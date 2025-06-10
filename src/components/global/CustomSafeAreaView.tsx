@@ -19,7 +19,7 @@ const CustomSafeAreaView: FC<CustomSafeAreaViewProps> = ({children, style}) => {
 const styles = StyleSheet.create({
     container:{
         flex: 1,
-        backgroundColor: Colors.Primary,
+        backgroundColor: Colors.Soft_Pink,
     }
 })
 
