@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { firebase } from "../../../firebaseConfig";
 import { Picker } from '@react-native-picker/picker';
 
-import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Alert } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Alert, Modal, ActivityIndicator } from 'react-native'
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
@@ -22,6 +22,7 @@ const RegisterScreen: React.FC = () => {
   const [cnfPassword, setCnfPassword] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
 
  
@@ -41,6 +42,7 @@ const RegisterScreen: React.FC = () => {
 
   const handleRegister = async () => {
     try {
+      setModalVisible(true);
       await firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
         var user = userCredential.user;
         firebase.firestore().collection("UserAccounts").doc(email).set({
@@ -53,8 +55,11 @@ const RegisterScreen: React.FC = () => {
           // birthDate: birthDate,
         })
       })
+      setModalVisible(false);
     } catch (error) {
-      console.log(error);
+      Alert.alert('Error', 'Internal server error please try again later.', [
+        { text: 'OK', onPress: () => console.log('OK Pressed') },
+      ]);
     }
   };
 
@@ -85,6 +90,18 @@ const RegisterScreen: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.inner_container}>
         <CustomSafeAreaView style={{ flex: 1 }}>
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalBackground}>
+              {/* <View style={styles.activityIndicatorWrapper}> */}
+                <ActivityIndicator size="large" color="#267EDF" />
+              {/* </View> */}
+            </View>
+          </Modal>
           <View style={{ flex: 1 }}>
             <ScrollView
               showsVerticalScrollIndicator={false}
@@ -267,6 +284,12 @@ const RegisterScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Grey background color with 50% opacity
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   containercheck: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,6 +372,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8,
+    color: "#291C0A",
   },
 
 
@@ -386,6 +410,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8,
+    color: "#291C0A",
   },
   labeltext: {
     fontWeight: 400,
