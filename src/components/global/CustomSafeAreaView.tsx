@@ -1,6 +1,7 @@
-import { View, ViewStyle, StyleSheet, SafeAreaView } from 'react-native'
+import { View, ViewStyle, StyleSheet } from 'react-native'
 import { FC, ReactNode } from 'react'
 import { Colors } from '@utils/Constants'
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface CustomSafeAreaViewProps {
     children: ReactNode,
@@ -9,18 +10,19 @@ interface CustomSafeAreaViewProps {
 
 const CustomSafeAreaView: FC<CustomSafeAreaViewProps> = ({children, style}) => {
   return (
-    <View style={styles.container}>
-      <SafeAreaView />
+      <SafeAreaView style={[styles.container, style]}>
       {children}
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
+
     container:{
         flex: 1,
-        backgroundColor: Colors.Primary,
-    }
+        // backgroundColor: Colors.Soft_Pink,
+    },
+   
 })
 
 export default CustomSafeAreaView

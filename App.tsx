@@ -12,6 +12,7 @@ import HomeScreen from '@features/user_screens/HomeScreen';
 import AddTask from '@features/admin_screens/AddTask';
 import TaskListScreen from '@features/user_screens/TaskListScreen';
 import TaskScreen from '@features/user_screens/TaskScreen';
+import ForgetScreen from '@features/auth/ForgetScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -48,6 +49,7 @@ const App = () => {
           <>
             <Stack.Screen name='LoginScreen' component={LoginScreen} options={{ headerShown: false }} />
             <Stack.Screen name='RegisterScreen' component={RegisterScreen} options={{ headerShown: false }} />
+            <Stack.Screen name='ForgetScreen' component={ForgetScreen} options={{ headerShown: false }} />
           </>
         ) : (
           <>

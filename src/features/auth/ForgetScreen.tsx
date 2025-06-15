@@ -1,40 +1,56 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { firebase } from "../../../firebaseConfig";
-import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput } from 'react-native'
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
 import InputField from '@components/global/InputField';
-import Feather from '@react-native-vector-icons/feather';
 import YellowButton from '@components/global/YellowButton';
-import { ScrollView } from 'react-native';
+import Toast from '@components/global/Toast'; // 👈 import toast
 
-
-const LoginScreen = () => {
-
-
+const ForgetScreen = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordVisible, setPasswordVisible] = useState(false);
+  const isDisabled = !email ;
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-
-  const isDisabled = !email || !password;
-
-  const handleLogin = async () => {
-    firebase.auth().signInWithEmailAndPassword(email, password)
+  const handleSendLink = () => {
+    if (email.includes('@gmail.com')) {
+      setToast({ message: 'Verification Email Sent', type: 'success' });
+      // send email logic...
+    } else {
+      setToast({ message: 'Invalid Email Address', type: 'error' });
+    }
   };
+
+  // auto-hide toast
+  useEffect(() => {
+    if (toast) {
+      const timeout = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [toast]);
 
   return (
     <View style={styles.container}>
       <View style={styles.inner_container}>
         <CustomSafeAreaView style={{ flex: 1 }}>
           <View style={{ flex: 1 }}>
+            {toast && (
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 999 }}>
+                <Toast message={toast.message} type={toast.type} />
+              </View>
+            )}
+
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }} // space for fixed footer
+              contentContainerStyle={{ paddingBottom: 120 }}
             >
-              <TitleText style={styles.titletext}>Sign In</TitleText>
-  
+              <TitleText style={styles.titletext}>Forgot Password</TitleText>
+              <View style={{ height: 24 }} />
+              <TitleText style={styles.textualtext}>
+                Enter your email and we will send password reset link on your registered email to recover the password
+              </TitleText>
+              <View style={{ height: 16 }} />
               <TitleText style={styles.labeltext}>Email</TitleText>
               <InputField
                 style={styles.input1}
@@ -42,48 +58,14 @@ const LoginScreen = () => {
                 onChangeText={setEmail}
                 autoCapitalize="none"
               />
-  
               <View style={{ height: 16 }} />
-  
-              <TitleText style={styles.labeltext}>Password</TitleText>
-              <View style={styles.inputWrapper}>
-                <InputField
-                  placeholder="Enter your password"
-                  secureTextEntry={!passwordVisible}
-                  onChangeText={setPassword}
-                  style={styles.inputWithIcon}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => setPasswordVisible(!passwordVisible)}
-                >
-                  <Feather
-                    name={passwordVisible ? 'eye' : 'eye-off'}
-                    size={20}
-                    color="#888"
-                  />
-                </TouchableOpacity>
-              </View>
-  
-              <View style={{ height: 16 }} />
-
-
-              <TouchableOpacity onPress={() => navigate('ForgetScreen')}>
-              <TitleText style={styles.forgottext}>Forgot Password?</TitleText>
-              </TouchableOpacity>
-  
-              
-
-
-
             </ScrollView>
-  
+
             <View style={styles.endcontainer}>
-              <YellowButton title="Sign In" onPress={handleLogin} disabled={!email || !password}/>
-              <TouchableOpacity onPress={() => navigate('RegisterScreen')}>
+              <YellowButton title="Send Link" onPress={handleSendLink} disabled={!email }/>
+              <TouchableOpacity onPress={() => navigate('LoginScreen')}>
                 <TitleText style={styles.link}>
-                  Don't have an account?
-                  <TitleText style={styles.link2}> Sign Up</TitleText>
+                  Back To <TitleText style={styles.link2}> Sign In</TitleText>
                 </TitleText>
               </TouchableOpacity>
             </View>
@@ -92,10 +74,15 @@ const LoginScreen = () => {
       </View>
     </View>
   );
-  
 };
 
 const styles = StyleSheet.create({
+
+    textualtext: {
+        fontWeight: 400,
+        fontSize: 14,
+        textAlign: 'center',
+    },
 
   endcontainer : {
     position: 'absolute',
@@ -167,7 +154,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 700,
     fontSize: 28,
-    color: '#FAB90A',
+    color: '#FECC01',
   },
   
   input: { marginBottom: 15, borderBottomWidth: 1, color: 'black' },
@@ -176,7 +163,7 @@ const styles = StyleSheet.create({
 });
 
 
-export default LoginScreen
+export default ForgetScreen
 
 
 
