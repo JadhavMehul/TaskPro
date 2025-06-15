@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { firebase } from "../../../firebaseConfig";
-import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Modal, ActivityIndicator } from 'react-native'
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
@@ -8,6 +8,7 @@ import InputField from '@components/global/InputField';
 import Feather from '@react-native-vector-icons/feather';
 import YellowButton from '@components/global/YellowButton';
 import { ScrollView } from 'react-native';
+import Toast from '@components/global/Toast'; // 👈 import toast
 
 
 const LoginScreen = () => {
@@ -16,19 +17,55 @@ const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
 
   const isDisabled = !email || !password;
 
   const handleLogin = async () => {
-    firebase.auth().signInWithEmailAndPassword(email, password)
+    setModalVisible(true);
+    try {
+      await firebase.auth().signInWithEmailAndPassword(email, password)
+      setModalVisible(false);
+    } catch (error: unknown) {
+      const firebaseError = error as { code: string; message: string };
+      const cleanedCode = firebaseError.code.replace('auth/', '');
+      setModalVisible(false);
+      setToast({ message: cleanedCode, type: 'error' });
+    }
   };
+
+  // auto-hide toast
+    useEffect(() => {
+      if (toast) {
+        const timeout = setTimeout(() => setToast(null), 3000);
+        return () => clearTimeout(timeout);
+      }
+    }, [toast]);
 
   return (
     <View style={styles.container}>
       <View style={styles.inner_container}>
         <CustomSafeAreaView style={{ flex: 1 }}>
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalBackground}>
+              {/* <View style={styles.activityIndicatorWrapper}> */}
+                <ActivityIndicator size="large" color="#267EDF" />
+              {/* </View> */}
+            </View>
+          </Modal>
           <View style={{ flex: 1 }}>
+            {toast && (
+              <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 999 }}>
+                <Toast message={toast.message} type={toast.type} />
+              </View>
+            )}
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 120 }} // space for fixed footer
@@ -96,7 +133,12 @@ const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
-
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Grey background color with 50% opacity
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   endcontainer : {
     position: 'absolute',
     width: '100%',
@@ -119,6 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8, 
+    color: "#291C0A",
   },
 
 
@@ -156,6 +199,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8,
+    color: "#291C0A",
   },
   labeltext: {
     fontWeight: 400,

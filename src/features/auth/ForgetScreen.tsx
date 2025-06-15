@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Alert } from 'react-native';
 import { firebase } from "../../../firebaseConfig";
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -12,15 +12,23 @@ const ForgetScreen = () => {
   const [email, setEmail] = useState('');
   const isDisabled = !email ;
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const handleSendLink = () => {
-    if (email.includes('@gmail.com')) {
-      setToast({ message: 'Verification Email Sent', type: 'success' });
-      // send email logic...
-    } else {
-      setToast({ message: 'Invalid Email Address', type: 'error' });
+  const handleSendLink = async () => {
+    setModalVisible(true);
+
+    try {
+      await firebase.auth().sendPasswordResetEmail(email);
+      Alert.alert('Email Sent', 'Reset password email has been sent.', [
+        { text: 'OK', onPress: () => navigate('LoginScreen') },
+      ]);
+    } catch (error: any) {
+      setToast({ message: 'Something went wrong, please try again later.', type: 'error' });
+    } finally {
+      setModalVisible(false);
     }
   };
+
 
   // auto-hide toast
   useEffect(() => {
@@ -34,6 +42,18 @@ const ForgetScreen = () => {
     <View style={styles.container}>
       <View style={styles.inner_container}>
         <CustomSafeAreaView style={{ flex: 1 }}>
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalBackground}>
+              {/* <View style={styles.activityIndicatorWrapper}> */}
+                <ActivityIndicator size="large" color="#267EDF" />
+              {/* </View> */}
+            </View>
+          </Modal>
           <View style={{ flex: 1 }}>
             {toast && (
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 999 }}>
@@ -77,7 +97,12 @@ const ForgetScreen = () => {
 };
 
 const styles = StyleSheet.create({
-
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Grey background color with 50% opacity
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
     textualtext: {
         fontWeight: 400,
         fontSize: 14,
@@ -143,6 +168,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 16,
     borderRadius: 8,
+    color: "#291C0A",
   },
   labeltext: {
     fontWeight: 400,
