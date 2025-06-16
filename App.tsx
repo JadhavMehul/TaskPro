@@ -13,6 +13,9 @@ import AddTask from '@features/admin_screens/AddTask';
 import TaskListScreen from '@features/user_screens/TaskListScreen';
 import TaskScreen from '@features/user_screens/TaskScreen';
 import ForgetScreen from '@features/auth/ForgetScreen';
+import ProfileScreen from '@features/user_screens/ProfileScreen';
+import AdminScreen from '@features/user_screens/AdminScreen';
+import TaskDetailsScreen from '@features/user_screens/TaskDetailsScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -57,6 +60,12 @@ const App = () => {
             <Stack.Screen name='TaskListScreen' component={TaskListScreen} options={{ headerShown: false }} />
             <Stack.Screen name='TaskScreen' component={TaskScreen} options={{ headerShown: false }} />
             <Stack.Screen name='AddTask' component={AddTask} options={{ headerShown: false }} />
+            <Stack.Screen name='ProfileScreen' component={ProfileScreen} options={{ headerShown: false }} />
+            <Stack.Screen name='AdminScreen' component={AdminScreen} options={{ headerShown: false }} />
+            <Stack.Screen name='TaskDetailsScreen' component={TaskDetailsScreen} options={{ headerShown: false }} />
+
+
+
           </>
         )}
 

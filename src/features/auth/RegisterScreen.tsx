@@ -88,7 +88,7 @@ const RegisterScreen: React.FC = () => {
           <View style={{ flex: 1 }}>
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }} // space for fixed footer
+              contentContainerStyle={{ paddingBottom: 120 }} 
             >
               <TitleText style={styles.titletext}>Sign Up</TitleText>
 

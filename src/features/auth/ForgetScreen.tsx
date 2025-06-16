@@ -6,7 +6,7 @@ import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
 import InputField from '@components/global/InputField';
 import YellowButton from '@components/global/YellowButton';
-import Toast from '@components/global/Toast'; // 👈 import toast
+import Toast from '@components/global/Toast'; 
 
 const ForgetScreen = () => {
   const [email, setEmail] = useState('');
@@ -16,13 +16,12 @@ const ForgetScreen = () => {
   const handleSendLink = () => {
     if (email.includes('@gmail.com')) {
       setToast({ message: 'Verification Email Sent', type: 'success' });
-      // send email logic...
+      
     } else {
-      setToast({ message: 'Invalid Email Address', type: 'error' });
+      setToast({ message: 'Invalid Email AddressInvalid Email AddressInvalid Email AddressInvalid Email AddressInvalid Email Address', type: 'error' });
     }
   };
 
-  // auto-hide toast
   useEffect(() => {
     if (toast) {
       const timeout = setTimeout(() => setToast(null), 3000);
