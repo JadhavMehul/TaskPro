@@ -1,8 +1,6 @@
-
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, View, Text, StyleSheet } from 'react-native';
 import Feather from '@react-native-vector-icons/feather';
-
 
 type ToastProps = {
   message: string;
@@ -10,15 +8,33 @@ type ToastProps = {
 };
 
 const Toast = ({ message, type }: ToastProps) => {
+  const translateY = useRef(new Animated.Value(-100)).current;
+
   const backgroundColor = type === 'success' ? '#D1FADF' : '#FEE4E2';
   const iconColor = type === 'success' ? '#12B76A' : '#F04438';
   const iconName = type === 'success' ? 'check-circle' : 'x-circle';
 
+  useEffect(() => {
+    Animated.timing(translateY, {
+      toValue: 10,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
   return (
-    <View style={[styles.toast, { backgroundColor }]}>
-      <Feather name={iconName} size={20} color={iconColor} style={styles.icon} />
-      <Text style={styles.message}>{message}</Text>
-    </View>
+    <Animated.View
+    style={[
+      styles.toast,
+      {
+        backgroundColor,
+        transform: [{ translateY }],
+      },
+    ]}
+  >
+    <Feather name={iconName} size={20} color={iconColor} style={styles.icon} />
+    <Text style={styles.message}>{message}</Text>
+  </Animated.View>
   );
 };
 
@@ -26,7 +42,12 @@ const styles = StyleSheet.create({
   toast: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    // padding: 24,
+
+    paddingTop: 14,
+    paddingBottom: 14,
+    paddingLeft: 14,
+    paddingRight: 24,
     borderRadius: 12,
     // marginHorizontal: 16,
     marginTop: 0,
@@ -42,6 +63,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#101828',
+    paddingRight: 16,
   },
 });
 

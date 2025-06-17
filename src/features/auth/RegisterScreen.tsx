@@ -99,13 +99,15 @@ const RegisterScreen: React.FC = () => {
             <View style={styles.modalBackground}>
               {/* <View style={styles.activityIndicatorWrapper}> */}
                 <ActivityIndicator size="large" color="#267EDF" />
+
+                
               {/* </View> */}
             </View>
           </Modal>
           <View style={{ flex: 1 }}>
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }} // space for fixed footer
+              contentContainerStyle={{ paddingBottom: 120 }} 
             >
               <TitleText style={styles.titletext}>Sign Up</TitleText>
 
@@ -193,7 +195,7 @@ const RegisterScreen: React.FC = () => {
                   onPress={() => setPasswordVisible2(!passwordVisible2)}
                 >
                   <Feather
-                    name={passwordVisible ? 'eye' : 'eye-off'}
+                    name={passwordVisible2 ? 'eye' : 'eye-off'}
                     size={20}
                     color="#888"
                   />
