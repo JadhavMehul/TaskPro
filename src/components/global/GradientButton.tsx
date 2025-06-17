@@ -30,7 +30,7 @@ const GradientButton: FC<GradientButtonProps> = ({ imageSource, title, onPress }
 const styles = StyleSheet.create({
     gradientBox: {
         // alignSelf: 'flex-start',
-        minWidth: 171,
+        // minWidth: 171,
         width: '100%',
         borderRadius: 16,
         justifyContent: 'center',

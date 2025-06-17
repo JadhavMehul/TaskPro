@@ -9,23 +9,26 @@ import BottomModal from '@components/global/BottomModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import ToggleSwitch from '@components/global/ToggleSwitch';
 import NameCard from '@components/global/Namecard';
+import { firebase } from "../../../firebaseConfig";
 
 const AdminScreen = () => {
+  
+  
+  
+    // const [isOn, setIsOn] = useState(false);
+    // const knobPosition = useRef(new Animated.Value(6)).current;
+  
+    // const toggleSwitch = () => {
+    //   Animated.timing(knobPosition, {
+    //     toValue: isOn ? 6 : 38,
+    //     duration: 200,
+    //     useNativeDriver: false,
+    //   }).start();
+    //   setIsOn(!isOn);
+    // };
 
-
-
-
-  // const [isOn, setIsOn] = useState(false);
-  // const knobPosition = useRef(new Animated.Value(6)).current;
-
-  // const toggleSwitch = () => {
-  //   Animated.timing(knobPosition, {
-  //     toValue: isOn ? 6 : 38,
-  //     duration: 200,
-  //     useNativeDriver: false,
-  //   }).start();
-  //   setIsOn(!isOn);
-  // };
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [isModalVisible2, setModalVisible2] = useState(false);
 
   const [cards, setCards] = useState([
     { name: 'Mehul', isOn: false, knobPosition: new Animated.Value(2) },
@@ -50,23 +53,41 @@ const AdminScreen = () => {
   };
 
 
-  const [code, setCode] = useState('1256');
+  const [code, setCode] = useState('');
 
   const handleCopy = () => {
     Clipboard.setString(code);
     Alert.alert('Copied', `Promo code "${code}" copied to clipboard.`);
   };
 
-  const [code2, setCode2] = useState('7894');
+  const [code2, setCode2] = useState('');
 
   const handleCopy2 = () => {
     Clipboard.setString(code2);
     Alert.alert('Copied', `Promo code "${code2}" copied to clipboard.`);
   };
 
-  const [isModalVisible, setModalVisible] = useState(false);
+  const storePromo = async (aCode: string, uCode: string) => {
+    try {
+      await firebase.firestore().collection("PromoCodes").doc("Code").set({
+        adminCode: aCode,
+        userCode: uCode
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-  const [isModalVisible2, setModalVisible2] = useState(false);
+  const generatePromoCode = () => {
+    const adminPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
+    setCode(adminPromoCode.toString());
+
+    const userPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
+    setCode2(userPromoCode.toString());
+
+    setModalVisible(true);
+    storePromo(adminPromoCode, userPromoCode);
+  }
 
 
   return (
@@ -82,9 +103,9 @@ const AdminScreen = () => {
 
 
             <GradientButton
-              imageSource={require('../../assets/images/promocode_img.png')}
+              imageSource={require('@assets/images/promocode_img.png')}
               title="Promo Code"
-              onPress={() => setModalVisible(true)}
+              onPress={generatePromoCode}
             />
 
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
@@ -95,7 +116,7 @@ const AdminScreen = () => {
 
                 <TouchableOpacity onPress={handleCopy}>
                   <Image
-                    source={require('../../assets/images/copy.png')}
+                    source={require('@assets/images/copy.png')}
                     style={styles.image3}
                   /></TouchableOpacity>
 
@@ -164,7 +185,7 @@ const AdminScreen = () => {
               <View style={{ height: 200 }}>
 
               </View>
-              <TouchableOpacity style={styles.orangebutton}>
+              <TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
                 <TitleText style={styles.orangebtntext}>
                   Regenrate
                 </TitleText>
