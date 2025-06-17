@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { firebase } from "../../../firebaseConfig";
 import { Picker } from '@react-native-picker/picker';
 
@@ -23,14 +23,13 @@ const RegisterScreen: React.FC = () => {
   const [promoCode, setPromoCode] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-
-
- 
-
-
   const [passwordVisible, setPasswordVisible] = useState(false);
-
   const [passwordVisible2, setPasswordVisible2] = useState(false);
+
+  // const [fetchedPromoCode, setFetchedPromoCode] = useState<{ adminCode: string; userCode: string }>({
+  //   adminCode: '',
+  //   userCode: '',
+  // });
 
 
 
@@ -39,8 +38,43 @@ const RegisterScreen: React.FC = () => {
   const isDisabled = !email || !password || !firstName|| !lastName||!selectedGender||!cnfPassword||!promoCode||!checked;
 
 
+  const getPromoCodes = async () => {
+    try {
+      const codeData = await firebase.firestore().collection("PromoCodes").doc("Code").get();
 
-  const handleRegister = async () => {
+      if (!codeData.exists) {
+        console.log("Promo code document not found");
+        return null;
+      } else {
+        const data = codeData.data();
+        if (data?.adminCode && data?.userCode) {
+          return({
+            adminCode: data.adminCode,
+            userCode: data.userCode,
+          });
+        } else {
+          console.log("Invalid promo code data structure");
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const updatePromo = async () => {
+    const adminPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const userPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
+    try {
+      await firebase.firestore().collection("PromoCodes").doc("Code").set({
+        adminCode: adminPromoCode,
+        userCode: userPromoCode
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  
+  const handleRegister = async (adminValue: boolean) => {
     try {
       setModalVisible(true);
       await firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
@@ -51,27 +85,39 @@ const RegisterScreen: React.FC = () => {
           lastName: lastName,
           email: email,
           gender: selectedGender,
-          isAdmin: isAdmin
+          isAdmin: adminValue
           // birthDate: birthDate,
         })
+      }).then(() => {
+        updatePromo();
       })
       setModalVisible(false);
     } catch (error) {
+      console.log(error);
+      
       Alert.alert('Error', 'Internal server error please try again later.', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
+      setModalVisible(false);
     }
   };
 
 
-  const passChecker = () => {
+  const passChecker = async () => {
+    const promoObject = await getPromoCodes();
+    if (!promoObject) {
+      Alert.alert('Error', 'Unable to fetch promo codes. Please try again later.');
+      return;
+    }
+
     if (password && cnfPassword !== "") {
       if (password === cnfPassword) {
-        if (promoCode === '2000') {
-          setIsAdmin(true)
-          handleRegister()
+        if (promoCode.toString() === promoObject.adminCode) {
+          handleRegister(true)
+        } else if (promoCode.toString() === promoObject.userCode) {
+          handleRegister(false)
         } else {
-          handleRegister()
+          Alert.alert('Invalid Code', 'The promo code you entered is incorrect.');
         }
       } else {
         Alert.alert('Wrong Details', 'Entered password and confirm password are not same.', [
@@ -85,6 +131,8 @@ const RegisterScreen: React.FC = () => {
     }
 
   }
+
+  
 
   return (
     <View style={styles.container}>
