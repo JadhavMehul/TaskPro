@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
 
   mainbottom_div: {
     width: '100%',
-    backgroundColor: "red",
+    // backgroundColor: "red",
   },
   bottomcontainer: {
     height: "auto",

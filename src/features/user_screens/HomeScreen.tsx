@@ -6,6 +6,8 @@ import BottomNav from '@components/global/BottomBar';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
 import Feather from '@react-native-vector-icons/feather';
+import Modal from 'react-native-modal';
+import BottomModal from '@components/global/BottomModal';
 
 
 const HomeScreen = () => {
@@ -13,6 +15,8 @@ const HomeScreen = () => {
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [allTaskCards, setAllTaskCards] = React.useState<string[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
+
+
 
 
 
@@ -130,6 +134,9 @@ const HomeScreen = () => {
 
 
                 <TouchableOpacity ><Feather name="trash" size={24} color="red" /></TouchableOpacity>
+               
+
+               
 
 
 
@@ -176,6 +183,12 @@ const HomeScreen = () => {
 
 
 const styles = StyleSheet.create({
+
+
+ 
+ 
+  
+  
 
   image: {
     width: 17,
@@ -302,10 +315,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   yellow: {
-    padding: 24,
+    padding: 16,
     flex: 1, backgroundColor: '#FAB90A',
-    borderTopLeftRadius: 25,
-    borderTopRightRadius: 25,
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
   },
   inner_container: {
     flex: 1,
