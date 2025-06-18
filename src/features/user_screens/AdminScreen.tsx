@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList } from 'react-native'
 import React, { useState, useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -27,12 +27,12 @@ const AdminScreen = () => {
     //   setIsOn(!isOn);
     // };
 
+  const [refreshing, setRefreshing] = React.useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalVisible2, setModalVisible2] = useState(false);
 
   const [cards, setCards] = useState([
-    { name: 'Mehul', isOn: false, knobPosition: new Animated.Value(2) },
-    { name: 'Tirthak', isOn: false, knobPosition: new Animated.Value(2) },
+    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(2) },
   ]);
 
   const toggleSwitch = (index: number) => {
@@ -87,6 +87,43 @@ const AdminScreen = () => {
 
     setModalVisible(true);
     storePromo(adminPromoCode, userPromoCode);
+  }
+
+  const getEmployees = async () => {
+    try {
+      const allEmployeeData = await firebase.firestore().collection("UserAccounts").get()
+      const employees = allEmployeeData.docs.map(doc => {
+        const data = doc.data();
+        console.log(data);
+        
+        return {
+          name: data.firstName || '',
+          isOn: data.isAdmin || false,
+          userEmail: data.email || null,
+          knobPosition: new Animated.Value(data.isAdmin ? 38 : 2),
+        };
+      });
+      setCards(employees);
+      // console.log("Employees:", JSON.stringify(employees));
+    } catch (error) {
+      console.log(error);
+    }
+    setModalVisible2(true);
+  }
+
+  const updateUserAdminStatus = async (userEmailId: string | null, userStatus: boolean, i:any) => {
+
+    try {
+      toggleSwitch(i)
+      
+      await firebase.firestore().collection("UserAccounts").doc(userEmailId!).update({ isAdmin:  !userStatus})
+
+    } catch (error) {
+      console.log(error);
+      
+    }
+    console.log(userEmailId);
+    
   }
 
 
@@ -154,7 +191,7 @@ const AdminScreen = () => {
 
                 <TouchableOpacity onPress={handleCopy2}>
                   <Image
-                    source={require('../../assets/images/copy.png')}
+                    source={require('@assets/images/copy.png')}
                     style={styles.image3}
                   /></TouchableOpacity>
               </View>
@@ -193,9 +230,9 @@ const AdminScreen = () => {
             </BottomModal>
 
             <GradientButton
-              imageSource={require('../../assets/images/employes_img.png')}
+              imageSource={require('@assets/images/employes_img.png')}
               title="Employees"
-              onPress={() => setModalVisible2(true)}
+              onPress={getEmployees}
             />
 
 
@@ -208,7 +245,6 @@ const AdminScreen = () => {
                 <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
                   Admin
                 </TitleText>
-
               </View>
 
 
@@ -228,8 +264,29 @@ const AdminScreen = () => {
               />
               </View> */}
 
-              <View style={{ flexDirection: 'column', gap: 16 }}>
-                {cards.map((card, index) => (
+              {/* <View style={{ flexDirection: 'column', gap: 16 }}> */}
+
+                <FlatList
+                  data={cards}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({item, index}) => (
+                    <NameCard
+                      key={index}
+                      name={item.name}
+                      imageSource={require('../../assets/images/home_fill.png')}
+                      isOn={item.isOn}
+                      toggleSwitch={() => updateUserAdminStatus(item.userEmail, item.isOn, index)}
+                      knobPosition={item.knobPosition}
+                      style={{marginBottom: 16}}
+                    />
+                  )}
+                  showsVerticalScrollIndicator={false}
+                  onRefresh={getEmployees}
+                  refreshing={refreshing}
+                  ListEmptyComponent={<Text>No task dates found</Text>}
+                />
+
+                {/* {cards.map((card, index) => (
                   <NameCard
                     key={index}
                     name={card.name}
@@ -238,8 +295,8 @@ const AdminScreen = () => {
                     toggleSwitch={() => toggleSwitch(index)}
                     knobPosition={card.knobPosition}
                   />
-                ))}
-              </View>
+                ))} */}
+              {/* </View> */}
 
             </BottomModal>
 
