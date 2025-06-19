@@ -28,8 +28,8 @@ const AdminScreen = () => {
   // };
 
   const [cards, setCards] = useState([
-    { name: 'Mehul', isOn: false, knobPosition: new Animated.Value(2) },
-    { name: 'Tirthak', isOn: false, knobPosition: new Animated.Value(2) },
+    { name: 'Mehul', isOn: false, knobPosition: new Animated.Value(6) },
+    { name: 'Tirthak', isOn: false, knobPosition: new Animated.Value(6) },
   ]);
 
   const toggleSwitch = (index: number) => {
