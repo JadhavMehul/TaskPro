@@ -9,7 +9,8 @@ import BottomModal from '@components/global/BottomModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import ToggleSwitch from '@components/global/ToggleSwitch';
 import NameCard from '@components/global/Namecard';
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
+import firestore from "@react-native-firebase/firestore";
 
 const AdminScreen = () => {
   
@@ -69,7 +70,7 @@ const AdminScreen = () => {
 
   const storePromo = async (aCode: string, uCode: string) => {
     try {
-      await firebase.firestore().collection("PromoCodes").doc("Code").set({
+      await firestore().collection("PromoCodes").doc("Code").set({
         adminCode: aCode,
         userCode: uCode
       })
@@ -91,7 +92,7 @@ const AdminScreen = () => {
 
   const getEmployees = async () => {
     try {
-      const allEmployeeData = await firebase.firestore().collection("UserAccounts").get()
+      const allEmployeeData = await firestore().collection("UserAccounts").get()
       const employees = allEmployeeData.docs.map(doc => {
         const data = doc.data();
         console.log(data);
@@ -116,7 +117,7 @@ const AdminScreen = () => {
     try {
       toggleSwitch(i)
       
-      await firebase.firestore().collection("UserAccounts").doc(userEmailId!).update({ isAdmin:  !userStatus})
+      await firestore().collection("UserAccounts").doc(userEmailId!).update({ isAdmin:  !userStatus})
 
     } catch (error) {
       console.log(error);

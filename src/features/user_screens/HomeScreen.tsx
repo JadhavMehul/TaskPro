@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
 import { View, Text, Button, StyleSheet, Alert, Image, FlatList, TouchableOpacity } from 'react-native';
 import { navigate } from '@utils/NavigationUtils';
 import BottomNav from '@components/global/BottomBar';
@@ -8,10 +8,12 @@ import TitleText from '@components/global/Titletext';
 import Feather from '@react-native-vector-icons/feather';
 import Modal from 'react-native-modal';
 import BottomModal from '@components/global/BottomModal';
+import auth from '@react-native-firebase/auth'
+import firestore from '@react-native-firebase/firestore'
 
 
 const HomeScreen = () => {
-  const user = firebase.auth().currentUser;
+  const user = auth().currentUser;
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [allTaskCards, setAllTaskCards] = React.useState<string[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -23,12 +25,12 @@ const HomeScreen = () => {
   const fetchUserData = async () => {
     if (user?.email) {
       try {
-        const doc = await firebase.firestore()
+        const doc = await firestore()
           .collection('UserAccounts')
           .doc(user.email)
           .get();
 
-        if (doc.exists) {
+        if (doc.exists()) {
           const userData = doc.data();
           if (userData && typeof userData.isAdmin !== 'undefined') {
             setUserIsAdmin(userData.isAdmin);
@@ -47,7 +49,7 @@ const HomeScreen = () => {
   const fetchTaskCard = async () => {
     setRefreshing(true);
     try {
-      const doc = await firebase.firestore().collection('TaskList').get();
+      const doc = await firestore().collection('TaskList').get();
       const dateList = doc.docs.map(doc => doc.id);
       setAllTaskCards(dateList)
     } catch (error) {

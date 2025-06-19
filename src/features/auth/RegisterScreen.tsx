@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
 import { Picker } from '@react-native-picker/picker';
 
 import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Alert, Modal, ActivityIndicator } from 'react-native'
@@ -10,6 +10,8 @@ import InputField from '@components/global/InputField';
 import Feather from '@react-native-vector-icons/feather';
 import YellowButton from '@components/global/YellowButton';
 import { ScrollView } from 'react-native';
+import auth from '@react-native-firebase/auth'
+import firestore from '@react-native-firebase/firestore'
 
 
 const RegisterScreen: React.FC = () => {
@@ -40,7 +42,7 @@ const RegisterScreen: React.FC = () => {
 
   const getPromoCodes = async () => {
     try {
-      const codeData = await firebase.firestore().collection("PromoCodes").doc("Code").get();
+      const codeData = await firestore().collection("PromoCodes").doc("Code").get();
 
       if (!codeData.exists) {
         console.log("Promo code document not found");
@@ -65,7 +67,7 @@ const RegisterScreen: React.FC = () => {
     const adminPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
     const userPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
     try {
-      await firebase.firestore().collection("PromoCodes").doc("Code").set({
+      await firestore().collection("PromoCodes").doc("Code").set({
         adminCode: adminPromoCode,
         userCode: userPromoCode
       })
@@ -77,9 +79,9 @@ const RegisterScreen: React.FC = () => {
   const handleRegister = async (adminValue: boolean) => {
     try {
       setModalVisible(true);
-      await firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
+      await auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
         var user = userCredential.user;
-        firebase.firestore().collection("UserAccounts").doc(email).set({
+        firestore().collection("UserAccounts").doc(email).set({
           userId: user?.uid,
           firstName: firstName,
           lastName: lastName,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
 import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Modal, ActivityIndicator } from 'react-native'
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -9,6 +9,7 @@ import Feather from '@react-native-vector-icons/feather';
 import YellowButton from '@components/global/YellowButton';
 import { ScrollView } from 'react-native';
 import Toast from '@components/global/Toast'; // 👈 import toast
+import auth from '@react-native-firebase/auth'
 
 
 const LoginScreen = () => {
@@ -26,7 +27,7 @@ const LoginScreen = () => {
   const handleLogin = async () => {
     setModalVisible(true);
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password)
+      await auth().signInWithEmailAndPassword(email, password)
       setModalVisible(false);
     } catch (error: unknown) {
       const firebaseError = error as { code: string; message: string };
