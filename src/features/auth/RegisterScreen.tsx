@@ -269,7 +269,7 @@ const RegisterScreen: React.FC = () => {
                   <View style={styles.pickerWrapper}>
                     <Picker
                       selectedValue={selectedGender}
-                      onValueChange={(itemValue) => setSelectedGender(itemValue)}
+                      onValueChange={(itemValue: string) => setSelectedGender(itemValue)}
                       style={styles.pickerText} // only font styles like color, fontSize
                       dropdownIconColor="#999" // optional: customize dropdown arrow
                     >

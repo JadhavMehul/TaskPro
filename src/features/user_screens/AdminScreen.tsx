@@ -112,20 +112,28 @@ const AdminScreen = () => {
     setModalVisible2(true);
   }
 
-  const updateUserAdminStatus = async (userEmailId: string | null, userStatus: boolean, i:any) => {
+  const updateUserAdminStatus = async (
+    userEmailId: string | null,
+    userStatus: boolean,
+    i: any
+  ) => {
+    if (!userEmailId) {
+      console.warn('User email is null, cannot update admin status.');
+      return;
+    }
 
     try {
-      toggleSwitch(i)
-      
-      await firestore().collection("UserAccounts").doc(userEmailId!).update({ isAdmin:  !userStatus})
+      toggleSwitch(i);
+      await firestore()
+        .collection('UserAccounts')
+        .doc(userEmailId)
+        .update({ isAdmin: !userStatus });
 
+      console.log(`Admin status updated for: ${userEmailId}`);
     } catch (error) {
-      console.log(error);
-      
+      console.error('Error updating admin status:', error);
     }
-    console.log(userEmailId);
-    
-  }
+  };
 
 
   return (
@@ -274,7 +282,7 @@ const AdminScreen = () => {
                     <NameCard
                       key={index}
                       name={item.name}
-                      imageSource={require('../../assets/images/home_fill.png')}
+                      imageSource={require('@assets/images/home_fill.png')}
                       isOn={item.isOn}
                       toggleSwitch={() => updateUserAdminStatus(item.userEmail, item.isOn, index)}
                       knobPosition={item.knobPosition}
