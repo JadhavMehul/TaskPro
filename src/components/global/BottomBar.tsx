@@ -78,7 +78,7 @@ const BottomNav: React.FC<BottomNavComp> = ({style}) => {
           <Image
             source={
               routeName === "ProfileScreen"
-                ? require("../../assets/images/profile_unfill.png")
+                ? require("../../assets/images/profile_fill.png")
                 : require("../../assets/images/profile_unfill.png")
             }
             style={

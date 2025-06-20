@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { firebase } from "../../../firebaseConfig";
-import { View, Text, Button, StyleSheet, Animated, Alert, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+// import { firebase } from "../../../firebaseConfig";
+import { View, Text, Button, StyleSheet, Animated, Alert, Platform, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
 import { navigate } from '@utils/NavigationUtils';
 import BottomNav from '@components/global/BottomBar';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -8,10 +8,18 @@ import TitleText from '@components/global/Titletext';
 import Feather from '@react-native-vector-icons/feather';
 import Modal from 'react-native-modal';
 import BottomModal from '@components/global/BottomModal';
+import auth from '@react-native-firebase/auth'
+import firestore from '@react-native-firebase/firestore'
 import TaskBox from '@components/global/TaskBox';
 import InputField from '@components/global/InputField';
 import ToggleSwitch from '@components/global/ToggleSwitch';
 import LinearGradient from 'react-native-linear-gradient';
+
+
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+
 
 
 type User2 = {
@@ -25,9 +33,9 @@ const users2: User2[] = [
   {
     id: '0',
     name: 'Assigned to',
-    image: 'https://i.com/1Qf1Z0G.jpg',
+    image: '',
   },
-  
+
   {
     id: '1',
     name: 'Mehul',
@@ -43,6 +51,83 @@ const users2: User2[] = [
 
 const HomeScreen = () => {
 
+
+  const [date, setDate] = useState<Date>(new Date());
+  const [show, setShow] = useState<boolean>(false);
+
+  const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    const currentDate = selectedDate || date;
+    setShow(Platform.OS === 'ios'); 
+    setDate(currentDate);
+  };
+
+  const showTimepicker = () => {
+    setShow(true);
+  };
+
+
+
+  const [selectedUser3, setSelectedUser3] = useState<User2 | null>(null);
+  const [showDropdown3, setShowDropdown3] = useState<boolean>(false);
+
+  const handleSelect3 = (user2: User2) => {
+    if (user2.id === '0') {
+      setSelectedUser3(null);
+    } else {
+      setSelectedUser3(user2);
+    }
+    setShowDropdown3(false);
+  };
+  const renderUser3 = ({ item }: { item: User2 }) => {
+    const isSelected3 = selectedUser3?.id === item.id;
+
+    if (item.id === '0') {
+      return (
+        <TouchableOpacity onPress={() => handleSelect3(item)}>
+          <View style={[styles.userContainer2, { backgroundColor: '#fff', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}>
+            <Text style={styles.crossIcon2}>❌</Text>
+            <Text style={styles.userName2}>{item.name}</Text>
+            <Text style={styles.crossIcon2}>❌</Text>
+          </View>
+        </TouchableOpacity>
+      );
+    }
+
+
+
+    const content3 = (
+      <View style={styles.userInner2}>
+        <Image source={{ uri: item.image }} style={styles.avatar2} />
+        <Text style={[styles.userName2, isSelected3 && { color: '#fff' }]}>
+          {item.name}
+        </Text>
+      </View>
+    );
+
+    return (
+      <TouchableOpacity onPress={() => handleSelect3(item)}>
+        {isSelected3 ? (
+          <LinearGradient
+            colors={['#F8B700', '#F88D00']}
+            style={styles.userContainer2}
+          >
+            {content3}
+          </LinearGradient>
+        ) : (
+          <View style={[styles.userContainer2, { backgroundColor: '#fff' }]}>
+            {content3}
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+
+
+
+
+
+
   const [selectedUser2, setSelectedUser2] = useState<User2 | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
 
@@ -54,18 +139,30 @@ const HomeScreen = () => {
     }
     setShowDropdown2(false);
   };
-  const renderUser2 = ({ item }: { item: User2 }) =>  {
+  const renderUser2 = ({ item }: { item: User2 }) => {
     const isSelected2 = selectedUser2?.id === item.id;
 
-    
+    if (item.id === '0') {
+      return (
+        <TouchableOpacity onPress={() => handleSelect2(item)}>
+          <View style={[styles.userContainer2, { backgroundColor: '#fff', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}>
+            <Text style={styles.crossIcon2}>❌</Text>
+            <Text style={styles.userName2}>{item.name}</Text>
+            <Text style={styles.crossIcon2}>❌</Text>
+          </View>
+        </TouchableOpacity>
+      );
+    }
+
+
 
     const content2 = (
       <View style={styles.userInner2}>
-      <Image source={{ uri: item.image }} style={styles.avatar2} />
-      <Text style={[styles.userName2, isSelected2 && { color: '#fff' }]}>
-        {item.name}
-      </Text>
-    </View>
+        <Image source={{ uri: item.image }} style={styles.avatar2} />
+        <Text style={[styles.userName2, isSelected2 && { color: '#fff' }]}>
+          {item.name}
+        </Text>
+      </View>
     );
 
     return (
@@ -100,7 +197,7 @@ const HomeScreen = () => {
 
 
 
-  const user = firebase.auth().currentUser;
+  const user = auth().currentUser;
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [allTaskCards, setAllTaskCards] = React.useState<string[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -111,7 +208,7 @@ const HomeScreen = () => {
   const knobPosition = useRef(new Animated.Value(6)).current;
 
   const toggleSwitch = () => {
-    const toValue = isOn ? 6 : 38; // move left/right based on toggle state
+    const toValue = isOn ? 6 : 38;
     Animated.timing(knobPosition, {
       toValue,
       duration: 200,
@@ -127,12 +224,12 @@ const HomeScreen = () => {
   const fetchUserData = async () => {
     if (user?.email) {
       try {
-        const doc = await firebase.firestore()
+        const doc = await firestore()
           .collection('UserAccounts')
           .doc(user.email)
           .get();
 
-        if (doc.exists) {
+        if (doc.exists()) {
           const userData = doc.data();
           if (userData && typeof userData.isAdmin !== 'undefined') {
             setUserIsAdmin(userData.isAdmin);
@@ -151,7 +248,7 @@ const HomeScreen = () => {
   const fetchTaskCard = async () => {
     setRefreshing(true);
     try {
-      const doc = await firebase.firestore().collection('TaskList').get();
+      const doc = await firestore().collection('TaskList').get();
       const dateList = doc.docs.map(doc => doc.id);
       setAllTaskCards(dateList)
     } catch (error) {
@@ -171,11 +268,11 @@ const HomeScreen = () => {
       <CustomSafeAreaView style={{ flex: 1 }}>
         {/* <View style={styles.yellow}> */}
         <LinearGradient
-        colors={['#FECC01', '#F49C16']}
-        style={styles.gradientBox}
-      >
+          colors={['#FECC01', '#F49C16']}
+          style={styles.gradientBox}
+        >
 
-     
+
 
           <View style={styles.dropsection}>
 
@@ -225,10 +322,10 @@ const HomeScreen = () => {
                     <TitleText style={styles.personName}>Mehul</TitleText>
                   </View>
 
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>
                     <View style={styles.addtask}>
-                      <TitleText>
-                        Assign To
+                      <TitleText style={styles.dropdownText2}>
+                        {selectedUser3 ? selectedUser3.name : 'Assign To'}
                       </TitleText>
                       <Image
                         source={require('../../assets/images/downarrow.png')}
@@ -238,11 +335,19 @@ const HomeScreen = () => {
 
                   </TouchableOpacity>
 
+                  {showDropdown3 && (
+                    <View style={styles.dropdownList2}>
+                      {users2.map((item) => (
+                        <React.Fragment key={item.id}>{renderUser3({ item })}</React.Fragment>
+                      ))}
+                    </View>
+                  )}
+
 
 
                 </View>
 
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                   <TitleText style={styles.poptext}>
                     Need Permission?
                   </TitleText>
@@ -255,42 +360,142 @@ const HomeScreen = () => {
 
 
                 </View>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <TitleText style={styles.poptext}>
+                    Task End Time
+                  </TitleText>
+
+                  <TouchableOpacity onPress={showTimepicker}>
+                    <View style={styles.addtask}>
+                      <TitleText>
+                        Add Time
+                      </TitleText>
+                      <Image
+                        source={require('../../assets/images/addcircle.png')}
+                        style={styles.image2}
+                      />
+                    </View>
+
+                  </TouchableOpacity>
+
+
+
+
+
+
+                </View>
+                {/* <Text style={{ fontSize: 16 }}>
+                  Selected Time: {date.toLocaleTimeString()}
+                </Text> */}
+                {show && (
+                  <DateTimePicker
+                    testID="timePicker"
+                    value={date}
+                    mode="time"
+                    is24Hour={true}
+                    display="spinner"
+                    onChange={onChange}
+                  />
+                )}
+
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <TitleText style={styles.poptext}>
+                    Notification Timer 1
+                  </TitleText>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+
+                    <View style={styles.addtask}>
+                      <TitleText>
+                        {date.toLocaleTimeString()}
+                      </TitleText>
+                    </View>
+                    <TouchableOpacity>
+                      <Image
+                        source={require('../../assets/images/cancelicon.png')}
+                        style={styles.image2}
+                      />
+                    </TouchableOpacity>
+
+
+                  </View>
+
+
+
+
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+
+
+                  <TouchableOpacity onPress={showTimepicker} style={{ marginLeft: 'auto' }}>
+                    <View style={styles.addtask}>
+                      <TitleText>
+                        Add Time
+                      </TitleText>
+                      <Image
+                        source={require('../../assets/images/addcircle.png')}
+                        style={styles.image2}
+                      />
+                    </View>
+
+                  </TouchableOpacity>
+
+
+
+
+
+
+                </View>
+
+                <TouchableOpacity style={styles.orangebutton} >
+                  <TitleText style={styles.orangebtntext}>
+                    Add Task
+                  </TitleText>
+                </TouchableOpacity>
+
+
+
+
+
+
+
+
               </View>
 
-              <View style={{ height: 100 }}>
 
-              </View>
 
 
 
             </BottomModal>
 
-            <TouchableOpacity 
-        onPress={() => setShowDropdown2(!showDropdown2)}>
+            <TouchableOpacity
+              onPress={() => setShowDropdown2(!showDropdown2)}>
 
-                <View style={styles.addtask}>
-                  <TitleText style={styles.dropdownText2}>
+              <View style={styles.addtask}>
+                <TitleText style={styles.dropdownText2}>
                   {selectedUser2 ? selectedUser2.name : 'Assigned To'}
-                  </TitleText>
-                  <Image
-                    source={require('../../assets/images/downarrow.png')}
-                    style={styles.image2}
-                  />
-                </View>
+                </TitleText>
+                <Image
+                  source={require('../../assets/images/downarrow.png')}
+                  style={styles.image2}
+                />
+              </View>
 
-                </TouchableOpacity>
+            </TouchableOpacity>
 
 
-            
+
 
 
             {showDropdown2 && (
-  <View style={styles.dropdownList2}>
-    {users2.map((item) => (
-      <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
-    ))}
-  </View>
-)}
+              <View style={styles.dropdownList2}>
+                {users2.map((item) => (
+                  <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
+                ))}
+              </View>
+            )}
 
           </View>
 
@@ -325,9 +530,6 @@ const HomeScreen = () => {
 
 
 
-          
-
-      
 
 
 
@@ -339,7 +541,14 @@ const HomeScreen = () => {
 
 
 
-                      {/* <FlatList
+
+
+
+
+
+
+
+          {/* <FlatList
                     data={allTaskCards}
                     keyExtractor={(item) => item}
                     renderItem={({item}) => (
@@ -361,7 +570,7 @@ const HomeScreen = () => {
 
 
 
-        {/* </View> */}
+          {/* </View> */}
         </LinearGradient>
         <BottomNav />
       </CustomSafeAreaView>
@@ -377,7 +586,19 @@ const styles = StyleSheet.create({
 
 
 
+  orangebtntext: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 
+  orangebutton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FECC01',
+    padding: 12,
+    borderRadius: 25,
+  },
 
   text: {
     fontSize: 16,
@@ -404,18 +625,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   dropdownText2: {
-    fontSize: 16,
-    marginRight: 10,
+    fontSize: 14,
+    // marginRight: 10,
   },
   arrow2: {
     fontSize: 16,
   },
   dropdownList2: {
     position: 'absolute',
-  top: 50, 
-  
-  right: 10,
-  zIndex: 4,
+    top: 50,
+
+    right: 10,
+    zIndex: 4,
     // marginTop: 10,
     width: 'auto',
     backgroundColor: '#ffffff',
@@ -425,7 +646,7 @@ const styles = StyleSheet.create({
   },
   userContainer2: {
     borderWidth: 1,
-    borderColor:'#E7E2DA',
+    borderColor: '#E7E2DA',
     borderRadius: 12,
     padding: 10,
   },
@@ -554,7 +775,7 @@ const styles = StyleSheet.create({
   gradientBox: {
     // ...StyleSheet.absoluteFillObject,
     padding: 16,
-    flex: 1, 
+    flex: 1,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Alert } from 'react-native';
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
 import InputField from '@components/global/InputField';
 import YellowButton from '@components/global/YellowButton';
 import Toast from '@components/global/Toast'; 
+import auth from '@react-native-firebase/auth'
+
 
 const ForgetScreen = () => {
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ const ForgetScreen = () => {
     setModalVisible(true);
 
     try {
-      await firebase.auth().sendPasswordResetEmail(email);
+      await auth().sendPasswordResetEmail(email);
       Alert.alert('Email Sent', 'Reset password email has been sent.', [
         { text: 'OK', onPress: () => navigate('LoginScreen') },
       ]);

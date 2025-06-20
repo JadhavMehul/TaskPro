@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList } from 'react-native'
 import React, { useState, useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -9,27 +9,31 @@ import BottomModal from '@components/global/BottomModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import ToggleSwitch from '@components/global/ToggleSwitch';
 import NameCard from '@components/global/Namecard';
+// import { firebase } from "../../../firebaseConfig";
+import firestore from "@react-native-firebase/firestore";
 
 const AdminScreen = () => {
+  
+  
+  
+    // const [isOn, setIsOn] = useState(false);
+    // const knobPosition = useRef(new Animated.Value(6)).current;
+  
+    // const toggleSwitch = () => {
+    //   Animated.timing(knobPosition, {
+    //     toValue: isOn ? 6 : 38,
+    //     duration: 200,
+    //     useNativeDriver: false,
+    //   }).start();
+    //   setIsOn(!isOn);
+    // };
 
-
-
-
-  // const [isOn, setIsOn] = useState(false);
-  // const knobPosition = useRef(new Animated.Value(6)).current;
-
-  // const toggleSwitch = () => {
-  //   Animated.timing(knobPosition, {
-  //     toValue: isOn ? 6 : 38,
-  //     duration: 200,
-  //     useNativeDriver: false,
-  //   }).start();
-  //   setIsOn(!isOn);
-  // };
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [isModalVisible2, setModalVisible2] = useState(false);
 
   const [cards, setCards] = useState([
-    { name: 'Mehul', isOn: false, knobPosition: new Animated.Value(6) },
-    { name: 'Tirthak', isOn: false, knobPosition: new Animated.Value(6) },
+    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(2) },
   ]);
 
   const toggleSwitch = (index: number) => {
@@ -50,23 +54,78 @@ const AdminScreen = () => {
   };
 
 
-  const [code, setCode] = useState('1256');
+  const [code, setCode] = useState('');
 
   const handleCopy = () => {
     Clipboard.setString(code);
     Alert.alert('Copied', `Promo code "${code}" copied to clipboard.`);
   };
 
-  const [code2, setCode2] = useState('7894');
+  const [code2, setCode2] = useState('');
 
   const handleCopy2 = () => {
     Clipboard.setString(code2);
     Alert.alert('Copied', `Promo code "${code2}" copied to clipboard.`);
   };
 
-  const [isModalVisible, setModalVisible] = useState(false);
+  const storePromo = async (aCode: string, uCode: string) => {
+    try {
+      await firestore().collection("PromoCodes").doc("Code").set({
+        adminCode: aCode,
+        userCode: uCode
+      })
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-  const [isModalVisible2, setModalVisible2] = useState(false);
+  const generatePromoCode = () => {
+    const adminPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
+    setCode(adminPromoCode.toString());
+
+    const userPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
+    setCode2(userPromoCode.toString());
+
+    setModalVisible(true);
+    storePromo(adminPromoCode, userPromoCode);
+  }
+
+  const getEmployees = async () => {
+    try {
+      const allEmployeeData = await firestore().collection("UserAccounts").get()
+      const employees = allEmployeeData.docs.map(doc => {
+        const data = doc.data();
+        console.log(data);
+        
+        return {
+          name: data.firstName || '',
+          isOn: data.isAdmin || false,
+          userEmail: data.email || null,
+          knobPosition: new Animated.Value(data.isAdmin ? 38 : 2),
+        };
+      });
+      setCards(employees);
+      // console.log("Employees:", JSON.stringify(employees));
+    } catch (error) {
+      console.log(error);
+    }
+    setModalVisible2(true);
+  }
+
+  const updateUserAdminStatus = async (userEmailId: string | null, userStatus: boolean, i:any) => {
+
+    try {
+      toggleSwitch(i)
+      
+      await firestore().collection("UserAccounts").doc(userEmailId!).update({ isAdmin:  !userStatus})
+
+    } catch (error) {
+      console.log(error);
+      
+    }
+    console.log(userEmailId);
+    
+  }
 
 
   return (
@@ -82,9 +141,9 @@ const AdminScreen = () => {
 
 
             <GradientButton
-              imageSource={require('../../assets/images/promocode_img.png')}
+              imageSource={require('@assets/images/promocode_img.png')}
               title="Promo Code"
-              onPress={() => setModalVisible(true)}
+              onPress={generatePromoCode}
             />
 
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
@@ -95,7 +154,7 @@ const AdminScreen = () => {
 
                 <TouchableOpacity onPress={handleCopy}>
                   <Image
-                    source={require('../../assets/images/copy.png')}
+                    source={require('@assets/images/copy.png')}
                     style={styles.image3}
                   /></TouchableOpacity>
 
@@ -133,7 +192,7 @@ const AdminScreen = () => {
 
                 <TouchableOpacity onPress={handleCopy2}>
                   <Image
-                    source={require('../../assets/images/copy.png')}
+                    source={require('@assets/images/copy.png')}
                     style={styles.image3}
                   /></TouchableOpacity>
               </View>
@@ -164,7 +223,7 @@ const AdminScreen = () => {
               <View style={{ height: 200 }}>
 
               </View>
-              <TouchableOpacity style={styles.orangebutton}>
+              <TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
                 <TitleText style={styles.orangebtntext}>
                   Regenrate
                 </TitleText>
@@ -172,9 +231,9 @@ const AdminScreen = () => {
             </BottomModal>
 
             <GradientButton
-              imageSource={require('../../assets/images/employes_img.png')}
+              imageSource={require('@assets/images/employes_img.png')}
               title="Employees"
-              onPress={() => setModalVisible2(true)}
+              onPress={getEmployees}
             />
 
 
@@ -187,7 +246,6 @@ const AdminScreen = () => {
                 <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
                   Admin
                 </TitleText>
-
               </View>
 
 
@@ -207,8 +265,29 @@ const AdminScreen = () => {
               />
               </View> */}
 
-              <View style={{ flexDirection: 'column', gap: 16 }}>
-                {cards.map((card, index) => (
+              {/* <View style={{ flexDirection: 'column', gap: 16 }}> */}
+
+                <FlatList
+                  data={cards}
+                  keyExtractor={(item, index) => index.toString()}
+                  renderItem={({item, index}) => (
+                    <NameCard
+                      key={index}
+                      name={item.name}
+                      imageSource={require('../../assets/images/home_fill.png')}
+                      isOn={item.isOn}
+                      toggleSwitch={() => updateUserAdminStatus(item.userEmail, item.isOn, index)}
+                      knobPosition={item.knobPosition}
+                      style={{marginBottom: 16}}
+                    />
+                  )}
+                  showsVerticalScrollIndicator={false}
+                  onRefresh={getEmployees}
+                  refreshing={refreshing}
+                  ListEmptyComponent={<Text>No task dates found</Text>}
+                />
+
+                {/* {cards.map((card, index) => (
                   <NameCard
                     key={index}
                     name={card.name}
@@ -217,8 +296,8 @@ const AdminScreen = () => {
                     toggleSwitch={() => toggleSwitch(index)}
                     knobPosition={card.knobPosition}
                   />
-                ))}
-              </View>
+                ))} */}
+              {/* </View> */}
 
             </BottomModal>
 
