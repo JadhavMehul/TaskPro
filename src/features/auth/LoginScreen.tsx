@@ -10,6 +10,8 @@ import YellowButton from '@components/global/YellowButton';
 import { ScrollView } from 'react-native';
 import Toast from '@components/global/Toast'; // 👈 import toast
 import auth from '@react-native-firebase/auth'
+import messaging from "@react-native-firebase/messaging";
+import firestore from "@react-native-firebase/firestore";
 
 
 const LoginScreen = () => {
@@ -24,10 +26,38 @@ const LoginScreen = () => {
 
   const isDisabled = !email || !password;
 
+  // Subscribe the user to a topic
+  const subscribeToTopic = async () => {
+    try {
+      const token = await messaging().getToken();
+      await messaging().subscribeToTopic('all_users');
+      console.log('Subscribed to topic: ', token);
+
+      const currentUser = auth().currentUser;
+
+      if (currentUser?.email) {
+        await firestore()
+          .collection('UserAccounts')
+          .doc(currentUser.email)
+          .update({
+            fcmToken: token,
+        });
+        console.log('Token saved to Firestore');
+      } else {
+        console.warn('No user signed in, cannot save token');
+      }
+
+    } catch (error) {
+      console.error('Subscription to topic failed:', error);
+    }
+  };
+
+
   const handleLogin = async () => {
     setModalVisible(true);
     try {
       await auth().signInWithEmailAndPassword(email, password)
+      subscribeToTopic();
       setModalVisible(false);
     } catch (error: unknown) {
       const firebaseError = error as { code: string; message: string };

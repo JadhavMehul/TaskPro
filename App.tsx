@@ -39,17 +39,7 @@ const App = () => {
 
     }
     requestUserPermission();
-    // Subscribe the user to a topic
-    const subscribeToTopic = async () => {
-      try {
-        await messaging().subscribeToTopic('all_users');
-        console.log('Subscribed to topic: all_users');
-      } catch (error) {
-        console.error('Subscription to topic failed:', error);
-      }
-    };
-
-    subscribeToTopic();
+    
 
     // Create a notification channel for Android
     const createNotificationChannel = async () => {
@@ -87,8 +77,8 @@ const App = () => {
       const imageUrl = remoteMessage.notification?.android?.imageUrl;
 
       await notifee.displayNotification({
-        title: remoteMessage.notification?.title || 'New Notification',
-        body: remoteMessage.notification?.body || 'Check out this update',
+        title: remoteMessage.notification?.title || 'New Notification 2',
+        body: remoteMessage.notification?.body || 'Check out this update 2',
         android: {
           channelId: 'default',
           importance: AndroidImportance.HIGH,
