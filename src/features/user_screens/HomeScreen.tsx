@@ -19,6 +19,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import TimePicker from '@components/global/TimePicker';
+import AddTaskEverything from '@components/global/AddTaskEverything';
 
 
 
@@ -52,75 +54,13 @@ const users2: User2[] = [
 const HomeScreen = () => {
 
 
-  const [date, setDate] = useState<Date>(new Date());
-  const [show, setShow] = useState<boolean>(false);
-
-  const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-    const currentDate = selectedDate || date;
-    setShow(Platform.OS === 'ios'); 
-    setDate(currentDate);
-  };
-
-  const showTimepicker = () => {
-    setShow(true);
-  };
+ 
 
 
-
-  const [selectedUser3, setSelectedUser3] = useState<User2 | null>(null);
-  const [showDropdown3, setShowDropdown3] = useState<boolean>(false);
-
-  const handleSelect3 = (user2: User2) => {
-    if (user2.id === '0') {
-      setSelectedUser3(null);
-    } else {
-      setSelectedUser3(user2);
-    }
-    setShowDropdown3(false);
-  };
-  const renderUser3 = ({ item }: { item: User2 }) => {
-    const isSelected3 = selectedUser3?.id === item.id;
-
-    if (item.id === '0') {
-      return (
-        <TouchableOpacity onPress={() => handleSelect3(item)}>
-          <View style={[styles.userContainer2, { backgroundColor: '#fff', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}>
-            <Text style={styles.crossIcon2}>❌</Text>
-            <Text style={styles.userName2}>{item.name}</Text>
-            <Text style={styles.crossIcon2}>❌</Text>
-          </View>
-        </TouchableOpacity>
-      );
-    }
+  
 
 
-
-    const content3 = (
-      <View style={styles.userInner2}>
-        <Image source={{ uri: item.image }} style={styles.avatar2} />
-        <Text style={[styles.userName2, isSelected3 && { color: '#fff' }]}>
-          {item.name}
-        </Text>
-      </View>
-    );
-
-    return (
-      <TouchableOpacity onPress={() => handleSelect3(item)}>
-        {isSelected3 ? (
-          <LinearGradient
-            colors={['#F8B700', '#F88D00']}
-            style={styles.userContainer2}
-          >
-            {content3}
-          </LinearGradient>
-        ) : (
-          <View style={[styles.userContainer2, { backgroundColor: '#fff' }]}>
-            {content3}
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
+    
 
 
 
@@ -204,18 +144,6 @@ const HomeScreen = () => {
 
   const [isModalVisible, setModalVisible] = useState(false);
 
-  const [isOn, setIsOn] = useState(false);
-  const knobPosition = useRef(new Animated.Value(6)).current;
-
-  const toggleSwitch = () => {
-    const toValue = isOn ? 6 : 38;
-    Animated.timing(knobPosition, {
-      toValue,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-    setIsOn(prev => !prev);
-  };
 
 
 
@@ -290,179 +218,22 @@ const HomeScreen = () => {
 
             </TouchableOpacity>
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
-              <View style={{ flexDirection: 'column', gap: 16 }}>
-                <TitleText style={styles.poptext}>
-                  Title
-                </TitleText>
-                <InputField style={styles.input1}
-                  placeholder="Task title"
-                  autoCapitalize="none" />
 
-                <TitleText style={styles.poptext}>
-                  Description
-                </TitleText>
+              
+              <ScrollView>
+              <AddTaskEverything />
+              </ScrollView>
+              
+             
 
-                <InputField style={styles.input2}
-                  placeholder="Description"
-                  autoCapitalize="none"
-                  textAlignVertical="top"
-                  multiline
-                  numberOfLines={4} />
+              <View style={styles.endcontainer}>
+        <TouchableOpacity style={styles.orangebutton} >
+          <TitleText style={styles.orangebtntext}>
+            Add Task
+          </TitleText>
+        </TouchableOpacity>
+      </View>
 
-                <View style={styles.namecard}>
-                  <View style={styles.row}>
-                    <View style={styles.circle}>
-                      <Image
-                        source={require('@assets/images/home_fill.png')}
-
-                        style={styles.circleImage}
-                      />
-                    </View>
-
-                    <TitleText style={styles.personName}>Mehul</TitleText>
-                  </View>
-
-                  <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>
-                    <View style={styles.addtask}>
-                      <TitleText style={styles.dropdownText2}>
-                        {selectedUser3 ? selectedUser3.name : 'Assign To'}
-                      </TitleText>
-                      <Image
-                        source={require('../../assets/images/downarrow.png')}
-                        style={styles.image2}
-                      />
-                    </View>
-
-                  </TouchableOpacity>
-
-                  {showDropdown3 && (
-                    <View style={styles.dropdownList2}>
-                      {users2.map((item) => (
-                        <React.Fragment key={item.id}>{renderUser3({ item })}</React.Fragment>
-                      ))}
-                    </View>
-                  )}
-
-
-
-                </View>
-
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <TitleText style={styles.poptext}>
-                    Need Permission?
-                  </TitleText>
-
-                  <ToggleSwitch
-                    isOn={isOn}
-                    toggleSwitch={toggleSwitch}
-                    knobPosition={knobPosition}
-                  />
-
-
-                </View>
-
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <TitleText style={styles.poptext}>
-                    Task End Time
-                  </TitleText>
-
-                  <TouchableOpacity onPress={showTimepicker}>
-                    <View style={styles.addtask}>
-                      <TitleText>
-                        Add Time
-                      </TitleText>
-                      <Image
-                        source={require('../../assets/images/addcircle.png')}
-                        style={styles.image2}
-                      />
-                    </View>
-
-                  </TouchableOpacity>
-
-
-
-
-
-
-                </View>
-                {/* <Text style={{ fontSize: 16 }}>
-                  Selected Time: {date.toLocaleTimeString()}
-                </Text> */}
-                {show && (
-                  <DateTimePicker
-                    testID="timePicker"
-                    value={date}
-                    mode="time"
-                    is24Hour={true}
-                    display="spinner"
-                    onChange={onChange}
-                  />
-                )}
-
-
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <TitleText style={styles.poptext}>
-                    Notification Timer 1
-                  </TitleText>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-
-                    <View style={styles.addtask}>
-                      <TitleText>
-                        {date.toLocaleTimeString()}
-                      </TitleText>
-                    </View>
-                    <TouchableOpacity>
-                      <Image
-                        source={require('../../assets/images/cancelicon.png')}
-                        style={styles.image2}
-                      />
-                    </TouchableOpacity>
-
-
-                  </View>
-
-
-
-
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-
-
-                  <TouchableOpacity onPress={showTimepicker} style={{ marginLeft: 'auto' }}>
-                    <View style={styles.addtask}>
-                      <TitleText>
-                        Add Time
-                      </TitleText>
-                      <Image
-                        source={require('../../assets/images/addcircle.png')}
-                        style={styles.image2}
-                      />
-                    </View>
-
-                  </TouchableOpacity>
-
-
-
-
-
-
-                </View>
-
-                <TouchableOpacity style={styles.orangebutton} >
-                  <TitleText style={styles.orangebtntext}>
-                    Add Task
-                  </TitleText>
-                </TouchableOpacity>
-
-
-
-
-
-
-
-
-              </View>
 
 
 
@@ -522,6 +293,7 @@ const HomeScreen = () => {
             </View>
 
           </ScrollView>
+          
 
 
 
@@ -584,7 +356,13 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
 
 
+  endcontainer: {
+    width: '100%',
+    paddingTop: 16,
+    bottom: 0,
+    backgroundColor: '#fff',
 
+  },
 
   orangebtntext: {
     color: '#ffffff',
@@ -735,7 +513,7 @@ const styles = StyleSheet.create({
   poptext: {
     fontSize: 15,
     fontWeight: 400,
-  },
+  },//
 
 
   image: {

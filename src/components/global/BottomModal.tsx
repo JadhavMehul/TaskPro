@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
     padding: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    height: '70%',
+    
   },
 
   modalbtn : {

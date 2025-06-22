@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList } from 'react-native'
+import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList, ScrollView } from 'react-native'
 import React, { useState, useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -155,6 +155,9 @@ const AdminScreen = () => {
             />
 
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
+              <ScrollView>
+
+              
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
                 <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
                   Admin Promo Code
@@ -227,15 +230,20 @@ const AdminScreen = () => {
                   </TitleText>
                 </View>
               </View>
+              </ScrollView>
+              {/* <View style={{ height: 190 }}>
 
-              <View style={{ height: 200 }}>
-
-              </View>
-              <TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
+              </View> */}
+              
+              
+<View style={styles.endcontainer}>
+<TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
                 <TitleText style={styles.orangebtntext}>
                   Regenrate
                 </TitleText>
               </TouchableOpacity>
+
+                        </View>
             </BottomModal>
 
             <GradientButton
@@ -274,6 +282,8 @@ const AdminScreen = () => {
               </View> */}
 
               {/* <View style={{ flexDirection: 'column', gap: 16 }}> */}
+
+              
 
                 <FlatList
                   data={cards}
@@ -326,6 +336,14 @@ const AdminScreen = () => {
 const styles = StyleSheet.create({
 
 
+  endcontainer: {
+    width: '100%',
+    paddingTop: 16,
+    bottom: 0,
+    backgroundColor: '#fff',
+
+  },
+
   switch: {
     transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }], // optional to increase size
   },
@@ -352,9 +370,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E7E2DA',
     backgroundColor: '#ffffff',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+    // paddingVertical: 16,
+    // paddingHorizontal: 32,
+    maxWidth: 75,
+    width: '100%',
+    minHeight: 75,
+    height: '100%',
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   image3: {

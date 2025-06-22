@@ -79,28 +79,28 @@ const ProfileScreen = () => {
         const storedData = await firestore()
           .collection('UserAccounts')
           .doc(currentUser.email).get()
-          
-          if (storedData.exists()) {
-            const data = storedData.data();
-            setFormData({
-              firstName: data?.firstName || '',
-              lastName: data?.lastName || '',
-              email: data?.email || '',
-              isAdmin: data?.isAdmin || false,
-              phoneNumber: data?.phone || '', 
-              addressLineOne: data?.addressLineOne || '',
-              addressLineTwo: data?.addressLineTwo || '',
-            });
-            setIsOn(data?.isAdmin || false);
-            
-          }
+
+        if (storedData.exists()) {
+          const data = storedData.data();
+          setFormData({
+            firstName: data?.firstName || '',
+            lastName: data?.lastName || '',
+            email: data?.email || '',
+            isAdmin: data?.isAdmin || false,
+            phoneNumber: data?.phone || '',
+            addressLineOne: data?.addressLineOne || '',
+            addressLineTwo: data?.addressLineTwo || '',
+          });
+          setIsOn(data?.isAdmin || false);
+
+        }
 
         setActivityIndicator(false)
       } else {
         console.warn('No user signed in, cannot update data');
         setActivityIndicator(false);
       }
-      
+
     } catch (error) {
       console.log(error);
     }
@@ -120,7 +120,7 @@ const ProfileScreen = () => {
       const currentUser = auth().currentUser;
 
 
-      if (currentUser?.email) {  
+      if (currentUser?.email) {
         await firestore()
           .collection('UserAccounts')
           .doc(currentUser.email)
@@ -135,14 +135,14 @@ const ProfileScreen = () => {
       console.log(error);
       setActivityIndicator(false);
     }
-    
+
 
   }
 
   useEffect(() => {
     loadUserData()
   }, [])
-  
+
 
   return (
     <View style={styles.inner_container}>
@@ -183,85 +183,98 @@ const ProfileScreen = () => {
 
 
                       <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
-                        <View style={{ gap: 16 }}>
+                        <ScrollView>
+                          <View style={{ gap: 16, }}>
 
-                          {activityIndicator ?
-                            <ActivityIndicator size="large" color="#FECC01" /> :
+                            {activityIndicator ?
+                              <ActivityIndicator size="large" color="#FECC01" /> :
 
-                            <>
+                              <>
 
-                              <View>
+                                <View>
 
-                                <TitleText style={styles.labeltext}>First Name</TitleText>
-                                <InputField
-                                  style={styles.input1}
-                                  placeholder="First Name"
-                                  autoCapitalize="none"
-                                  value={formData.firstName}
-                                  onChangeText={(text) => handleInputChange('firstName', text)}
-                                />
+                                  <TitleText style={styles.labeltext}>First Name</TitleText>
+                                  <InputField
+                                    style={styles.input1}
+                                    placeholder="First Name"
+                                    autoCapitalize="none"
+                                    value={formData.firstName}
+                                    onChangeText={(text) => handleInputChange('firstName', text)}
+                                  />
 
-                              </View>
-                              <View>
+                                </View>
+                                <View>
 
-                                <TitleText style={styles.labeltext}>Last Name</TitleText>
-                                <InputField
-                                  style={styles.input1}
-                                  placeholder="Last Name"
-                                  autoCapitalize="none"
-                                  value={formData.lastName}
-                                  onChangeText={(text) => handleInputChange('lastName', text)}
-                                />
+                                  <TitleText style={styles.labeltext}>Last Name</TitleText>
+                                  <InputField
+                                    style={styles.input1}
+                                    placeholder="Last Name"
+                                    autoCapitalize="none"
+                                    value={formData.lastName}
+                                    onChangeText={(text) => handleInputChange('lastName', text)}
+                                  />
 
-                              </View>
+                                </View>
 
 
-                              <View>
+                                <View>
 
-                                <TitleText style={styles.labeltext}>Phone Number</TitleText>
-                                <InputField
-                                  style={styles.input1}
-                                  placeholder="Phone Number"
-                                  autoCapitalize="none"
-                                  value={formData.phoneNumber}
-                                  onChangeText={(text) => handleInputChange('phoneNumber', text)}
-                                />
+                                  <TitleText style={styles.labeltext}>Phone Number</TitleText>
+                                  <InputField
+                                    style={styles.input1}
+                                    placeholder="Phone Number"
+                                    autoCapitalize="none"
+                                    value={formData.phoneNumber}
+                                    onChangeText={(text) => handleInputChange('phoneNumber', text)}
+                                  />
 
-                              </View>
-                              <View>
+                                </View>
+                                <View>
 
-                                <TitleText style={styles.labeltext}>Address Line 1</TitleText>
-                                <InputField
-                                  style={styles.input1}
-                                  placeholder="Flat No / Apartment Name / Street"
-                                  autoCapitalize="none"
-                                  value={formData.addressLineOne}
-                                  onChangeText={(text) => handleInputChange('addressLineOne', text)}
-                                />
+                                  <TitleText style={styles.labeltext}>Address Line 1</TitleText>
+                                  <InputField
+                                    style={styles.input1}
+                                    placeholder="Flat No / Apartment Name / Street"
+                                    autoCapitalize="none"
+                                    value={formData.addressLineOne}
+                                    onChangeText={(text) => handleInputChange('addressLineOne', text)}
+                                  />
 
-                              </View>
+                                </View>
 
-                              <View>
+                                <View>
 
-                                <TitleText style={styles.labeltext}>Address Line 2</TitleText>
-                                <InputField
-                                  style={styles.input1}
-                                  placeholder="Land Mark / Near "
-                                  autoCapitalize="none"
-                                  value={formData.addressLineTwo}
-                                  onChangeText={(text) => handleInputChange('addressLineTwo', text)}
-                                />
+                                  <TitleText style={styles.labeltext}>Address Line 2</TitleText>
+                                  <InputField
+                                    style={styles.input1}
+                                    placeholder="Land Mark / Near "
+                                    autoCapitalize="none"
+                                    value={formData.addressLineTwo}
+                                    onChangeText={(text) => handleInputChange('addressLineTwo', text)}
+                                  />
 
-                              </View>
-                              <TouchableOpacity style={styles.orangebutton} onPress={() => { handleProfileEdit(formData) }} >
-                                <TitleText style={styles.orangebtntext}>
-                                  Save
-                                </TitleText>
-                              </TouchableOpacity>
+                                </View>
 
-                            </>}
+                                
 
+
+
+
+
+
+                              </>}
+
+                          </View>
+                        </ScrollView>
+
+                        <View style={styles.endcontainer}>
+                          <TouchableOpacity style={styles.orangebutton} onPress={() => { handleProfileEdit(formData) }} >
+                            <TitleText style={styles.orangebtntext}>
+                              Save
+                            </TitleText>
+                          </TouchableOpacity>
                         </View>
+
                       </BottomModal>
 
                       <TouchableOpacity style={styles.button}>
@@ -402,6 +415,14 @@ const ProfileScreen = () => {
 }
 
 const styles = StyleSheet.create({
+
+  endcontainer: {
+    width: '100%',
+    paddingTop: 16,
+    bottom: 0,
+    backgroundColor: '#fff',
+
+  },
 
 
   orangebtntext: {
