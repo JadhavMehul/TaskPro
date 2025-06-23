@@ -1,8 +1,10 @@
-import React from "react";
-import { View, StyleSheet, Image, TouchableHighlight,ViewStyle } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Image, TouchableHighlight, ViewStyle } from "react-native";
 import { useRoute, RouteProp } from "@react-navigation/native";
 // import { navigate } from "../../utils/NavigationUtils"; 
 import { navigate } from '@utils/NavigationUtils';
+import auth from "@react-native-firebase/auth";
+import firestore from "@react-native-firebase/firestore";
 
 // // Replace with your actual navigation types
 // interface RootStackParamList {
@@ -15,85 +17,124 @@ import { navigate } from '@utils/NavigationUtils';
 
 
 interface BottomNavComp {
-    style?: ViewStyle
+  style?: ViewStyle
 }
 
 // const CustomSafeAreaView: FC<CustomSafeAreaViewProps> = ({children, style}) => {
 
-const BottomNav: React.FC<BottomNavComp> = ({style}) => {
-    const route = useRoute();
+const BottomNav: React.FC<BottomNavComp> = ({ style }) => {
+  const route = useRoute();
   const routeName = route.name;
+
+  const user = auth().currentUser;
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+
+
+
+  const fetchUserData = async () => {
+    if (user?.email) {
+      try {
+        const doc = await firestore()
+          .collection('UserAccounts')
+          .doc(user.email)
+          .get();
+
+        if (doc.exists()) {
+          const userData = doc.data();
+          if (userData && typeof userData.isAdmin !== 'undefined') {
+            setUserIsAdmin(userData.isAdmin);
+          }
+        } else {
+          console.log('User document does not exist');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    } else {
+      console.log('No user is logged in');
+    }
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, [user]);
+
 
   return (
     <View style={styles.mainbottom_div}>
-          <View style={styles.bottomcontainer}>
-      <View style={styles.menuItem}>
-        <TouchableHighlight
-          onPress={() => navigate("HomeScreen")}
-          activeOpacity={0.6}
-          underlayColor="none"
-        >
-          <Image
-            source={
-              routeName === "HomeScreen"
-                ? require("../../assets/images/home_fill.png")
-                : require("../../assets/images/home_unfill.png")
-            }
-            style={
-              routeName === "HomeScreen"
-                ? styles.menuItemIcon2
-                : styles.menuItemIcon
-            }
-          />
-        </TouchableHighlight>
-      </View>
+      <View style={styles.bottomcontainer}>
+        <View style={styles.menuItem}>
+          <TouchableHighlight
+            onPress={() => navigate("HomeScreen")}
+            activeOpacity={0.6}
+            underlayColor="none"
+          >
+            <Image
+              source={
+                routeName === "HomeScreen"
+                  ? require("@assets/images/home_fill.png")
+                  : require("@assets/images/home_unfill.png")
+              }
+              style={
+                routeName === "HomeScreen"
+                  ? styles.menuItemIcon2
+                  : styles.menuItemIcon
+              }
+            />
+          </TouchableHighlight>
+        </View>
 
-      <View style={styles.menuItem}>
-        <TouchableHighlight
-          onPress={() => navigate("AdminScreen")}
-          activeOpacity={0.6}
-          underlayColor="none"
-        >
-          <Image
-            source={
-              routeName === "AdminScreen"
-                ? require("../../assets/images/admin_fill.png")
-                : require("../../assets/images/admin_unfill.png")
-            }
-            style={
-              routeName === "AdminScreen"
-                ? styles.menuItemIcon2
-                : styles.menuItemIcon
-            }
-          />
-        </TouchableHighlight>
-      </View>
 
-      <View style={styles.menuItem}>
-        <TouchableHighlight
-          onPress={() => navigate("ProfileScreen")}
-          activeOpacity={0.6}
-          underlayColor="none"
-        >
-          <Image
-            source={
-              routeName === "ProfileScreen"
-                ? require("../../assets/images/profile_fill.png")
-                : require("../../assets/images/profile_unfill.png")
-            }
-            style={
-              routeName === "ProfileScreen"
-                ? styles.menuItemIcon2
-                : styles.menuItemIcon
-            }
-          />
-        </TouchableHighlight>
-      </View>
-
-      
+        {
+          userIsAdmin &&
+          <View style={styles.menuItem}>
+            <TouchableHighlight
+              onPress={() => navigate("AdminScreen")}
+              activeOpacity={0.6}
+              underlayColor="none"
+            >
+              <Image
+                source={
+                  routeName === "AdminScreen"
+                    ? require("@assets/images/admin_fill.png")
+                    : require("@assets/images/admin_unfill.png")
+                }
+                style={
+                  routeName === "AdminScreen"
+                    ? styles.menuItemIcon2
+                    : styles.menuItemIcon
+                }
+              />
+            </TouchableHighlight>
           </View>
+        }
+        
+
+        <View style={styles.menuItem}>
+          <TouchableHighlight
+            onPress={() => navigate("ProfileScreen")}
+            activeOpacity={0.6}
+            underlayColor="none"
+          >
+            <Image
+              source={
+                routeName === "ProfileScreen"
+                  ? require("@assets/images/profile_fill.png")
+                  : require("@assets/images/profile_unfill.png")
+              }
+              style={
+                routeName === "ProfileScreen"
+                  ? styles.menuItemIcon2
+                  : styles.menuItemIcon
+              }
+            />
+          </TouchableHighlight>
+        </View>
+
+
+      </View>
     </View>
-    
+
   );
 };
 
@@ -113,7 +154,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderRadius: 12,
     alignItems: "center",
-   
+
   },
   menuItem: {
     flex: 1,

@@ -33,7 +33,7 @@ const AdminScreen = () => {
   const [isModalVisible2, setModalVisible2] = useState(false);
 
   const [cards, setCards] = useState([
-    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(2) },
+    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(6) },
   ]);
 
   const toggleSwitch = (index: number) => {

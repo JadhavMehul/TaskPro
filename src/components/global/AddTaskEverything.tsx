@@ -49,6 +49,20 @@ const AddTaskEverything = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [show, setShow] = useState<boolean>(false);
   const [timeSet, setTimeSet] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    assignTo: '',
+    needPermission: false,
+    phoneNumber: '',
+    taskEndTime: '',
+    notificationTimer: '',
+  });
+
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   // const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
   //   const currentDate = selectedDate || date;
@@ -61,6 +75,8 @@ const AddTaskEverything = () => {
     if (selectedDate) {
       setDate(selectedDate);
       setTimeSet(true);
+      const taskEndTime = moment(selectedDate).format('YYYY-MM-DDTHH:mm:ssZ');
+      handleInputChange('taskEndTime', taskEndTime)
     }
   };
 
@@ -158,12 +174,12 @@ const AddTaskEverything = () => {
 
   return (
 
-    <View>
+    <View style={{ flex: 1 }}>
 
 
 
       <ScrollView>
-        <View style={{ flexDirection: 'column', gap: 16, }}>
+        <View style={{ flexDirection: 'column', gap: 16 }}>
 
 
 
@@ -173,7 +189,10 @@ const AddTaskEverything = () => {
           </TitleText>
           <InputField style={styles.input1}
             placeholder="Task title"
-            autoCapitalize="none" />
+            autoCapitalize="none"
+            value={formData.title}
+            onChangeText={(text) => handleInputChange('title', text)}
+          />
 
           <TitleText style={styles.poptext}>
             Description
@@ -184,7 +203,10 @@ const AddTaskEverything = () => {
             autoCapitalize="none"
             textAlignVertical="top"
             multiline
-            numberOfLines={4} />
+            numberOfLines={4}
+            value={formData.description}
+            onChangeText={(text) => handleInputChange('description', text)}
+          />
 
           <View style={styles.namecard}>
             <View style={styles.row}>
@@ -231,7 +253,10 @@ const AddTaskEverything = () => {
 
             <ToggleSwitch
               isOn={isOn}
-              toggleSwitch={toggleSwitch}
+              toggleSwitch={() => {
+                toggleSwitch(); // <- call toggle switch
+                handleInputChange('needPermission', !isOn); // <- call input change
+              }}
               knobPosition={knobPosition}
             />
 
@@ -248,7 +273,8 @@ const AddTaskEverything = () => {
               <View style={styles.addtask}>
                 {timeSet ? (
                   <TitleText >
-                    {moment(date).format('HH:mm')}
+                    {moment(date).format('YYYY-MM-DDTHH:mm:ssZ')}
+                    {/* {moment(date).format('HH:mm')} */}
                   </TitleText>
                 ) : (
                   <>
@@ -353,11 +379,11 @@ const AddTaskEverything = () => {
           </TitleText>
         </TouchableOpacity> */}
 
-         
 
-         
 
-          
+
+
+
 
 
 
@@ -368,7 +394,13 @@ const AddTaskEverything = () => {
         </View>
       </ScrollView>
 
-      
+      <View style={styles.endcontainer}>
+        <TouchableOpacity style={styles.orangebutton} onPress={() => console.log(formData)}>
+          <TitleText style={styles.orangebtntext}>
+            Add Task
+          </TitleText>
+        </TouchableOpacity>
+      </View>
     </View>
 
   )

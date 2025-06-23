@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet,Text } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import Modal from 'react-native-modal';
 
 interface BottomModalProps {
@@ -21,11 +21,9 @@ const BottomModal: React.FC<BottomModalProps> = ({ isVisible, onClose, children 
       animationOut="slideOutDown"
     >
       <View style={styles.container}>
-      <View style={styles.modalbtn}>
-            
-        </View>
+        <View style={styles.modalbtn}></View>
         {children}
-        
+
       </View>
     </Modal>
   );
@@ -44,10 +42,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     height: '70%',
-    
+
   },
 
-  modalbtn : {
+  modalbtn: {
     height: 4,
     width: '20%',
     borderRadius: 11,

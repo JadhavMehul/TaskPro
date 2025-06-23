@@ -40,6 +40,7 @@ const ProfileScreen = () => {
 
 
 
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
 
@@ -92,7 +93,7 @@ const ProfileScreen = () => {
             addressLineTwo: data?.addressLineTwo || '',
           });
           setIsOn(data?.isAdmin || false);
-
+          setUserIsAdmin(data?.isAdmin || false);
         }
 
         setActivityIndicator(false)
@@ -255,7 +256,7 @@ const ProfileScreen = () => {
 
                                 </View>
 
-                                
+
 
 
 
@@ -306,19 +307,20 @@ const ProfileScreen = () => {
                 </View>
               </LinearGradient>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                <TitleText style={styles.poptext}>
-                  Admin
-                </TitleText>
+              {
+                userIsAdmin &&
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <TitleText style={styles.poptext}>
+                    Admin
+                  </TitleText>
 
-                <ToggleSwitch
-                  isOn={isOn}
-                  toggleSwitch={toggleSwitch}
-                  knobPosition={new Animated.Value(isOn ? 38 : 2)}
-                />
-
-
-              </View>
+                  <ToggleSwitch
+                    isOn={isOn}
+                    toggleSwitch={toggleSwitch}
+                    knobPosition={new Animated.Value(isOn ? 38 : 2)}
+                  />
+                </View>
+              }
 
               <View>
 

@@ -218,27 +218,7 @@ const HomeScreen = () => {
 
             </TouchableOpacity>
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
-
-              
-              <ScrollView>
               <AddTaskEverything />
-              </ScrollView>
-              
-             
-
-              <View style={styles.endcontainer}>
-        <TouchableOpacity style={styles.orangebutton} >
-          <TitleText style={styles.orangebtntext}>
-            Add Task
-          </TitleText>
-        </TouchableOpacity>
-      </View>
-
-
-
-
-
-
             </BottomModal>
 
             <TouchableOpacity
