@@ -1,4 +1,4 @@
-import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView, TouchableWithoutFeedback, Modal } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react';
 import TitleText from './Titletext'
 import InputField from './InputField'
@@ -46,9 +46,12 @@ const AddTaskEverything = () => {
 
   //   timepicker start
 
-  const [date, setDate] = useState<Date>(new Date());
-  const [show, setShow] = useState<boolean>(false);
+  const [date, setDate] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
   const [timeSet, setTimeSet] = useState(false);
+
+
   
   const [formData, setFormData] = useState({
     title: '',
@@ -71,19 +74,27 @@ const AddTaskEverything = () => {
   // };
 
   const onChange = (event: any, selectedDate?: Date) => {
-    setShow(false);
-    if (selectedDate) {
-      setDate(selectedDate);
+    if (event.type === 'dismissed') {
+      setShowPicker(false);
+      return;
+    }
+
+    if (pickerMode === 'date') {
+      const currentDate = selectedDate || date;
+      setDate(currentDate);
+      setPickerMode('time'); 
+      setShowPicker(true); 
+    } else {
+      const updatedDate = selectedDate || date;
+      setDate(updatedDate);
+      setShowPicker(false);
       setTimeSet(true);
-      const taskEndTime = moment(selectedDate).format('YYYY-MM-DDTHH:mm:ssZ');
-      handleInputChange('taskEndTime', taskEndTime)
     }
   };
-
-  const showTimepicker = () => {
-    setShow(true);
+  const showDateTimePicker = () => {
+    setPickerMode('date');
+    setShowPicker(true);
   };
-
   //   timepicker end
 
   // toggleswitch start
@@ -221,7 +232,7 @@ const AddTaskEverything = () => {
               <TitleText style={styles.personName}>Mehul</TitleText>
             </View>
 
-            <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>
+            {/* <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>
               <View style={styles.addtask}>
                 <TitleText style={styles.dropdownText2}>
                   {selectedUser3 ? selectedUser3.name : 'Assign To'}
@@ -240,7 +251,40 @@ const AddTaskEverything = () => {
                   <React.Fragment key={item.id}>{renderUser3({ item })}</React.Fragment>
                 ))}
               </View>
-            )}
+            )} */}
+
+<TouchableOpacity onPress={() => setShowDropdown3(true)}>
+  <View style={styles.addtask}>
+    <TitleText style={styles.dropdownText2}>
+      {selectedUser3 ? selectedUser3.name : 'Assign To'}
+    </TitleText>
+    <Image
+      source={require('../../assets/images/downarrow.png')}
+      style={styles.image2}
+    />
+  </View>
+</TouchableOpacity>
+
+<Modal
+  transparent
+  visible={showDropdown3}
+  animationType="fade"
+  onRequestClose={() => setShowDropdown3(false)}
+>
+  <TouchableWithoutFeedback onPress={() => setShowDropdown3(false)}>
+    <View style={styles.modalOverlay}>
+      <TouchableWithoutFeedback>
+        <View style={styles.modalContent}>
+          <ScrollView contentContainerStyle={{ gap: 10 }}>
+            {users2.map((item) => (
+              <React.Fragment key={item.id}>{renderUser3({ item })}</React.Fragment>
+            ))}
+          </ScrollView>
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
+  </TouchableWithoutFeedback>
+</Modal>
 
 
 
@@ -269,12 +313,12 @@ const AddTaskEverything = () => {
             </TitleText>
 
 
-            <TouchableOpacity onPress={showTimepicker}>
+            {/* <TouchableOpacity onPress={showTimepicker}>
               <View style={styles.addtask}>
                 {timeSet ? (
                   <TitleText >
                     {moment(date).format('YYYY-MM-DDTHH:mm:ssZ')}
-                    {/* {moment(date).format('HH:mm')} */}
+                   
                   </TitleText>
                 ) : (
                   <>
@@ -297,68 +341,47 @@ const AddTaskEverything = () => {
                 display="spinner"
                 onChange={onChange}
               />
-            )}
-
-            {/* <TouchableOpacity onPress={showTimepicker}>
-          <View style={styles.addtask}>
-            <TitleText>
-              Add Time
-            </TitleText>
-            <Image
-              source={require('../../assets/images/addcircle.png')}
-              style={styles.image2}
-            />
-          </View>
-
-        </TouchableOpacity> */}
+            )} */}
 
 
+<TouchableOpacity onPress={showDateTimePicker}>
+        <View style={styles.addtask}>
+          {timeSet ? (
+            <TitleText>{moment(date).format('YYYY-MM-DDTHH:mm:ssZ')}</TitleText>
+          ) : (
+            <>
+              <TitleText>Add Time</TitleText>
+              <Image
+                source={require('../../assets/images/addcircle.png')}
+                style={styles.image2}
+              />
+            </>
+          )}
+        </View>
+      </TouchableOpacity>
 
-
-
-
-          </View>
-          {/* <Text style={{ fontSize: 16 }}>
-      Selected Time: {date.toLocaleTimeString()}
-    </Text> */}
-          {/* {show && (
+      {showPicker && (
         <DateTimePicker
-          testID="timePicker"
           value={date}
-          mode="time"
+          mode={pickerMode}
           is24Hour={true}
           display="spinner"
           onChange={onChange}
         />
-      )} */}
+      )}
 
-
-          {/* <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <TitleText style={styles.poptext}>
-        Notification Timer 1
-      </TitleText>
-
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-
-        <View style={styles.addtask}>
-          <TitleText>
-            {date.toLocaleTimeString()}
-          </TitleText>
-        </View>
-        <TouchableOpacity>
-          <Image
-            source={require('../../assets/images/cancelicon.png')}
-            style={styles.image2}
-          />
-        </TouchableOpacity>
-
-
-      </View>
+         
 
 
 
 
-    </View> */}
+
+
+          </View>
+          
+
+
+        
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <TitleText style={styles.poptext}>
@@ -407,6 +430,22 @@ const AddTaskEverything = () => {
 }
 
 const styles = StyleSheet.create({
+
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '60%',
+    height: '20%', 
+    borderRadius: 10,
+    padding: 16,
+    
+  },
 
 
   endcontainer: {

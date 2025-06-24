@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 // import { firebase } from "../../../firebaseConfig";
-import { View, Text, Button, StyleSheet, Animated, Alert, Platform, Image, FlatList, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, Button, StyleSheet, Animated, Alert, Platform, Image, FlatList, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { navigate } from '@utils/NavigationUtils';
 import BottomNav from '@components/global/BottomBar';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
 import Feather from '@react-native-vector-icons/feather';
-import Modal from 'react-native-modal';
+import { Modal } from 'react-native';
+
 import BottomModal from '@components/global/BottomModal';
 import auth from '@react-native-firebase/auth'
 import firestore from '@react-native-firebase/firestore'
@@ -221,7 +222,7 @@ const HomeScreen = () => {
               <AddTaskEverything />
             </BottomModal>
 
-            <TouchableOpacity
+            {/* <TouchableOpacity
               onPress={() => setShowDropdown2(!showDropdown2)}>
 
               <View style={styles.addtask}>
@@ -246,7 +247,37 @@ const HomeScreen = () => {
                   <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
                 ))}
               </View>
-            )}
+            )} */}
+
+<TouchableOpacity onPress={() => setShowDropdown2(true)}>
+        <View style={styles.addtask}>
+          <Text style={styles.dropdownText2}>
+            {selectedUser2 ? selectedUser2.name : 'Assigned To'}
+          </Text>
+          <Image
+            source={require('../../assets/images/downarrow.png')}
+            style={styles.image2}
+          />
+        </View>
+      </TouchableOpacity>
+
+      <Modal
+         visible={showDropdown2}
+         transparent
+         animationType="fade"
+         onRequestClose={() => setShowDropdown2(false)}
+      >
+        <Pressable style={styles.modalBackground} onPress={() => setShowDropdown2(false)}>
+          <View style={styles.modalContainer}>
+            <FlatList
+              data={users2}
+              keyExtractor={(item) => item.id}
+              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+              renderItem={renderUser2}
+            />
+          </View>
+        </Pressable>
+      </Modal>
 
           </View>
 
@@ -334,6 +365,25 @@ const HomeScreen = () => {
 
 
 const styles = StyleSheet.create({
+
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: 60, 
+    right: 20,
+    backgroundColor: '#FFF',
+    width: '50%',
+    borderRadius: 10,
+    padding: 15,
+    height: '20%',
+    elevation: 5,
+    gap: 10,
+  },
 
 
   endcontainer: {

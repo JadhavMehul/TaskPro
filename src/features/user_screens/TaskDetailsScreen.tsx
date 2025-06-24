@@ -56,7 +56,7 @@ const TaskDetailsScreen = () => {
     }
     setShowDropdown2(false);
   };
-  const renderUser2 = ({ item }: { item: User2 }) =>  {
+  const renderUser2 = ({ item }: { item: User2 }) => {
     const isSelected2 = selectedUser2?.id === item.id;
 
     if (item.id === '0') {
@@ -73,11 +73,11 @@ const TaskDetailsScreen = () => {
 
     const content2 = (
       <View style={styles.userInner2}>
-      <Image source={{ uri: item.image }} style={styles.avatar2} />
-      <Text style={[styles.userName2, isSelected2 && { color: '#fff' }]}>
-        {item.name}
-      </Text>
-    </View>
+        <Image source={{ uri: item.image }} style={styles.avatar2} />
+        <Text style={[styles.userName2, isSelected2 && { color: '#fff' }]}>
+          {item.name}
+        </Text>
+      </View>
     );
 
     return (
@@ -151,18 +151,18 @@ const TaskDetailsScreen = () => {
               {/* <TitleText style={styles.tasktitle}>taskTitle</TitleText> */}
 
               <ReadMoreText
-        text="taskTitle"
-        numberOfLines={1}
-        style={styles.text}
-        toggleTextStyle={styles.readMoreLink}
-      />
+                text="taskTitle"
+                numberOfLines={1}
+                style={styles.text}
+                toggleTextStyle={styles.readMoreLink}
+              />
 
               <ReadMoreText
-        text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-        numberOfLines={1}
-        style={styles.text}
-        toggleTextStyle={styles.readMoreLink}
-      />
+                text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
+                numberOfLines={1}
+                style={styles.text}
+                toggleTextStyle={styles.readMoreLink}
+              />
               {/* <TitleText style={styles.taskdescription}>taskDescription</TitleText> */}
 
             </View>
@@ -226,30 +226,32 @@ const TaskDetailsScreen = () => {
                 </Modal>
 
 
-                <TouchableOpacity 
-        onPress={() => setShowDropdown2(!showDropdown2)}>
+                <TouchableOpacity
+                  onPress={() => setShowDropdown2(!showDropdown2)}>
 
-                <View style={styles.addtask}>
-                  <TitleText style={styles.dropdownText2}>
-                  {selectedUser2 ? selectedUser2.name : 'Assign To'}
-                  </TitleText>
-                  <Image
-                    source={require('../../assets/images/downarrow.png')}
-                    style={styles.image2}
-                  />
-                </View>
+                  <View style={styles.addtask}>
+                    <TitleText style={styles.dropdownText2}>
+                      {selectedUser2 ? selectedUser2.name : 'Assign To'}
+                    </TitleText>
+                    <Image
+                      source={require('../../assets/images/downarrow.png')}
+                      style={styles.image2}
+                    />
+                  </View>
 
                 </TouchableOpacity>
 
-                {showDropdown2 && (
-  <View style={styles.dropdownList2}>
-    {users2.map((item) => (
-      <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
-    ))}
-  </View>
-)}
 
-                
+
+                {showDropdown2 && (
+                  <View style={styles.dropdownList2}>
+                    {users2.map((item) => (
+                      <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
+                    ))}
+                  </View>
+                )}
+
+
               </View>
             </View>
 
@@ -308,11 +310,11 @@ const TaskDetailsScreen = () => {
                   <TitleText>30 May 2025 11:25 AM</TitleText>
 
                   <ReadMoreText
-        text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-        numberOfLines={2}
-        style={styles.text}
-        toggleTextStyle={styles.readMoreLink}
-      />
+                    text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
+                    numberOfLines={2}
+                    style={styles.text}
+                    toggleTextStyle={styles.readMoreLink}
+                  />
                   {/* <TitleText >Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam.</TitleText> */}
                 </View>
 
@@ -368,10 +370,10 @@ const styles = StyleSheet.create({
   },
   dropdownList2: {
     position: 'absolute',
-  top: 60, // adjust this based on dropdownHeader height
-  // left: 0,
-  right: 0,
-  zIndex: 4,
+    top: 60, // adjust this based on dropdownHeader height
+    // left: 0,
+    right: 0,
+    zIndex: 4,
     marginTop: 10,
     width: 'auto',
     backgroundColor: '#ffffff',
@@ -381,7 +383,7 @@ const styles = StyleSheet.create({
   },
   userContainer2: {
     borderWidth: 1,
-    borderColor:'#E7E2DA',
+    borderColor: '#E7E2DA',
     borderRadius: 12,
     padding: 10,
   },
@@ -444,22 +446,22 @@ const styles = StyleSheet.create({
     marginLeft: 'auto',
     marginRight: 20,
   },
-  
+
 
   option: {
     paddingVertical: 4,
     paddingHorizontal: 8,
-    backgroundColor: '#fff', 
+    backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: '#e0ddd7',
-    borderRadius: 6, 
+    borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
-   
+
   },
   optionText: {
     fontSize: 16,
-    lineHeight: 20, 
+    lineHeight: 20,
     fontWeight: 'bold',
   },
   profilePic: {
