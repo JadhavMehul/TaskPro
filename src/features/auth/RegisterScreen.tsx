@@ -37,7 +37,7 @@ const RegisterScreen: React.FC = () => {
 
   const [checked, setChecked] = useState(false);
 
-  const isDisabled = !email || !password || !firstName|| !lastName||!selectedGender||!cnfPassword||!promoCode||!checked;
+  const isDisabled = !email || !password || !firstName || !lastName || !selectedGender || !cnfPassword || !promoCode || !checked;
 
 
   const getPromoCodes = async () => {
@@ -50,7 +50,7 @@ const RegisterScreen: React.FC = () => {
       } else {
         const data = codeData.data();
         if (data?.adminCode && data?.userCode) {
-          return({
+          return ({
             adminCode: data.adminCode,
             userCode: data.userCode,
           });
@@ -75,35 +75,38 @@ const RegisterScreen: React.FC = () => {
       console.log(error);
     }
   }
-  
+
   const handleRegister = async (adminValue: boolean) => {
     try {
       setModalVisible(true);
-      await auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
-        var user = userCredential.user;
-        firestore().collection("UserAccounts").doc(email).set({
-          userId: user?.uid,
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          gender: selectedGender,
-          isAdmin: adminValue,
-          profilePicture: 'https://picsum.photos/200'
-          // birthDate: birthDate,
-        })
-      }).then(() => {
-        updatePromo();
-      })
+
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      await firestore().collection("UserAccounts").doc(email).set({
+        userId: user?.uid,
+        firstName,
+        lastName,
+        email,
+        gender: selectedGender,
+        isAdmin: adminValue,
+        profilePicture: 'https://picsum.photos/200',
+      });
+
+      await updatePromo(); // optional
+
+      await auth().signOut(); // ✅ sign out only if above succeed
+
       setModalVisible(false);
     } catch (error) {
       console.log(error);
-      
-      Alert.alert('Error', 'Internal server error please try again later.', [
+      Alert.alert('Error', 'Internal server error. Please try again later.', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
       setModalVisible(false);
     }
   };
+
 
 
   const passChecker = async () => {
@@ -135,7 +138,7 @@ const RegisterScreen: React.FC = () => {
 
   }
 
-  
+
 
   return (
     <View style={styles.container}>
@@ -149,16 +152,16 @@ const RegisterScreen: React.FC = () => {
           >
             <View style={styles.modalBackground}>
               {/* <View style={styles.activityIndicatorWrapper}> */}
-                <ActivityIndicator size="large" color="#267EDF" />
+              <ActivityIndicator size="large" color="#267EDF" />
 
-                
+
               {/* </View> */}
             </View>
           </Modal>
           <View style={{ flex: 1 }}>
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }} 
+              contentContainerStyle={{ paddingBottom: 120 }}
             >
               <TitleText style={styles.titletext}>Sign Up</TitleText>
 
@@ -321,7 +324,7 @@ const RegisterScreen: React.FC = () => {
 
             </ScrollView>
             <View style={styles.endcontainer}>
-              <YellowButton title="Register" onPress={passChecker} disabled={!email || !password || !firstName|| !lastName||!selectedGender||!cnfPassword||!promoCode||!checked}/>
+              <YellowButton title="Register" onPress={passChecker} disabled={!email || !password || !firstName || !lastName || !selectedGender || !cnfPassword || !promoCode || !checked} />
               <TouchableOpacity onPress={() => navigate('LoginScreen')}>
                 <TitleText style={styles.link}>
                   Have a account?
@@ -360,7 +363,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
-    elevation: 2, 
+    elevation: 2,
   },
   checkedBox: {
     backgroundColor: '#FDC201',
