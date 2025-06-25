@@ -219,7 +219,7 @@ const HomeScreen = () => {
 
             </TouchableOpacity>
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
-              <AddTaskEverything />
+              <AddTaskEverything onCloseModal={() => setModalVisible(false)} />
             </BottomModal>
 
             {/* <TouchableOpacity

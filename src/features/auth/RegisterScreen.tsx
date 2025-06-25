@@ -87,7 +87,8 @@ const RegisterScreen: React.FC = () => {
           lastName: lastName,
           email: email,
           gender: selectedGender,
-          isAdmin: adminValue
+          isAdmin: adminValue,
+          profilePicture: 'https://picsum.photos/200'
           // birthDate: birthDate,
         })
       }).then(() => {

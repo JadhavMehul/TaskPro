@@ -10,13 +10,23 @@ import {
 } from 'react-native';
 import TitleText from './Titletext';
 
-const TimePickerHorizontal: React.FC = () => {
+interface ChildProps {
+  onSendData: (data: string) => void;
+}
+
+const TimePickerHorizontal: React.FC<ChildProps> = ({ onSendData }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedHours, setSelectedHours] = useState<number | null>(null);
-  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
+  const [selectedHours, setSelectedHours] = useState<number | null>(0);
+  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(0);
+
+  
 
   const handleConfirm = () => {
     setModalVisible(false);
+    const notificationTimer = `${`${selectedHours}`.padStart(2, '0')}:${`${selectedMinutes}`.padStart(2, '0')}`;
+    if (notificationTimer) {
+      onSendData(notificationTimer)
+    }
   };
 
   const handleReset = () => {
@@ -28,6 +38,8 @@ const TimePickerHorizontal: React.FC = () => {
     if (selectedHours || selectedMinutes) {
       const hr = selectedHours ? `${selectedHours} hr${selectedHours > 1 ? 's' : ''}` : '';
       const min = selectedMinutes ? `${selectedMinutes} min` : '';
+      
+      
       return `${hr} ${min}`.trim();
     }
     return 'Add Time';
