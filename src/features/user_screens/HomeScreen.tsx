@@ -10,7 +10,7 @@ import { Modal } from 'react-native';
 
 import BottomModal from '@components/global/BottomModal';
 import auth from '@react-native-firebase/auth'
-import firestore from '@react-native-firebase/firestore'
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore'
 import TaskBox from '@components/global/TaskBox';
 import InputField from '@components/global/InputField';
 import ToggleSwitch from '@components/global/ToggleSwitch';
@@ -24,6 +24,18 @@ import TimePicker from '@components/global/TimePicker';
 import AddTaskEverything from '@components/global/AddTaskEverything';
 
 
+
+type TaskData = {
+  id: string;
+  assignTo: string;
+  title: string;
+  description: string;
+  createdBy: string;
+  needPermission: boolean;
+  notificationTimer: string;
+  taskEndTime: string;
+  createdAt: FirebaseFirestoreTypes.Timestamp;
+};
 
 type User2 = {
   id: string;
@@ -53,21 +65,6 @@ const users2: User2[] = [
 
 
 const HomeScreen = () => {
-
-
- 
-
-
-  
-
-
-    
-
-
-
-
-
-
 
   const [selectedUser2, setSelectedUser2] = useState<User2 | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
@@ -124,23 +121,9 @@ const HomeScreen = () => {
     );
   };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   const user = auth().currentUser;
   const [userIsAdmin, setUserIsAdmin] = useState(false);
-  const [allTaskCards, setAllTaskCards] = React.useState<string[]>([]);
+  const [allTaskCards, setAllTaskCards] = useState<any[]>([]);
   const [refreshing, setRefreshing] = React.useState(false);
 
   const [isModalVisible, setModalVisible] = useState(false);
@@ -174,22 +157,63 @@ const HomeScreen = () => {
     }
   };
 
-  const fetchTaskCard = async () => {
-    setRefreshing(true);
-    try {
-      const doc = await firestore().collection('TaskList').get();
-      const dateList = doc.docs.map(doc => doc.id);
-      setAllTaskCards(dateList)
-    } catch (error) {
-      console.error("Error getting task dates:", error);
-    }
-    setRefreshing(false);
-  };
+  const fetchTaskCard = () => {
+  const unsubscribe = firestore()
+    .collection('TaskList')
+    .orderBy('createdAt', 'desc')
+    .onSnapshot(async (snapshot) => {
+      try {
+        const tasksWithUserInfo = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const task = { ...(doc.data() as TaskData), id: doc.id };
+
+
+            let userInfo = { firstName: '', profilePicture: '' };
+
+            if (task.assignTo) {
+              const userDoc = await firestore()
+                .collection('UserAccounts')
+                .doc(task.assignTo) // This assumes the document ID in UserAccounts is the user's email
+                .get();
+
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+                userInfo = {
+                  firstName: userData?.firstName || '',
+                  profilePicture: userData?.profilePicture || '',
+                };
+              }
+            }
+
+            return {
+              ...task,
+              firstName: userInfo.firstName,
+              profilePicture: userInfo.profilePicture,
+            };
+          })
+        );
+
+        setAllTaskCards(tasksWithUserInfo);
+        console.log(tasksWithUserInfo);
+        
+      } catch (error) {
+        console.error('Error fetching user info for tasks:', error);
+      }
+    }, (error) => {
+      console.error('Error fetching tasks:', error);
+    });
+
+  return unsubscribe;
+};
+
+
+
 
 
   useEffect(() => {
     fetchUserData();
-    fetchTaskCard();
+    const unsubscribe = fetchTaskCard();
+    return () => unsubscribe && unsubscribe();
   }, [user]);
 
   return (
@@ -200,6 +224,7 @@ const HomeScreen = () => {
           colors={['#FECC01', '#F49C16']}
           style={styles.gradientBox}
         >
+
 
 
 
@@ -219,7 +244,7 @@ const HomeScreen = () => {
 
             </TouchableOpacity>
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
-              <AddTaskEverything />
+              <AddTaskEverything onCloseModal={() => setModalVisible(false)} />
             </BottomModal>
 
             {/* <TouchableOpacity
@@ -249,46 +274,59 @@ const HomeScreen = () => {
               </View>
             )} */}
 
-<TouchableOpacity onPress={() => setShowDropdown2(true)}>
-        <View style={styles.addtask}>
-          <Text style={styles.dropdownText2}>
-            {selectedUser2 ? selectedUser2.name : 'Assigned To'}
-          </Text>
-          <Image
-            source={require('../../assets/images/downarrow.png')}
-            style={styles.image2}
-          />
-        </View>
-      </TouchableOpacity>
+{/* <TouchableOpacity onPress={() => setModalVisible(true)}>
 
-      <Modal
-         visible={showDropdown2}
-         transparent
-         animationType="fade"
-         onRequestClose={() => setShowDropdown2(false)}
-      >
-        <Pressable style={styles.modalBackground} onPress={() => setShowDropdown2(false)}>
-          <View style={styles.modalContainer}>
-            <FlatList
-              data={users2}
-              keyExtractor={(item) => item.id}
-              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-              renderItem={renderUser2}
-            />
+<View style={styles.addtask}>
+  <TitleText>
+    Add task
+  </TitleText>
+  <Image
+    source={require('../../assets/images/edit.png')}
+    style={styles.image}
+  />
+</View>
+
+</TouchableOpacity> */}
+
+            <TouchableOpacity onPress={() => setShowDropdown2(true)}>
+              <View style={styles.addtask}>
+                <TitleText>
+                  {selectedUser2 ? selectedUser2.name : 'Assigned To'}
+                </TitleText>
+                <Image
+                  source={require('../../assets/images/downarrow.png')}
+                  style={styles.image2}
+                />
+              </View>
+            </TouchableOpacity>
+
+            <Modal
+              visible={showDropdown2}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowDropdown2(false)}
+            >
+              <Pressable style={styles.modalBackground} onPress={() => setShowDropdown2(false)}>
+                <View style={styles.modalContainer}>
+                  <FlatList
+                    data={users2}
+                    keyExtractor={(item) => item.id}
+                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                    renderItem={renderUser2}
+                  />
+                </View>
+              </Pressable>
+            </Modal>
+
           </View>
-        </Pressable>
-      </Modal>
-
-          </View>
 
 
-          <ScrollView showsHorizontalScrollIndicator={false} overScrollMode="never">
+          {/* <ScrollView showsHorizontalScrollIndicator={false} overScrollMode="never"> */}
 
-            <View style={{ flexDirection: 'column', gap: 16 }}>
+          <View style={{ flexDirection: 'column', gap: 16 }}>
 
 
-
-              <TaskBox
+            {/* <TaskBox
                 taskTitle="Meeting with client"
                 taskDescription="Discuss project requirements and timelines."
                 imageSource={require('../../assets/images/home_fill.png')}
@@ -296,15 +334,32 @@ const HomeScreen = () => {
                 dateTime="30 May 2025 - 11:24 AM"
                 onPress={() => navigate('TaskDetailsScreen')}
                 onDelete={() => console.log('Delete pressed')}
-              />
+              /> */}
+
+            <FlatList
+              data={allTaskCards}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TaskBox
+                  taskTitle={item.title}
+                  taskDescription={item.description}
+                  imageSource={item.profilePicture} // Or dynamic if needed
+                  personName={item.firstName || 'Unknown'}
+                  dateTime="30 May 2025 - 11:24 AM"
+                  onPress={() => navigate('TaskDetailsScreen', { task: item })}
+                  onDelete={() => console.log('Delete pressed')}
+                />
+              )}
+            />
 
 
 
 
-            </View>
 
-          </ScrollView>
-          
+          </View>
+
+          {/* </ScrollView> */}
+
 
 
 
@@ -355,7 +410,7 @@ const HomeScreen = () => {
 
           {/* </View> */}
         </LinearGradient>
-        <BottomNav />
+        <BottomNav backgroundColor="#F5A115"/>
       </CustomSafeAreaView>
 
     </View>
@@ -374,7 +429,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     position: 'absolute',
-    top: 60, 
+    top: 60,
     right: 20,
     backgroundColor: '#FFF',
     width: '50%',
@@ -432,10 +487,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
   },
-  dropdownText2: {
-    fontSize: 14,
-    // marginRight: 10,
-  },
+  
   arrow2: {
     fontSize: 16,
   },
@@ -583,6 +635,7 @@ const styles = StyleSheet.create({
   gradientBox: {
     // ...StyleSheet.absoluteFillObject,
     padding: 16,
+    paddingBottom: 75,
     flex: 1,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,

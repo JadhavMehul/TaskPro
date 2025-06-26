@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList, ScrollView,useWindowDimensions } from 'react-native'
 import React, { useState, useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -13,6 +13,10 @@ import NameCard from '@components/global/Namecard';
 import firestore from "@react-native-firebase/firestore";
 
 const AdminScreen = () => {
+  const { width } = useWindowDimensions();
+  const buttonWidth = 171;
+  const gap = 12;
+  const isWrapped = width < buttonWidth * 2 + gap;
   
   
   
@@ -135,11 +139,13 @@ const AdminScreen = () => {
     }
   };
 
+  
+
 
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, }}>
 
           <View style={{ padding: 24, alignItems: 'center', flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
 
@@ -152,6 +158,7 @@ const AdminScreen = () => {
               imageSource={require('@assets/images/promocode_img.png')}
               title="Promo Code"
               onPress={generatePromoCode}
+              style={isWrapped ? styles.fullWidth : styles.fixedWidth}
             />
 
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
@@ -250,6 +257,7 @@ const AdminScreen = () => {
               imageSource={require('@assets/images/employes_img.png')}
               title="Employees"
               onPress={getEmployees}
+              style={isWrapped ? styles.fullWidth : styles.fixedWidth}
             />
 
 
@@ -345,9 +353,16 @@ const styles = StyleSheet.create({
   },
 
   switch: {
-    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }], // optional to increase size
+    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }], 
   },
 
+
+  fixedWidth: {
+    width: 171,
+  },
+  fullWidth: {
+    width: '100%',
+  },
 
 
 

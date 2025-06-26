@@ -20,6 +20,7 @@ import notifee, { AndroidImportance, AndroidStyle, AuthorizationStatus, EventTyp
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import messaging from "@react-native-firebase/messaging";
 import Recorder from '@features/user_screens/Recorder';
+import { AudioProvider } from '@components/global/AudioContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -139,6 +140,9 @@ const App = () => {
   if (initializing) return null;
 
   return (
+    <AudioProvider>
+
+   
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="SplashScreen" component={SplashScreen} />
@@ -156,6 +160,8 @@ const App = () => {
 
       </Stack.Navigator>
     </NavigationContainer>
+
+    </AudioProvider>
   );
 };
 

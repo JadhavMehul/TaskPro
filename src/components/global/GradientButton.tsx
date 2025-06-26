@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { TouchableOpacity, Image, ImageSourcePropType, StyleSheet, Text, GestureResponderEvent } from 'react-native';
+import { TouchableOpacity, Image, ImageSourcePropType, StyleSheet, Text, GestureResponderEvent,ViewStyle } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import TitleText from './Titletext';
 
@@ -7,14 +7,15 @@ type GradientButtonProps = {
   imageSource: ImageSourcePropType;
   title: string;
   onPress?: (event: GestureResponderEvent) => void;
+  style?: ViewStyle;
 };
 
-const GradientButton: FC<GradientButtonProps> = ({ imageSource, title, onPress }) => {
+const GradientButton: FC<GradientButtonProps> = ({ imageSource, title, onPress,style }) => {
   return (
     <TouchableOpacity onPress={onPress}>
       <LinearGradient
         colors={['#FECC01', '#F49C16']}
-        style={styles.gradientBox}
+        style={[styles.gradientBox, style]} 
       >
         <Image source={imageSource} style={styles.image} />
   

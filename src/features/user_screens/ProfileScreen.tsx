@@ -11,6 +11,9 @@ import InputField from '@components/global/InputField';
 import LinearGradient from 'react-native-linear-gradient';
 import BottomModal from '@components/global/BottomModal';
 import firestore from '@react-native-firebase/firestore';
+import { StatusBar } from 'react-native';
+
+
 
 
 
@@ -147,6 +150,8 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.inner_container}>
+        <StatusBar barStyle="light-content" backgroundColor="black" />
+
       <CustomSafeAreaView style={{ flex: 1 }}>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 10 }}>
@@ -330,6 +335,7 @@ const ProfileScreen = () => {
                   placeholder="First Name"
                   autoCapitalize="none"
                   value={formData.firstName}
+                  editable={false}
                 />
 
               </View>
@@ -341,6 +347,7 @@ const ProfileScreen = () => {
                   placeholder="Last Name"
                   autoCapitalize="none"
                   value={formData.lastName}
+                  editable={false}
                 />
 
               </View>
@@ -352,6 +359,7 @@ const ProfileScreen = () => {
                   placeholder="Enter your email"
                   autoCapitalize="none"
                   value={formData.email}
+                   editable={false}
                 />
 
               </View>
@@ -364,6 +372,7 @@ const ProfileScreen = () => {
                   placeholder="Phone Number"
                   autoCapitalize="none"
                   value={formData.phoneNumber}
+                  editable={false}
                 />
 
               </View>
@@ -375,6 +384,7 @@ const ProfileScreen = () => {
                   placeholder="Flat No / Apartment Name / Street"
                   autoCapitalize="none"
                   value={formData.addressLineOne}
+                  editable={false}
                 />
 
               </View>
@@ -387,6 +397,7 @@ const ProfileScreen = () => {
                   placeholder="Land Mark / Near "
                   autoCapitalize="none"
                   value={formData.addressLineTwo}
+                  editable={false}
                 />
 
               </View>

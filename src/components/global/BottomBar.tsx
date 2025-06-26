@@ -18,11 +18,12 @@ import firestore from "@react-native-firebase/firestore";
 
 interface BottomNavComp {
   style?: ViewStyle
+  backgroundColor?: string;
 }
 
 // const CustomSafeAreaView: FC<CustomSafeAreaViewProps> = ({children, style}) => {
 
-const BottomNav: React.FC<BottomNavComp> = ({ style }) => {
+const BottomNav: React.FC<BottomNavComp> = ({ style, backgroundColor }) => {
   const route = useRoute();
   const routeName = route.name;
 
@@ -61,7 +62,8 @@ const BottomNav: React.FC<BottomNavComp> = ({ style }) => {
 
 
   return (
-    <View style={styles.mainbottom_div}>
+    <View style={[styles.mainbottom_div, { backgroundColor: backgroundColor || 'transparent' }]}>
+
       <View style={styles.bottomcontainer}>
         <View style={styles.menuItem}>
           <TouchableHighlight
@@ -151,8 +153,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 12,
     paddingVertical: 12,
-    paddingBottom: 12,
-    borderRadius: 12,
+    // paddingBottom: 24,
+    // borderRadius: 12,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     alignItems: "center",
 
   },

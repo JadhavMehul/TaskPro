@@ -1,4 +1,4 @@
-import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView, TouchableWithoutFeedback, Modal } from 'react-native'
+import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView,PermissionsAndroid, TouchableWithoutFeedback, Modal, ActivityIndicator, Alert } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react';
 import TitleText from './Titletext'
 import InputField from './InputField'
@@ -10,60 +10,52 @@ import DateTimePicker, {
 import TimePicker from './TimePicker'
 import LinearGradient from 'react-native-linear-gradient';
 import moment from 'moment';
+import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
+
+
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import RNFS from 'react-native-fs';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { useAudio } from '../global/AudioContext';
 
 
 
-type User2 = {
-  id: string;
-  name: string;
-  image: string;
+
+type Props = {
+  onCloseModal: () => void;
 };
 
-const users2: User2[] = [
+type User = {
+  id: string;
+  name: string;
+  profilePicture: string;
+  userEmail: string | null;
+};
 
-  {
-    id: '0',
-    name: 'Assigned to',
-    image: '',
-  },
-
-  {
-    id: '1',
-    name: 'Mehul',
-    image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-  },
-  {
-    id: '2',
-    name: 'Chris',
-    image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-  },
-];
-
-
-
-const AddTaskEverything = () => {
-
-
-  //   timepicker start
-
+const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
+  const currentUser = auth().currentUser;
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+  const [activityIndicator, setActivityIndicator] = useState(false);
   const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
   const [timeSet, setTimeSet] = useState(false);
+  const [users, setUsers] = useState([
+    { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
+  ]);
 
 
-  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     assignTo: '',
     needPermission: false,
-    phoneNumber: '',
     taskEndTime: '',
     notificationTimer: '',
+    createdBy: ''
   });
 
-  const handleInputChange = (field: keyof typeof formData, value: string | boolean) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | boolean | null | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -82,13 +74,14 @@ const AddTaskEverything = () => {
     if (pickerMode === 'date') {
       const currentDate = selectedDate || date;
       setDate(currentDate);
-      setPickerMode('time'); 
-      setShowPicker(true); 
+      setPickerMode('time');
+      setShowPicker(true);
     } else {
       const updatedDate = selectedDate || date;
       setDate(updatedDate);
       setShowPicker(false);
       setTimeSet(true);
+      handleInputChange('taskEndTime', moment(updatedDate).format('YYYY-MM-DDTHH:mm:ssZ'))
     }
   };
   const showDateTimePicker = () => {
@@ -114,22 +107,21 @@ const AddTaskEverything = () => {
 
   // toggleswitch end
 
-
-
-
   // dropdown start
-  const [selectedUser3, setSelectedUser3] = useState<User2 | null>(null);
+  const [selectedUser3, setSelectedUser3] = useState<User | null>(null);
   const [showDropdown3, setShowDropdown3] = useState<boolean>(false);
 
-  const handleSelect3 = (user2: User2) => {
-    if (user2.id === '0') {
+  const handleSelect3 = (user: User) => {
+    if (user.id === '0') {
       setSelectedUser3(null);
     } else {
-      setSelectedUser3(user2);
+      setSelectedUser3(user);
+      handleInputChange('assignTo', user.userEmail)
+      handleInputChange('createdBy', currentUser?.email)
     }
     setShowDropdown3(false);
   };
-  const renderUser3 = ({ item }: { item: User2 }) => {
+  const renderUser3 = ({ item }: { item: User }) => {
     const isSelected3 = selectedUser3?.id === item.id;
 
     if (item.id === '0') {
@@ -144,11 +136,9 @@ const AddTaskEverything = () => {
       );
     }
 
-
-
     const content3 = (
       <View style={styles.userInner2}>
-        <Image source={{ uri: item.image }} style={styles.avatar2} />
+        <Image source={{ uri: item.profilePicture }} style={styles.avatar2} />
         <Text style={[styles.userName2, isSelected3 && { color: '#fff' }]}>
           {item.name}
         </Text>
@@ -173,11 +163,113 @@ const AddTaskEverything = () => {
     );
   };
 
-  // dropdown end
+  const addTaskFunction = async (formData: any) => {
+  const { title, description, assignTo, taskEndTime, notificationTimer, createdBy } = formData;
+
+  // Check if any required field is empty
+  if (
+    !title.trim() ||
+    !description.trim() ||
+    !assignTo.trim() ||
+    !taskEndTime.trim() ||
+    !notificationTimer.trim() ||
+    !createdBy.trim()
+  ) {
+    Alert.alert('Error', 'Please fill in all fields before submitting.');
+    return;
+  }
+
+  setActivityIndicator(true);
+  try {
+    await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp()});
+    console.log('Task added successfully!');
+  } catch (error) {
+    console.error('Error adding task:', error);
+  } finally {
+    setActivityIndicator(false);
+    onCloseModal();
+  }
+};
+
+
+  useEffect(() => {
+    const getEmployees = async () => {
+      setActivityIndicator(true)
+      try {
+        const allEmployeeData = await firestore().collection("UserAccounts").get()
+        const employees = allEmployeeData.docs.map((doc, i) => {
+          const data = doc.data();
+          // console.log(data);
+          return {
+            id: (i + 1).toString(),
+            name: data.firstName || '',
+            profilePicture: data.profilePicture || '',
+            userEmail: data.email || null,
+          };
+        });
+        // setCards(employees);
+
+        const updatedUsers = [
+          { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
+          ...employees,
+        ];
+        setUsers(updatedUsers);
+        setActivityIndicator(false)
+        // console.log("Employees:", JSON.stringify(employees));
+      } catch (error) {
+        console.log(error);
+        setActivityIndicator(false)
+      }
+    }
+    getEmployees();
+  }, [])
 
 
 
+  // audio section
 
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
+  const { setAudioPath } = useAudio();
+
+  const requestMicrophonePermission = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      ]);
+      return (
+        granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } else {
+      const result = await request(PERMISSIONS.IOS.MICROPHONE);
+      return result === RESULTS.GRANTED;
+    }
+  };
+
+  const onStartRecord = async () => {
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) {
+      console.warn('Permission denied');
+      return;
+    }
+
+    const path = Platform.select({
+      ios: 'sound.m4a',
+      android: `${RNFS.CachesDirectoryPath}/sound.m4a`,
+    });
+
+    const uri = await audioRecorderPlayer.startRecorder(path as string);
+    audioRecorderPlayer.addRecordBackListener(() => {});
+    console.log('Recording at:', uri);
+    setAudioPath(uri);
+  };
+
+  const onStopRecord = async () => {
+    const result = await audioRecorderPlayer.stopRecorder();
+    audioRecorderPlayer.removeRecordBackListener();
+    console.log('Stopped recording:', result);
+  };
 
 
 
@@ -187,52 +279,60 @@ const AddTaskEverything = () => {
 
     <View style={{ flex: 1 }}>
 
-
-
       <ScrollView>
         <View style={{ flexDirection: 'column', gap: 16 }}>
 
+          {activityIndicator ?
+            <ActivityIndicator size="large" color="#FECC01" /> :
 
+            <>
 
+              <TitleText style={styles.poptext}>
+                Title
+              </TitleText>
+              <InputField style={styles.input1}
+                placeholder="Task title"
+                autoCapitalize="none"
+                value={formData.title}
+                onChangeText={(text) => handleInputChange('title', text)}
+              />
 
-          <TitleText style={styles.poptext}>
-            Title
-          </TitleText>
-          <InputField style={styles.input1}
-            placeholder="Task title"
-            autoCapitalize="none"
-            value={formData.title}
-            onChangeText={(text) => handleInputChange('title', text)}
-          />
+              <TitleText style={styles.poptext}>
+                Description
+              </TitleText>
 
-          <TitleText style={styles.poptext}>
-            Description
-          </TitleText>
+              <InputField style={styles.input2}
+                placeholder="Description"
+                autoCapitalize="none"
+                textAlignVertical="top"
+                multiline
+                numberOfLines={4}
+                value={formData.description}
+                onChangeText={(text) => handleInputChange('description', text)}
+              />
 
-          <InputField style={styles.input2}
-            placeholder="Description"
-            autoCapitalize="none"
-            textAlignVertical="top"
-            multiline
-            numberOfLines={4}
-            value={formData.description}
-            onChangeText={(text) => handleInputChange('description', text)}
-          />
+<TouchableOpacity
+        onPressIn={onStartRecord}
+        onPressOut={onStopRecord}
+        style={styles.recordBtn}
+      >
+        <Text style={styles.btnText}>Hold to Record</Text>
+      </TouchableOpacity>
 
-          <View style={styles.namecard}>
-            <View style={styles.row}>
-              <View style={styles.circle}>
-                <Image
-                  source={require('@assets/images/home_fill.png')}
+              <View style={styles.namecard}>
+                <View style={styles.row}>
+                  <View style={styles.circle}>
+                    <Image
+                      source={selectedUser3 ? {uri:selectedUser3.profilePicture} : require('@assets/images/profileIcon.png')}
 
-                  style={styles.circleImage}
-                />
-              </View>
+                      style={styles.circleImage}
+                    />
+                  </View>
 
-              <TitleText style={styles.personName}>Mehul</TitleText>
-            </View>
+                  <TitleText style={styles.personName}>{selectedUser3 ? selectedUser3.name :'User Name'}</TitleText>
+                </View>
 
-            {/* <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>
+                {/* <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>
               <View style={styles.addtask}>
                 <TitleText style={styles.dropdownText2}>
                   {selectedUser3 ? selectedUser3.name : 'Assign To'}
@@ -253,67 +353,67 @@ const AddTaskEverything = () => {
               </View>
             )} */}
 
-<TouchableOpacity onPress={() => setShowDropdown3(true)}>
-  <View style={styles.addtask}>
-    <TitleText style={styles.dropdownText2}>
-      {selectedUser3 ? selectedUser3.name : 'Assign To'}
-    </TitleText>
-    <Image
-      source={require('../../assets/images/downarrow.png')}
-      style={styles.image2}
-    />
-  </View>
-</TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowDropdown3(true)}>
+                  <View style={styles.addtask}>
+                    <TitleText style={styles.dropdownText2}>
+                      {selectedUser3 ? selectedUser3.name : 'Assign To'}
+                    </TitleText>
+                    <Image
+                      source={require('../../assets/images/downarrow.png')}
+                      style={styles.image2}
+                    />
+                  </View>
+                </TouchableOpacity>
 
-<Modal
-  transparent
-  visible={showDropdown3}
-  animationType="fade"
-  onRequestClose={() => setShowDropdown3(false)}
->
-  <TouchableWithoutFeedback onPress={() => setShowDropdown3(false)}>
-    <View style={styles.modalOverlay}>
-      <TouchableWithoutFeedback>
-        <View style={styles.modalContent}>
-          <ScrollView contentContainerStyle={{ gap: 10 }}>
-            {users2.map((item) => (
-              <React.Fragment key={item.id}>{renderUser3({ item })}</React.Fragment>
-            ))}
-          </ScrollView>
-        </View>
-      </TouchableWithoutFeedback>
-    </View>
-  </TouchableWithoutFeedback>
-</Modal>
-
-
-
-          </View>
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <TitleText style={styles.poptext}>
-              Need Permission?
-            </TitleText>
-
-            <ToggleSwitch
-              isOn={isOn}
-              toggleSwitch={() => {
-                toggleSwitch(); // <- call toggle switch
-                handleInputChange('needPermission', !isOn); // <- call input change
-              }}
-              knobPosition={knobPosition}
-            />
+                <Modal
+                  transparent
+                  visible={showDropdown3}
+                  animationType="fade"
+                  onRequestClose={() => setShowDropdown3(false)}
+                >
+                  <TouchableWithoutFeedback onPress={() => setShowDropdown3(false)}>
+                    <View style={styles.modalOverlay}>
+                      <TouchableWithoutFeedback>
+                        <View style={styles.modalContent}>
+                          <ScrollView contentContainerStyle={{ gap: 10 }}>
+                            {users.map((item) => (
+                              <React.Fragment key={item.userEmail}>{renderUser3({ item })}</React.Fragment>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      </TouchableWithoutFeedback>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </Modal>
 
 
-          </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <TitleText style={styles.poptext}>
-              Task End Time
-            </TitleText>
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <TitleText style={styles.poptext}>
+                  Need Permission?
+                </TitleText>
+
+                <ToggleSwitch
+                  isOn={isOn}
+                  toggleSwitch={() => {
+                    toggleSwitch(); // <- call toggle switch
+                    handleInputChange('needPermission', !isOn); // <- call input change
+                  }}
+                  knobPosition={knobPosition}
+                />
 
 
-            {/* <TouchableOpacity onPress={showTimepicker}>
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <TitleText style={styles.poptext}>
+                  Task End Time
+                </TitleText>
+
+
+                {/* <TouchableOpacity onPress={showTimepicker}>
               <View style={styles.addtask}>
                 {timeSet ? (
                   <TitleText >
@@ -344,81 +444,65 @@ const AddTaskEverything = () => {
             )} */}
 
 
-<TouchableOpacity onPress={showDateTimePicker}>
-        <View style={styles.addtask}>
-          {timeSet ? (
-            <TitleText>{moment(date).format('YYYY-MM-DDTHH:mm:ssZ')}</TitleText>
-          ) : (
-            <>
-              <TitleText>Add Time</TitleText>
-              <Image
-                source={require('../../assets/images/addcircle.png')}
-                style={styles.image2}
-              />
+                <TouchableOpacity onPress={showDateTimePicker}>
+                  <View style={styles.addtask}>
+                    {timeSet ? (
+                      <TitleText>{moment(date).format('YYYY-MM-DDTHH:mm:ssZ')}</TitleText>
+                    ) : (
+                      <>
+                        <TitleText>Add Time</TitleText>
+                        <Image
+                          source={require('../../assets/images/addcircle.png')}
+                          style={styles.image2}
+                        />
+                      </>
+                    )}
+                  </View>
+                </TouchableOpacity>
+
+                {showPicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode={pickerMode}
+                    is24Hour={true}
+                    display="spinner"
+                    onChange={onChange}
+                  />
+                )}
+
+
+
+
+
+
+
+
+              </View>
+
+
+
+
+
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <TitleText style={styles.poptext}>
+                  Add Notification Timer
+                </TitleText>
+
+
+
+                <TimePicker onSendData={(timer: string) => handleInputChange('notificationTimer', timer)} />
+
+
+              </View>
+
+
             </>
-          )}
-        </View>
-      </TouchableOpacity>
-
-      {showPicker && (
-        <DateTimePicker
-          value={date}
-          mode={pickerMode}
-          is24Hour={true}
-          display="spinner"
-          onChange={onChange}
-        />
-      )}
-
-         
-
-
-
-
-
-
-          </View>
-          
-
-
-        
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <TitleText style={styles.poptext}>
-              Add Notification Timer
-            </TitleText>
-
-
-
-            <TimePicker />
-
-
-          </View>
-
-
-          {/* <TouchableOpacity style={styles.orangebutton} >
-          <TitleText style={styles.orangebtntext}>
-            Add Task
-          </TitleText>
-        </TouchableOpacity> */}
-
-
-
-
-
-
-
-
-
-
-
-
-
+          }
         </View>
       </ScrollView>
 
       <View style={styles.endcontainer}>
-        <TouchableOpacity style={styles.orangebutton} onPress={() => console.log(formData)}>
+        <TouchableOpacity style={styles.orangebutton} onPress={() => addTaskFunction(formData)}>
           <TitleText style={styles.orangebtntext}>
             Add Task
           </TitleText>
@@ -432,6 +516,10 @@ const AddTaskEverything = () => {
 const styles = StyleSheet.create({
 
 
+  recordBtn: { padding: 20, backgroundColor: '#FF5555', borderRadius: 12 },
+  btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
+
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -440,11 +528,11 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: '#fff',
-    width: '60%',
-    height: '20%', 
+    width: '80%',
+    height: '50%',
     borderRadius: 10,
     padding: 16,
-    
+
   },
 
 

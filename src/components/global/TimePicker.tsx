@@ -10,13 +10,23 @@ import {
 } from 'react-native';
 import TitleText from './Titletext';
 
-const TimePickerHorizontal: React.FC = () => {
+interface ChildProps {
+  onSendData: (data: string) => void;
+}
+
+const TimePickerHorizontal: React.FC<ChildProps> = ({ onSendData }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedHours, setSelectedHours] = useState<number | null>(null);
-  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(null);
+  const [selectedHours, setSelectedHours] = useState<number | null>(0);
+  const [selectedMinutes, setSelectedMinutes] = useState<number | null>(0);
+
+  
 
   const handleConfirm = () => {
     setModalVisible(false);
+    const notificationTimer = `${`${selectedHours}`.padStart(2, '0')}:${`${selectedMinutes}`.padStart(2, '0')}`;
+    if (notificationTimer) {
+      onSendData(notificationTimer)
+    }
   };
 
   const handleReset = () => {
@@ -28,6 +38,8 @@ const TimePickerHorizontal: React.FC = () => {
     if (selectedHours || selectedMinutes) {
       const hr = selectedHours ? `${selectedHours} hr${selectedHours > 1 ? 's' : ''}` : '';
       const min = selectedMinutes ? `${selectedMinutes} min` : '';
+      
+      
       return `${hr} ${min}`.trim();
     }
     return 'Add Time';
@@ -71,25 +83,14 @@ const TimePickerHorizontal: React.FC = () => {
          
         </View>
      </TouchableOpacity>
-      {/* <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
-        <View style={styles.buttonContent}>
-          {showPlusIcon && (
-             <Image
-             source={require('../../assets/images/addcircle.png')}
-             style={styles.image2}
-           />
-          )}
-          <Text style={styles.buttonText}>{getTimeLabel()}</Text>
-        </View>
-      </TouchableOpacity> */}
+      
 
-      <Modal visible={modalVisible} transparent animationType="fade">
-        <TouchableOpacity
-          style={styles.modalBackground}
-          activeOpacity={1}
-          onPressOut={() => setModalVisible(false)}
-        >
-          <View style={styles.dropdown}>
+     <Modal visible={modalVisible} transparent animationType="fade">
+  <View style={styles.modalBackground}>
+    <View style={styles.dropdown}>
+      <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+        <Text style={styles.closeButtonText}>×</Text>
+      </TouchableOpacity>
             <Text style={styles.label}>Select Hours</Text>
             <FlatList
               data={[...Array(24).keys()].map(i => i + 1)}
@@ -122,7 +123,7 @@ const TimePickerHorizontal: React.FC = () => {
               <Text style={styles.confirmText}>Confirm</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
@@ -131,6 +132,24 @@ const TimePickerHorizontal: React.FC = () => {
 export default TimePickerHorizontal;
 
 const styles = StyleSheet.create({
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    backgroundColor: '#ddd',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+
 
   addtask: {
     flexDirection: 'row',

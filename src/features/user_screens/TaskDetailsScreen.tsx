@@ -2,7 +2,7 @@ import {
   View, Text, StyleSheet, Alert, Button, Image, TouchableOpacity, Modal,
   Pressable
 } from 'react-native'
-import React, { useState } from 'react';
+import React, { useState,useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
@@ -10,6 +10,9 @@ import { goBack } from '@utils/NavigationUtils';
 import Feather from '@react-native-vector-icons/feather';
 import LinearGradient from 'react-native-linear-gradient';
 import ReadMoreText from '@components/global/ReadMoreText';
+
+import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import { useAudio } from '../../components/global/AudioContext';
 
 
 
@@ -44,6 +47,39 @@ const users2: User2[] = [
 
 
 const TaskDetailsScreen = () => {
+
+  const { audioPath } = useAudio();
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
+
+  const onPlaySound = async () => {
+    if (!audioPath) {
+      console.warn('No recording available');
+      return;
+    }
+
+    const cleanedPath = audioPath.replace('file://', '');
+
+    try {
+      await audioRecorderPlayer.startPlayer(cleanedPath);
+      audioRecorderPlayer.addPlayBackListener((e) => {
+        if (e.currentPosition >= e.duration) {
+          audioRecorderPlayer.stopPlayer();
+          audioRecorderPlayer.removePlayBackListener();
+        }
+        return;
+      });
+    } catch (error) {
+      console.error('Playback failed', error);
+    }
+  };
+
+
+
+
+
+
+
+
 
   const [selectedUser2, setSelectedUser2] = useState<User2 | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
@@ -131,7 +167,7 @@ const TaskDetailsScreen = () => {
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, }}>
           <TouchableOpacity onPress={goBack}>
             <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center' }} >
               <Image
@@ -168,8 +204,11 @@ const TaskDetailsScreen = () => {
             </View>
 
             <View style={styles.commentbox}>
-
+              <TouchableOpacity onPress={onPlaySound} >
               <Image source={require('../../assets/images/speaker.png')} style={styles.speaker} />
+              </TouchableOpacity>
+
+              
 
               <View style={styles.righttop}>
                 <View style={styles.circle}>
@@ -255,6 +294,10 @@ const TaskDetailsScreen = () => {
               </View>
             </View>
 
+            {/* <TouchableOpacity onPress={onPlaySound} style={styles.playBtn}>
+        <Text style={styles.btnText}>Play Recording</Text>
+      </TouchableOpacity> */}
+
 
             <View style={styles.commentbox}>
 
@@ -336,6 +379,9 @@ const TaskDetailsScreen = () => {
 }
 
 const styles = StyleSheet.create({
+
+  playBtn: { padding: 20, backgroundColor: '#4CAF50', borderRadius: 12 },
+  btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
 
   text: {
     fontSize: 16,
