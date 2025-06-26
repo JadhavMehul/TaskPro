@@ -19,6 +19,7 @@ import TaskDetailsScreen from '@features/user_screens/TaskDetailsScreen';
 import notifee, { AndroidImportance, AndroidStyle, AuthorizationStatus, EventType } from '@notifee/react-native';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import messaging from "@react-native-firebase/messaging";
+import Recorder from '@features/user_screens/Recorder';
 
 const Stack = createNativeStackNavigator();
 
@@ -151,6 +152,8 @@ const App = () => {
         <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
         <Stack.Screen name="AdminScreen" component={AdminScreen} />
         <Stack.Screen name="TaskDetailsScreen" component={TaskDetailsScreen} />
+        <Stack.Screen name="Recorder" component={Recorder} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
