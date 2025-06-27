@@ -167,7 +167,7 @@ const TaskDetailsScreen = () => {
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1, }}>
+        <View style={{ flex: 1, backgroundColor:'#FAF8F5'}}>
           <TouchableOpacity onPress={goBack}>
             <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center' }} >
               <Image

@@ -155,8 +155,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     // paddingBottom: 24,
     // borderRadius: 12,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
     alignItems: "center",
 
   },

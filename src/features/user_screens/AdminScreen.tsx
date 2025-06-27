@@ -16,7 +16,9 @@ const AdminScreen = () => {
   const { width } = useWindowDimensions();
   const buttonWidth = 171;
   const gap = 12;
-  const isWrapped = width < buttonWidth * 2 + gap;
+  // const isWrapped = width < buttonWidth * 2 + gap;
+  // const isWrapped = false;
+  const isWrapped = width < (buttonWidth * 2 + gap + 48);
   
   
   
@@ -145,9 +147,10 @@ const AdminScreen = () => {
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1, }}>
+        <View style={{ flex: 1, backgroundColor: '#FAF8F5'}}>
 
-          <View style={{ padding: 24, alignItems: 'center', flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* <View style={{ padding: 24, alignItems: 'center', flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}> */}
+          <View style={{ padding: 24, alignItems: isWrapped ? 'stretch' : 'center', flexDirection: isWrapped ? 'column' : 'row', gap: 16, justifyContent: 'center', flexWrap: isWrapped ? 'nowrap' : 'wrap',  }}>
 
 
 
@@ -334,7 +337,7 @@ const AdminScreen = () => {
 
 
         </View>
-        <BottomNav />
+        <BottomNav  backgroundColor="#FAF8F5"/>
       </CustomSafeAreaView>
 
     </View>

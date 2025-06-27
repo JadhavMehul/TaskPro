@@ -91,7 +91,7 @@ const LoginScreen = () => {
               {/* </View> */}
             </View>
           </Modal>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
             {toast && (
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 999 }}>
                 <Toast message={toast.message} type={toast.type} />
@@ -99,7 +99,8 @@ const LoginScreen = () => {
             )}
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }} // space for fixed footer
+              contentContainerStyle={{ paddingBottom: 120 }} 
+              style= {{paddingHorizontal: 24, paddingTop:24}}
             >
               <TitleText style={styles.titletext}>Sign In</TitleText>
   
@@ -173,7 +174,8 @@ const styles = StyleSheet.create({
   endcontainer : {
     position: 'absolute',
     width: '100%',
-    paddingTop: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     bottom: 0,
     alignItems: 'center',
     backgroundColor: '#FAF8F5',
@@ -211,14 +213,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   container: {
-    padding: 6,
-    borderRadius: 12,
+    
     flex: 1,
-    backgroundColor: "#ffffff",
   },
   inner_container: {
-    paddingLeft: 24,
-    paddingRight: 24,
+    
     flex: 1,
     backgroundColor: "#FAF8F5",
     borderRadius: 12,

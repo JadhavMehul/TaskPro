@@ -12,7 +12,7 @@ interface Props extends TextInputProps  {
 };
 
 export default function InputField({ style, ...rest }: Props) {
-  return <TextInput style={[styles.input, style]} {...rest} />;
+  return <TextInput style={[styles.input, style]} placeholderTextColor="grey" {...rest} />;
 }
 
 const styles = StyleSheet.create({

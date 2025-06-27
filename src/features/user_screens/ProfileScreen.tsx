@@ -150,10 +150,9 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.inner_container}>
-        <StatusBar barStyle="light-content" backgroundColor="black" />
 
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1 , backgroundColor: '#FAF8F5' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 10 }}>
             <TitleText style={styles.tts}>
               Profile
@@ -416,7 +415,7 @@ const ProfileScreen = () => {
           </ScrollView>
 
         </View>
-        <BottomNav />
+        <BottomNav backgroundColor="#FAF8F5"/>
       </CustomSafeAreaView>
 
     </View>

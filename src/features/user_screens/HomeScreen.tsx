@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 // import { firebase } from "../../../firebaseConfig";
-import { View, Text, Button, StyleSheet, Animated, Alert, Platform, Image, FlatList, TouchableOpacity, ScrollView, Pressable } from 'react-native';
+import { View, Text, Button, StyleSheet, Animated, Alert, Platform, Image, FlatList, TouchableOpacity, ScrollView, Pressable, StatusBar } from 'react-native';
 import { navigate } from '@utils/NavigationUtils';
 import BottomNav from '@components/global/BottomBar';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -217,6 +217,13 @@ const HomeScreen = () => {
   }, [user]);
 
   return (
+
+    <>
+    {/* <StatusBar barStyle={'dark-content'}/> */}
+   
+    
+
+   
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
         {/* <View style={styles.yellow}> */}
@@ -237,8 +244,8 @@ const HomeScreen = () => {
                   Add task
                 </TitleText>
                 <Image
-                  source={require('../../assets/images/edit.png')}
-                  style={styles.image}
+                  source={require('../../assets/images/addtaskicon.png')}
+                  style={styles.image2}
                 />
               </View>
 
@@ -414,6 +421,7 @@ const HomeScreen = () => {
       </CustomSafeAreaView>
 
     </View>
+     </>
   );
 };
 
@@ -612,6 +620,7 @@ const styles = StyleSheet.create({
 
   addtask: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#E7E2DA',
@@ -636,6 +645,7 @@ const styles = StyleSheet.create({
     // ...StyleSheet.absoluteFillObject,
     padding: 16,
     paddingBottom: 75,
+    // paddingTop: 100,
     flex: 1,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,

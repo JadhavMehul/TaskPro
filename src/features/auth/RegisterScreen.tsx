@@ -143,7 +143,7 @@ const RegisterScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.inner_container}>
-        <CustomSafeAreaView style={{ flex: 1 }}>
+        <CustomSafeAreaView style={{ flex: 1 ,}}>
           <Modal
             animationType="fade"
             transparent={true}
@@ -158,10 +158,11 @@ const RegisterScreen: React.FC = () => {
               {/* </View> */}
             </View>
           </Modal>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1 , backgroundColor: '#FAF8F5'}}>
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={{ paddingBottom: 120 }}
+              style= {{paddingHorizontal: 24, paddingTop:24}}
             >
               <TitleText style={styles.titletext}>Sign Up</TitleText>
 
@@ -409,7 +410,8 @@ const styles = StyleSheet.create({
   endcontainer: {
     position: 'absolute',
     width: '100%',
-    paddingTop: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     bottom: 0,
     alignItems: 'center',
     backgroundColor: '#FAF8F5',
@@ -447,14 +449,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   container: {
-    padding: 6,
-    borderRadius: 12,
+    
     flex: 1,
-    backgroundColor: "#ffffff",
   },
   inner_container: {
-    paddingLeft: 24,
-    paddingRight: 24,
+    
     flex: 1,
     backgroundColor: "#FAF8F5",
     borderRadius: 12,
