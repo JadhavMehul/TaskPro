@@ -9,6 +9,7 @@ type TaskBoxProps = {
   imageSource: ImageSourcePropType;
   personName: string;
   dateTime: string;
+  taskStatus: string;
   onPress: () => void;
   onDelete: () => void;
 };
@@ -19,12 +20,17 @@ const TaskBox = ({
   imageSource,
   personName,
   dateTime,
+  taskStatus,
   onPress,
   onDelete
 }: TaskBoxProps) => {
   return (
     <TouchableOpacity onPress={onPress}>
-      <View style={styles.taskbox}>
+      <View style={[
+    styles.taskbox,
+    taskStatus === 'Done' && { backgroundColor: '#FFFFAF' },
+    taskStatus === 'Approved' && { backgroundColor: '#DAF8E6' },
+  ]}>
         <View style={styles.topbox}>
           <View style={styles.lefttop}>
             <TitleText numberOfLines={1} ellipsizeMode="tail" style={styles.tasktitle}>{taskTitle}</TitleText>

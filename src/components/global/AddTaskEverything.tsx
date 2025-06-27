@@ -52,7 +52,8 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     needPermission: false,
     taskEndTime: '',
     notificationTimer: '',
-    createdBy: ''
+    createdBy: '',
+    taskStatus: ''
   });
 
   const handleInputChange = (field: keyof typeof formData, value: string | boolean | null | undefined) => {
@@ -164,7 +165,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   };
 
   const addTaskFunction = async (formData: any) => {
-    const { title, description, assignTo, taskEndTime, notificationTimer, createdBy } = formData;
+    const { title, description, assignTo, taskEndTime, notificationTimer, createdBy, taskStatus } = formData;
 
     // Check if any required field is empty
     if (
@@ -181,7 +182,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
     setActivityIndicator(true);
     try {
-      await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp() });
+      await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New' });
       console.log('Task added successfully!');
     } catch (error) {
       console.error('Error adding task:', error);

@@ -408,6 +408,7 @@ const HomeScreen = () => {
                     imageSource={item.profilePicture} // Or dynamic if needed
                     personName={item.firstName || 'Unknown'}
                     dateTime={item.createdAt}
+                    taskStatus={item.taskStatus}
                     onPress={() => navigate('TaskDetailsScreen', { task: item })}
                     onDelete={() => deleteTask(item.id)}
                   />
