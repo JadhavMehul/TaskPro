@@ -1,4 +1,4 @@
-import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView,PermissionsAndroid, TouchableWithoutFeedback, Modal, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView, PermissionsAndroid, TouchableWithoutFeedback, Modal, ActivityIndicator, Alert } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react';
 import TitleText from './Titletext'
 import InputField from './InputField'
@@ -164,32 +164,32 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   };
 
   const addTaskFunction = async (formData: any) => {
-  const { title, description, assignTo, taskEndTime, notificationTimer, createdBy } = formData;
+    const { title, description, assignTo, taskEndTime, notificationTimer, createdBy } = formData;
 
-  // Check if any required field is empty
-  if (
-    !title.trim() ||
-    !description.trim() ||
-    !assignTo.trim() ||
-    !taskEndTime.trim() ||
-    !notificationTimer.trim() ||
-    !createdBy.trim()
-  ) {
-    Alert.alert('Error', 'Please fill in all fields before submitting.');
-    return;
-  }
+    // Check if any required field is empty
+    if (
+      !title.trim() ||
+      !description.trim() ||
+      !assignTo.trim() ||
+      !taskEndTime.trim() ||
+      !notificationTimer.trim() ||
+      !createdBy.trim()
+    ) {
+      Alert.alert('Error', 'Please fill in all fields before submitting.');
+      return;
+    }
 
-  setActivityIndicator(true);
-  try {
-    await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp()});
-    console.log('Task added successfully!');
-  } catch (error) {
-    console.error('Error adding task:', error);
-  } finally {
-    setActivityIndicator(false);
-    onCloseModal();
-  }
-};
+    setActivityIndicator(true);
+    try {
+      await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp() });
+      console.log('Task added successfully!');
+    } catch (error) {
+      console.error('Error adding task:', error);
+    } finally {
+      setActivityIndicator(false);
+      onCloseModal();
+    }
+  };
 
 
   useEffect(() => {
@@ -260,7 +260,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     });
 
     const uri = await audioRecorderPlayer.startRecorder(path as string);
-    audioRecorderPlayer.addRecordBackListener(() => {});
+    audioRecorderPlayer.addRecordBackListener(() => { });
     console.log('Recording at:', uri);
     setAudioPath(uri);
   };
@@ -311,25 +311,25 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 onChangeText={(text) => handleInputChange('description', text)}
               />
 
-<TouchableOpacity
-        onPressIn={onStartRecord}
-        onPressOut={onStopRecord}
-        style={styles.recordBtn}
-      >
-        <Text style={styles.btnText}>Hold to Record</Text>
-      </TouchableOpacity>
+              <TouchableOpacity
+                onPressIn={onStartRecord}
+                onPressOut={onStopRecord}
+                style={styles.recordBtn}
+              >
+                <Text style={styles.btnText}>Hold to Record</Text>
+              </TouchableOpacity>
 
               <View style={styles.namecard}>
                 <View style={styles.row}>
                   <View style={styles.circle}>
                     <Image
-                      source={selectedUser3 ? {uri:selectedUser3.profilePicture} : require('@assets/images/profileIcon.png')}
+                      source={selectedUser3 ? { uri: selectedUser3.profilePicture } : require('@assets/images/profileIcon.png')}
 
                       style={styles.circleImage}
                     />
                   </View>
 
-                  <TitleText style={styles.personName}>{selectedUser3 ? selectedUser3.name :'User Name'}</TitleText>
+                  <TitleText style={styles.personName}>{selectedUser3 ? selectedUser3.name : 'User Name'}</TitleText>
                 </View>
 
                 {/* <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>

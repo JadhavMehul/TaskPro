@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     width: '74%',
     // backgroundColor: 'red',
     flexDirection: 'column',
-    gap: 24,
+    gap: 12,
   },
 
   topbox: {

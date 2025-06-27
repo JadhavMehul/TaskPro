@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 // import { firebase } from "../../../firebaseConfig";
-import { View, Text, Button, StyleSheet, Animated, Alert, Platform, Image, FlatList, TouchableOpacity, ScrollView, Pressable, StatusBar } from 'react-native';
+import { View, Text, Button, StyleSheet, Animated, Alert, Platform, Image, FlatList, TouchableOpacity, ScrollView, Pressable, StatusBar, ActivityIndicator } from 'react-native';
 import { navigate } from '@utils/NavigationUtils';
 import BottomNav from '@components/global/BottomBar';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -22,6 +22,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import TimePicker from '@components/global/TimePicker';
 import AddTaskEverything from '@components/global/AddTaskEverything';
+import moment from 'moment';
 
 
 
@@ -37,47 +38,73 @@ type TaskData = {
   createdAt: FirebaseFirestoreTypes.Timestamp;
 };
 
-type User2 = {
+// type User2 = {
+//   id: string;
+//   name: string;
+//   image: string;
+// };
+
+// const users2: User2[] = [
+
+//   {
+//     id: '0',
+//     name: 'Assigned to',
+//     image: '',
+//   },
+
+//   {
+//     id: '1',
+//     name: 'Mehul',
+//     image: 'https://i.imgur.com/1Qf1Z0G.jpg',
+//   },
+//   {
+//     id: '2',
+//     name: 'Chris',
+//     image: 'https://i.imgur.com/1Qf1Z0G.jpg',
+//   },
+// ];
+
+type User = {
   id: string;
   name: string;
-  image: string;
+  profilePicture: string;
+  userEmail: string | null;
 };
-
-const users2: User2[] = [
-
-  {
-    id: '0',
-    name: 'Assigned to',
-    image: '',
-  },
-
-  {
-    id: '1',
-    name: 'Mehul',
-    image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-  },
-  {
-    id: '2',
-    name: 'Chris',
-    image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-  },
-];
-
 
 const HomeScreen = () => {
 
-  const [selectedUser2, setSelectedUser2] = useState<User2 | null>(null);
-  const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
+  const user = auth().currentUser;
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [originalTaskCards, setOriginalTaskCards] = useState<any[]>([]);
+  const [allTaskCards, setAllTaskCards] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  const handleSelect2 = (user2: User2) => {
-    if (user2.id === '0') {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
+  const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
+  const [activityIndicator, setActivityIndicator] = useState(false);
+  const [users, setUsers] = useState([
+    { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
+  ]);
+
+  const sortTaskByUsers = (userEmail: string | null) => {
+  if (!userEmail) return;
+
+  const filteredTasks = originalTaskCards.filter(task => task.assignTo === userEmail);
+  setAllTaskCards(filteredTasks);
+};
+  
+  const handleSelect2 = (user: User) => {
+    if (user.id === '0') {
       setSelectedUser2(null);
+      setAllTaskCards(originalTaskCards);
     } else {
-      setSelectedUser2(user2);
+      setSelectedUser2(user);
+      sortTaskByUsers(user.userEmail);
     }
     setShowDropdown2(false);
   };
-  const renderUser2 = ({ item }: { item: User2 }) => {
+  const renderUser2 = ({ item }: { item: User }) => {
     const isSelected2 = selectedUser2?.id === item.id;
 
     if (item.id === '0') {
@@ -96,7 +123,7 @@ const HomeScreen = () => {
 
     const content2 = (
       <View style={styles.userInner2}>
-        <Image source={{ uri: item.image }} style={styles.avatar2} />
+        <Image source={{ uri: item.profilePicture }} style={styles.avatar2} />
         <Text style={[styles.userName2, isSelected2 && { color: '#fff' }]}>
           {item.name}
         </Text>
@@ -120,16 +147,6 @@ const HomeScreen = () => {
       </TouchableOpacity>
     );
   };
-
-  const user = auth().currentUser;
-  const [userIsAdmin, setUserIsAdmin] = useState(false);
-  const [allTaskCards, setAllTaskCards] = useState<any[]>([]);
-  const [refreshing, setRefreshing] = React.useState(false);
-
-  const [isModalVisible, setModalVisible] = useState(false);
-
-
-
 
 
 
@@ -158,103 +175,150 @@ const HomeScreen = () => {
   };
 
   const fetchTaskCard = () => {
-  const unsubscribe = firestore()
-    .collection('TaskList')
-    .orderBy('createdAt', 'desc')
-    .onSnapshot(async (snapshot) => {
-      try {
-        const tasksWithUserInfo = await Promise.all(
-          snapshot.docs.map(async (doc) => {
-            const task = { ...(doc.data() as TaskData), id: doc.id };
+    const unsubscribe = firestore()
+      .collection('TaskList')
+      .orderBy('createdAt', 'desc')
+      .onSnapshot(async (snapshot) => {
+        try {
+          const tasksWithUserInfo = await Promise.all(
+            snapshot.docs.map(async (doc) => {
+              const task = { ...(doc.data() as TaskData), id: doc.id };
 
 
-            let userInfo = { firstName: '', profilePicture: '' };
+              let userInfo = { firstName: '', profilePicture: '' };
 
-            if (task.assignTo) {
-              const userDoc = await firestore()
-                .collection('UserAccounts')
-                .doc(task.assignTo) // This assumes the document ID in UserAccounts is the user's email
-                .get();
+              if (task.assignTo) {
+                const userDoc = await firestore()
+                  .collection('UserAccounts')
+                  .doc(task.assignTo) // This assumes the document ID in UserAccounts is the user's email
+                  .get();
 
-              if (userDoc.exists()) {
-                const userData = userDoc.data();
-                userInfo = {
-                  firstName: userData?.firstName || '',
-                  profilePicture: userData?.profilePicture || '',
-                };
+                if (userDoc.exists()) {
+                  const userData = userDoc.data();
+                  userInfo = {
+                    firstName: userData?.firstName || '',
+                    profilePicture: userData?.profilePicture || '',
+                  };
+                }
               }
-            }
 
-            return {
-              ...task,
-              firstName: userInfo.firstName,
-              profilePicture: userInfo.profilePicture,
-            };
-          })
-        );
+              const formattedDate = task.createdAt?.toDate ? moment(task.createdAt.toDate()).format("DD MMM YYYY - hh:mm A") : '';
 
-        setAllTaskCards(tasksWithUserInfo);
-        console.log(tasksWithUserInfo);
-        
-      } catch (error) {
-        console.error('Error fetching user info for tasks:', error);
-      }
-    }, (error) => {
-      console.error('Error fetching tasks:', error);
-    });
+              return {
+                ...task,
+                createdAt: formattedDate,
+                firstName: userInfo.firstName,
+                profilePicture: userInfo.profilePicture,
+              };
+            })
+          );
 
-  return unsubscribe;
-};
+          setOriginalTaskCards(tasksWithUserInfo);
+          setAllTaskCards(tasksWithUserInfo);
+          console.log(tasksWithUserInfo);
+
+        } catch (error) {
+          console.error('Error fetching user info for tasks:', error);
+        }
+      }, (error) => {
+        console.error('Error fetching tasks:', error);
+      });
+
+    return unsubscribe;
+  };
+
+  const deleteTask = async (taskId: string) => {
+    try {
+      await firestore().collection("TaskList").doc(taskId).delete().then(() => {
+        console.log("Document successfully deleted!");
+      })
+    } catch (error) {
+      console.log(error);
+    }
+
+  }
 
 
 
 
 
   useEffect(() => {
-    fetchUserData();
-    const unsubscribe = fetchTaskCard();
-    return () => unsubscribe && unsubscribe();
-  }, [user]);
+  const getEmployees = async () => {
+    setActivityIndicator(true);
+    try {
+      const allEmployeeData = await firestore().collection("UserAccounts").get();
+      const employees = allEmployeeData.docs.map((doc, i) => {
+        const data = doc.data();
+        return {
+          id: (i + 1).toString(),
+          name: data.firstName || '',
+          profilePicture: data.profilePicture || '',
+          userEmail: data.email || null,
+        };
+      });
+
+      const updatedUsers = [
+        { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
+        ...employees,
+      ];
+      setUsers(updatedUsers);
+    } catch (error) {
+      console.log("Error fetching employees:", error);
+    } finally {
+      setActivityIndicator(false);
+    }
+  };
+
+  fetchUserData();           // already defined
+  getEmployees();            // new addition
+  const unsubscribe = fetchTaskCard(); // snapshot listener
+
+  return () => {
+    if (unsubscribe) unsubscribe(); // cleanup listener
+  };
+}, [user]);
+
 
   return (
 
     <>
-    {/* <StatusBar barStyle={'dark-content'}/> */}
-   
-    
-
-   
-    <View style={styles.inner_container}>
-      <CustomSafeAreaView style={{ flex: 1 }}>
-        {/* <View style={styles.yellow}> */}
-        <LinearGradient
-          colors={['#FECC01', '#F49C16']}
-          style={styles.gradientBox}
-        >
+      {/* <StatusBar barStyle={'dark-content'}/> */}
 
 
 
 
-          <View style={styles.dropsection}>
+      <View style={styles.inner_container}>
+        <CustomSafeAreaView style={{ flex: 1 }}>
+          {/* <View style={styles.yellow}> */}
+          <LinearGradient
+            colors={['#FECC01', '#F49C16']}
+            style={styles.gradientBox}
+          >
 
-            <TouchableOpacity onPress={() => setModalVisible(true)}>
+          {activityIndicator ?
+                      <ActivityIndicator size="large" color="#FECC01" /> :
 
-              <View style={styles.addtask}>
-                <TitleText>
-                  Add task
-                </TitleText>
-                <Image
-                  source={require('../../assets/images/addtaskicon.png')}
-                  style={styles.image2}
-                />
-              </View>
+            <>
+            <View style={styles.dropsection}>
 
-            </TouchableOpacity>
-            <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
-              <AddTaskEverything onCloseModal={() => setModalVisible(false)} />
-            </BottomModal>
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
 
-            {/* <TouchableOpacity
+                <View style={styles.addtask}>
+                  <TitleText>
+                    Add task
+                  </TitleText>
+                  <Image
+                    source={require('../../assets/images/addtaskicon.png')}
+                    style={styles.image2}
+                  />
+                </View>
+
+              </TouchableOpacity>
+              <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
+                <AddTaskEverything onCloseModal={() => setModalVisible(false)} />
+              </BottomModal>
+
+              {/* <TouchableOpacity
               onPress={() => setShowDropdown2(!showDropdown2)}>
 
               <View style={styles.addtask}>
@@ -281,7 +345,7 @@ const HomeScreen = () => {
               </View>
             )} */}
 
-{/* <TouchableOpacity onPress={() => setModalVisible(true)}>
+              {/* <TouchableOpacity onPress={() => setModalVisible(true)}>
 
 <View style={styles.addtask}>
   <TitleText>
@@ -295,133 +359,77 @@ const HomeScreen = () => {
 
 </TouchableOpacity> */}
 
-            <TouchableOpacity onPress={() => setShowDropdown2(true)}>
-              <View style={styles.addtask}>
-                <TitleText>
-                  {selectedUser2 ? selectedUser2.name : 'Assigned To'}
-                </TitleText>
-                <Image
-                  source={require('../../assets/images/downarrow.png')}
-                  style={styles.image2}
-                />
-              </View>
-            </TouchableOpacity>
-
-            <Modal
-              visible={showDropdown2}
-              transparent
-              animationType="fade"
-              onRequestClose={() => setShowDropdown2(false)}
-            >
-              <Pressable style={styles.modalBackground} onPress={() => setShowDropdown2(false)}>
-                <View style={styles.modalContainer}>
-                  <FlatList
-                    data={users2}
-                    keyExtractor={(item) => item.id}
-                    ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                    renderItem={renderUser2}
+              <TouchableOpacity onPress={() => setShowDropdown2(true)}>
+                <View style={styles.addtask}>
+                  <TitleText>
+                    {selectedUser2 ? selectedUser2.name : 'Assigned To'}
+                  </TitleText>
+                  <Image
+                    source={require('../../assets/images/downarrow.png')}
+                    style={styles.image2}
                   />
                 </View>
-              </Pressable>
-            </Modal>
+              </TouchableOpacity>
 
-          </View>
+              <Modal
+                visible={showDropdown2}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDropdown2(false)}
+              >
+                <Pressable style={styles.modalBackground} onPress={() => setShowDropdown2(false)}>
+                  <View style={styles.modalContainer}>
+                    <FlatList
+                      data={users}
+                      keyExtractor={(item) => item.id}
+                      ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                      renderItem={renderUser2}
+                    />
+                  </View>
+                </Pressable>
+              </Modal>
+
+            </View>
 
 
-          {/* <ScrollView showsHorizontalScrollIndicator={false} overScrollMode="never"> */}
+            {/* <ScrollView showsHorizontalScrollIndicator={false} overScrollMode="never"> */}
 
-          <View style={{ flexDirection: 'column', gap: 16 }}>
-
-
-            {/* <TaskBox
-                taskTitle="Meeting with client"
-                taskDescription="Discuss project requirements and timelines."
-                imageSource={require('../../assets/images/home_fill.png')}
-                personName="Mehul"
-                dateTime="30 May 2025 - 11:24 AM"
-                onPress={() => navigate('TaskDetailsScreen')}
-                onDelete={() => console.log('Delete pressed')}
-              /> */}
-
-            <FlatList
-              data={allTaskCards}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TaskBox
-                  taskTitle={item.title}
-                  taskDescription={item.description}
-                  imageSource={item.profilePicture} // Or dynamic if needed
-                  personName={item.firstName || 'Unknown'}
-                  dateTime="30 May 2025 - 11:24 AM"
-                  onPress={() => navigate('TaskDetailsScreen', { task: item })}
-                  onDelete={() => console.log('Delete pressed')}
-                />
-              )}
-            />
+            <View style={{ flexDirection: 'column', gap: 16 }}>
 
 
 
-
-
-          </View>
-
-          {/* </ScrollView> */}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-          {/* <FlatList
-                    data={allTaskCards}
-                    keyExtractor={(item) => item}
-                    renderItem={({item}) => (
-                      <TouchableOpacity onPress={() => navigate('TaskListScreen', { taskId: item })}>
-                        <Text style={styles.itemText}>{item}</Text>
-                      </TouchableOpacity>
-                    )}
-                    showsVerticalScrollIndicator={false}
-                    onRefresh={fetchTaskCard}
-                    refreshing={refreshing}
-                    ListEmptyComponent={<Text style={styles.emptyText}>No task dates found</Text>}
+              <FlatList
+                data={allTaskCards}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TaskBox
+                    taskTitle={item.title}
+                    taskDescription={item.description}
+                    imageSource={item.profilePicture} // Or dynamic if needed
+                    personName={item.firstName || 'Unknown'}
+                    dateTime={item.createdAt}
+                    onPress={() => navigate('TaskDetailsScreen', { task: item })}
+                    onDelete={() => deleteTask(item.id)}
                   />
-                  
-                  
-                  <Button title="btn" onPress={fetchTaskCard} color="#ff4d4d" />
-                  {(userIsAdmin) && (
-                    <Button title="Add Task" onPress={() => navigate('AddTask')} color="#0badf5" />
-                  )} */}
+                )}
+              />
 
 
 
-          {/* </View> */}
-        </LinearGradient>
-        <BottomNav backgroundColor="#F5A115"/>
-      </CustomSafeAreaView>
 
-    </View>
-     </>
+
+            </View>
+
+            {/* </ScrollView> */}
+
+            </>
+          }
+          </LinearGradient>
+          <BottomNav backgroundColor="#F5A115" />
+        </CustomSafeAreaView>
+
+      </View>
+    </>
   );
 };
 
@@ -443,7 +451,7 @@ const styles = StyleSheet.create({
     width: '50%',
     borderRadius: 10,
     padding: 15,
-    height: '20%',
+    height: '70%',
     elevation: 5,
     gap: 10,
   },
@@ -495,7 +503,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fff',
   },
-  
+
   arrow2: {
     fontSize: 16,
   },
