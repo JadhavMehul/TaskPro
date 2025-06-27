@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
 import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Modal, ActivityIndicator } from 'react-native'
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -9,6 +9,9 @@ import Feather from '@react-native-vector-icons/feather';
 import YellowButton from '@components/global/YellowButton';
 import { ScrollView } from 'react-native';
 import Toast from '@components/global/Toast'; // 👈 import toast
+import auth from '@react-native-firebase/auth'
+import messaging from "@react-native-firebase/messaging";
+import firestore from "@react-native-firebase/firestore";
 
 
 const LoginScreen = () => {
@@ -23,10 +26,38 @@ const LoginScreen = () => {
 
   const isDisabled = !email || !password;
 
+  // Subscribe the user to a topic
+  const subscribeToTopic = async () => {
+    try {
+      const token = await messaging().getToken();
+      await messaging().subscribeToTopic('all_users');
+      console.log('Subscribed to topic: ', token);
+
+      const currentUser = auth().currentUser;
+
+      if (currentUser?.email) {
+        await firestore()
+          .collection('UserAccounts')
+          .doc(currentUser.email)
+          .update({
+            fcmToken: token,
+        });
+        console.log('Token saved to Firestore');
+      } else {
+        console.warn('No user signed in, cannot save token');
+      }
+
+    } catch (error) {
+      console.error('Subscription to topic failed:', error);
+    }
+  };
+
+
   const handleLogin = async () => {
     setModalVisible(true);
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password)
+      await auth().signInWithEmailAndPassword(email, password)
+      subscribeToTopic();
       setModalVisible(false);
     } catch (error: unknown) {
       const firebaseError = error as { code: string; message: string };
@@ -60,7 +91,7 @@ const LoginScreen = () => {
               {/* </View> */}
             </View>
           </Modal>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
             {toast && (
               <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 999 }}>
                 <Toast message={toast.message} type={toast.type} />
@@ -68,7 +99,8 @@ const LoginScreen = () => {
             )}
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }} // space for fixed footer
+              contentContainerStyle={{ paddingBottom: 120 }} 
+              style= {{paddingHorizontal: 24, paddingTop:24}}
             >
               <TitleText style={styles.titletext}>Sign In</TitleText>
   
@@ -142,7 +174,8 @@ const styles = StyleSheet.create({
   endcontainer : {
     position: 'absolute',
     width: '100%',
-    paddingTop: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     bottom: 0,
     alignItems: 'center',
     backgroundColor: '#FAF8F5',
@@ -180,14 +213,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   container: {
-    padding: 6,
-    borderRadius: 12,
+    
     flex: 1,
-    backgroundColor: "#ffffff",
   },
   inner_container: {
-    paddingLeft: 24,
-    paddingRight: 24,
+    
     flex: 1,
     backgroundColor: "#FAF8F5",
     borderRadius: 12,

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList } from 'react-native'
+import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList, ScrollView,useWindowDimensions } from 'react-native'
 import React, { useState, useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -9,9 +9,16 @@ import BottomModal from '@components/global/BottomModal';
 import Clipboard from '@react-native-clipboard/clipboard';
 import ToggleSwitch from '@components/global/ToggleSwitch';
 import NameCard from '@components/global/Namecard';
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
+import firestore from "@react-native-firebase/firestore";
 
 const AdminScreen = () => {
+  const { width } = useWindowDimensions();
+  const buttonWidth = 171;
+  const gap = 12;
+  // const isWrapped = width < buttonWidth * 2 + gap;
+  // const isWrapped = false;
+  const isWrapped = width < (buttonWidth * 2 + gap + 48);
   
   
   
@@ -32,7 +39,7 @@ const AdminScreen = () => {
   const [isModalVisible2, setModalVisible2] = useState(false);
 
   const [cards, setCards] = useState([
-    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(2) },
+    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(6) },
   ]);
 
   const toggleSwitch = (index: number) => {
@@ -69,7 +76,7 @@ const AdminScreen = () => {
 
   const storePromo = async (aCode: string, uCode: string) => {
     try {
-      await firebase.firestore().collection("PromoCodes").doc("Code").set({
+      await firestore().collection("PromoCodes").doc("Code").set({
         adminCode: aCode,
         userCode: uCode
       })
@@ -91,7 +98,7 @@ const AdminScreen = () => {
 
   const getEmployees = async () => {
     try {
-      const allEmployeeData = await firebase.firestore().collection("UserAccounts").get()
+      const allEmployeeData = await firestore().collection("UserAccounts").get()
       const employees = allEmployeeData.docs.map(doc => {
         const data = doc.data();
         console.log(data);
@@ -111,28 +118,39 @@ const AdminScreen = () => {
     setModalVisible2(true);
   }
 
-  const updateUserAdminStatus = async (userEmailId: string | null, userStatus: boolean, i:any) => {
+  const updateUserAdminStatus = async (
+    userEmailId: string | null,
+    userStatus: boolean,
+    i: any
+  ) => {
+    if (!userEmailId) {
+      console.warn('User email is null, cannot update admin status.');
+      return;
+    }
 
     try {
-      toggleSwitch(i)
-      
-      await firebase.firestore().collection("UserAccounts").doc(userEmailId!).update({ isAdmin:  !userStatus})
+      toggleSwitch(i);
+      await firestore()
+        .collection('UserAccounts')
+        .doc(userEmailId)
+        .update({ isAdmin: !userStatus });
 
+      console.log(`Admin status updated for: ${userEmailId}`);
     } catch (error) {
-      console.log(error);
-      
+      console.error('Error updating admin status:', error);
     }
-    console.log(userEmailId);
-    
-  }
+  };
+
+  
 
 
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: '#FAF8F5'}}>
 
-          <View style={{ padding: 24, alignItems: 'center', flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* <View style={{ padding: 24, alignItems: 'center', flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}> */}
+          <View style={{ padding: 24, alignItems: isWrapped ? 'stretch' : 'center', flexDirection: isWrapped ? 'column' : 'row', gap: 16, justifyContent: 'center', flexWrap: isWrapped ? 'nowrap' : 'wrap',  }}>
 
 
 
@@ -143,9 +161,13 @@ const AdminScreen = () => {
               imageSource={require('@assets/images/promocode_img.png')}
               title="Promo Code"
               onPress={generatePromoCode}
+              style={isWrapped ? styles.fullWidth : styles.fixedWidth}
             />
 
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
+              <ScrollView>
+
+              
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
                 <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
                   Admin Promo Code
@@ -218,21 +240,27 @@ const AdminScreen = () => {
                   </TitleText>
                 </View>
               </View>
+              </ScrollView>
+              {/* <View style={{ height: 190 }}>
 
-              <View style={{ height: 200 }}>
-
-              </View>
-              <TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
+              </View> */}
+              
+              
+<View style={styles.endcontainer}>
+<TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
                 <TitleText style={styles.orangebtntext}>
                   Regenrate
                 </TitleText>
               </TouchableOpacity>
+
+                        </View>
             </BottomModal>
 
             <GradientButton
               imageSource={require('@assets/images/employes_img.png')}
               title="Employees"
               onPress={getEmployees}
+              style={isWrapped ? styles.fullWidth : styles.fixedWidth}
             />
 
 
@@ -266,6 +294,8 @@ const AdminScreen = () => {
 
               {/* <View style={{ flexDirection: 'column', gap: 16 }}> */}
 
+              
+
                 <FlatList
                   data={cards}
                   keyExtractor={(item, index) => index.toString()}
@@ -273,7 +303,7 @@ const AdminScreen = () => {
                     <NameCard
                       key={index}
                       name={item.name}
-                      imageSource={require('../../assets/images/home_fill.png')}
+                      imageSource={require('@assets/images/home_fill.png')}
                       isOn={item.isOn}
                       toggleSwitch={() => updateUserAdminStatus(item.userEmail, item.isOn, index)}
                       knobPosition={item.knobPosition}
@@ -307,7 +337,7 @@ const AdminScreen = () => {
 
 
         </View>
-        <BottomNav />
+        <BottomNav  backgroundColor="#FAF8F5"/>
       </CustomSafeAreaView>
 
     </View>
@@ -317,10 +347,25 @@ const AdminScreen = () => {
 const styles = StyleSheet.create({
 
 
-  switch: {
-    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }], // optional to increase size
+  endcontainer: {
+    width: '100%',
+    paddingTop: 16,
+    bottom: 0,
+    backgroundColor: '#fff',
+
   },
 
+  switch: {
+    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }], 
+  },
+
+
+  fixedWidth: {
+    width: 171,
+  },
+  fullWidth: {
+    width: '100%',
+  },
 
 
 
@@ -343,9 +388,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E7E2DA',
     backgroundColor: '#ffffff',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
+    // paddingVertical: 16,
+    // paddingHorizontal: 32,
+    maxWidth: 75,
+    width: '100%',
+    minHeight: 75,
+    height: '100%',
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   image3: {

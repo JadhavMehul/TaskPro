@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
 import { Picker } from '@react-native-picker/picker';
 
 import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Alert, Modal, ActivityIndicator } from 'react-native'
@@ -10,6 +10,8 @@ import InputField from '@components/global/InputField';
 import Feather from '@react-native-vector-icons/feather';
 import YellowButton from '@components/global/YellowButton';
 import { ScrollView } from 'react-native';
+import auth from '@react-native-firebase/auth'
+import firestore from '@react-native-firebase/firestore'
 
 
 const RegisterScreen: React.FC = () => {
@@ -35,12 +37,12 @@ const RegisterScreen: React.FC = () => {
 
   const [checked, setChecked] = useState(false);
 
-  const isDisabled = !email || !password || !firstName|| !lastName||!selectedGender||!cnfPassword||!promoCode||!checked;
+  const isDisabled = !email || !password || !firstName || !lastName || !selectedGender || !cnfPassword || !promoCode || !checked;
 
 
   const getPromoCodes = async () => {
     try {
-      const codeData = await firebase.firestore().collection("PromoCodes").doc("Code").get();
+      const codeData = await firestore().collection("PromoCodes").doc("Code").get();
 
       if (!codeData.exists) {
         console.log("Promo code document not found");
@@ -48,7 +50,7 @@ const RegisterScreen: React.FC = () => {
       } else {
         const data = codeData.data();
         if (data?.adminCode && data?.userCode) {
-          return({
+          return ({
             adminCode: data.adminCode,
             userCode: data.userCode,
           });
@@ -65,7 +67,7 @@ const RegisterScreen: React.FC = () => {
     const adminPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
     const userPromoCode = Math.floor(1000 + Math.random() * 9000).toString();
     try {
-      await firebase.firestore().collection("PromoCodes").doc("Code").set({
+      await firestore().collection("PromoCodes").doc("Code").set({
         adminCode: adminPromoCode,
         userCode: userPromoCode
       })
@@ -73,34 +75,38 @@ const RegisterScreen: React.FC = () => {
       console.log(error);
     }
   }
-  
+
   const handleRegister = async (adminValue: boolean) => {
     try {
       setModalVisible(true);
-      await firebase.auth().createUserWithEmailAndPassword(email, password).then((userCredential) => {
-        var user = userCredential.user;
-        firebase.firestore().collection("UserAccounts").doc(email).set({
-          userId: user?.uid,
-          firstName: firstName,
-          lastName: lastName,
-          email: email,
-          gender: selectedGender,
-          isAdmin: adminValue
-          // birthDate: birthDate,
-        })
-      }).then(() => {
-        updatePromo();
-      })
+
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      await firestore().collection("UserAccounts").doc(email).set({
+        userId: user?.uid,
+        firstName,
+        lastName,
+        email,
+        gender: selectedGender,
+        isAdmin: adminValue,
+        profilePicture: 'https://picsum.photos/200',
+      });
+
+      await updatePromo(); // optional
+
+      await auth().signOut(); // ✅ sign out only if above succeed
+
       setModalVisible(false);
     } catch (error) {
       console.log(error);
-      
-      Alert.alert('Error', 'Internal server error please try again later.', [
+      Alert.alert('Error', 'Internal server error. Please try again later.', [
         { text: 'OK', onPress: () => console.log('OK Pressed') },
       ]);
       setModalVisible(false);
     }
   };
+
 
 
   const passChecker = async () => {
@@ -132,12 +138,12 @@ const RegisterScreen: React.FC = () => {
 
   }
 
-  
+
 
   return (
     <View style={styles.container}>
       <View style={styles.inner_container}>
-        <CustomSafeAreaView style={{ flex: 1 }}>
+        <CustomSafeAreaView style={{ flex: 1 ,}}>
           <Modal
             animationType="fade"
             transparent={true}
@@ -146,16 +152,17 @@ const RegisterScreen: React.FC = () => {
           >
             <View style={styles.modalBackground}>
               {/* <View style={styles.activityIndicatorWrapper}> */}
-                <ActivityIndicator size="large" color="#267EDF" />
+              <ActivityIndicator size="large" color="#267EDF" />
 
-                
+
               {/* </View> */}
             </View>
           </Modal>
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1 , backgroundColor: '#FAF8F5'}}>
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }} 
+              contentContainerStyle={{ paddingBottom: 120 }}
+              style= {{paddingHorizontal: 24, paddingTop:24}}
             >
               <TitleText style={styles.titletext}>Sign Up</TitleText>
 
@@ -267,7 +274,7 @@ const RegisterScreen: React.FC = () => {
                   <View style={styles.pickerWrapper}>
                     <Picker
                       selectedValue={selectedGender}
-                      onValueChange={(itemValue) => setSelectedGender(itemValue)}
+                      onValueChange={(itemValue: string) => setSelectedGender(itemValue)}
                       style={styles.pickerText} // only font styles like color, fontSize
                       dropdownIconColor="#999" // optional: customize dropdown arrow
                     >
@@ -318,7 +325,7 @@ const RegisterScreen: React.FC = () => {
 
             </ScrollView>
             <View style={styles.endcontainer}>
-              <YellowButton title="Register" onPress={passChecker} disabled={!email || !password || !firstName|| !lastName||!selectedGender||!cnfPassword||!promoCode||!checked}/>
+              <YellowButton title="Register" onPress={passChecker} disabled={!email || !password || !firstName || !lastName || !selectedGender || !cnfPassword || !promoCode || !checked} />
               <TouchableOpacity onPress={() => navigate('LoginScreen')}>
                 <TitleText style={styles.link}>
                   Have a account?
@@ -357,7 +364,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowOffset: { width: 0, height: 4 },
     shadowRadius: 12,
-    elevation: 2, 
+    elevation: 2,
   },
   checkedBox: {
     backgroundColor: '#FDC201',
@@ -403,7 +410,8 @@ const styles = StyleSheet.create({
   endcontainer: {
     position: 'absolute',
     width: '100%',
-    paddingTop: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     bottom: 0,
     alignItems: 'center',
     backgroundColor: '#FAF8F5',
@@ -441,14 +449,11 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   container: {
-    padding: 6,
-    borderRadius: 12,
+    
     flex: 1,
-    backgroundColor: "#ffffff",
   },
   inner_container: {
-    paddingLeft: 24,
-    paddingRight: 24,
+    
     flex: 1,
     backgroundColor: "#FAF8F5",
     borderRadius: 12,

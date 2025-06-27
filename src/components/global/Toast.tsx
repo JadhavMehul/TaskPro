@@ -23,6 +23,9 @@ const Toast = ({ message, type }: ToastProps) => {
   }, []);
 
   return (
+    <View style={{paddingHorizontal: 24,}}>
+
+   
     <Animated.View
     style={[
       styles.toast,
@@ -35,6 +38,7 @@ const Toast = ({ message, type }: ToastProps) => {
     <Feather name={iconName} size={20} color={iconColor} style={styles.icon} />
     <Text style={styles.message}>{message}</Text>
   </Animated.View>
+  </View>
   );
 };
 

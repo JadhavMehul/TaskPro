@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
-import { firebase } from "../../../firebaseConfig";
+// import { firebase } from "../../../firebaseConfig";
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { navigate } from '@utils/NavigationUtils';
 
@@ -17,21 +17,21 @@ const TaskListScreen = () => {
 
   const fetchTaskList = async () => {
     setRefreshing(true);
-    try {
-      const doc = await firebase.firestore().collection('TaskList').doc(taskId).get();
-      const data = doc.data();
+    // try {
+    //   const doc = await firebase.firestore().collection('TaskList').doc(taskId).get();
+    //   const data = doc.data();
 
-      if (data?.taskList) {
-        const taskArray = Object.values(data.taskList);
-        setAllTaskList(taskArray);
-      } else {
-        setAllTaskList([]);
-      }
+    //   if (data?.taskList) {
+    //     const taskArray = Object.values(data.taskList);
+    //     setAllTaskList(taskArray);
+    //   } else {
+    //     setAllTaskList([]);
+    //   }
 
-      console.log("Fetched data:", data);
-    } catch (error) {
-      console.error("Error getting task list:", error);
-    }
+    //   console.log("Fetched data:", data);
+    // } catch (error) {
+    //   console.error("Error getting task list:", error);
+    // }
     setRefreshing(false);
   };
 
