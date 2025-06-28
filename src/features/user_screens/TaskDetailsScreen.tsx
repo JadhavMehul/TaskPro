@@ -1,8 +1,9 @@
 import {
   View, Text, StyleSheet, Alert, Button, Image, TouchableOpacity, Modal,
-  Pressable
+  Pressable,
+  ActivityIndicator
 } from 'react-native'
-import React, { useState,useRef } from 'react';
+import React, { useState,useRef, useEffect } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
@@ -13,6 +14,8 @@ import ReadMoreText from '@components/global/ReadMoreText';
 
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import { useAudio } from '../../components/global/AudioContext';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import firestore from "@react-native-firebase/firestore";
 
 
 
@@ -44,9 +47,29 @@ const users2: User2[] = [
   },
 ];
 
+type RootStackParamList = {
+  TaskDetailsScreen: { taskId: string }; // Replace `any` with your actual task type
+};
+
+type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScreen'>;
 
 
 const TaskDetailsScreen = () => {
+
+  const route = useRoute<TaskDetailsScreenRouteProp>();
+  const { taskId } = route.params;
+
+  
+  const [activityIndicator, setActivityIndicator] = useState(false);
+  const [allData, setAllData] = useState({
+    title: '',
+    description: '',
+    recordedSound: '',
+    assignedProfilePicture: '',
+    assignedName: '',
+    taskStatus: '',
+    needPermission: false
+  })
 
   const { audioPath } = useAudio();
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
@@ -72,12 +95,6 @@ const TaskDetailsScreen = () => {
       console.error('Playback failed', error);
     }
   };
-
-
-
-
-
-
 
 
 
@@ -164,9 +181,46 @@ const TaskDetailsScreen = () => {
 
   const [selected, setSelected] = useState(false);
   const [selected2, setSelected2] = useState(false);
+
+  const fetchTask = async () => {
+    setActivityIndicator(true)
+    try {
+      const taskData = await firestore().collection('TaskList').doc(taskId).get();
+      if (taskData.exists()) {
+        const data = taskData.data();
+        const fetchAssignToData = await firestore().collection('UserAccounts').doc(data?.assignTo).get();
+        const assignToData = fetchAssignToData.data();
+        setAllData({
+          title: data?.title || '',
+          description: data?.description || '',
+          recordedSound: data?.recordedSound || null,
+          assignedProfilePicture: assignToData?.profilePicture || '',
+          assignedName: assignToData?.firstName || '',
+          taskStatus: data?.taskStatus || '',
+          needPermission: data?.needPermission || false,
+        })
+        console.log(data);
+        
+      }
+      
+    } catch (error) {
+      console.log(error);
+      
+    } finally {
+      setActivityIndicator(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchTask(); 
+  }, [])
+  
+
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
+        {activityIndicator ?
+                              <ActivityIndicator size="large" color="#FECC01" /> :
         <View style={{ flex: 1, backgroundColor:'#FAF8F5'}}>
           <TouchableOpacity onPress={goBack}>
             <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center' }} >
@@ -187,14 +241,14 @@ const TaskDetailsScreen = () => {
               {/* <TitleText style={styles.tasktitle}>taskTitle</TitleText> */}
 
               <ReadMoreText
-                text="taskTitle"
+                text={allData.title}
                 numberOfLines={1}
                 style={styles.text}
                 toggleTextStyle={styles.readMoreLink}
               />
 
               <ReadMoreText
-                text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
+                text={allData.description}
                 numberOfLines={1}
                 style={styles.text}
                 toggleTextStyle={styles.readMoreLink}
@@ -212,9 +266,13 @@ const TaskDetailsScreen = () => {
 
               <View style={styles.righttop}>
                 <View style={styles.circle}>
-                  <Image source={require('../../assets/images/home_fill.png')} style={styles.circleImage} />
+                  <Image source={
+                    allData.assignedProfilePicture
+                      ? { uri: allData.assignedProfilePicture } // Remote URL string
+                      : require('@assets/images/profileIcon.png') // Local fallback
+                  } style={styles.circleImage} />
                 </View>
-                <Text style={styles.personName}>Mehul</Text>
+                <Text style={styles.personName}>{allData.assignedName}</Text>
               </View>
 
               <View style={{ flexDirection: 'column', gap: 6 }}>
@@ -225,7 +283,8 @@ const TaskDetailsScreen = () => {
                     { backgroundColor: getBackgroundColor(selectedStatus) },
                   ]}>
                     <TitleText>
-                      {selectedStatus}
+                      {allData.taskStatus}
+                      {/* {selectedStatus} */}
                     </TitleText>
                     <Image
                       source={require('../../assets/images/downarrow.png')}
@@ -299,7 +358,10 @@ const TaskDetailsScreen = () => {
       </TouchableOpacity> */}
 
 
-            <View style={styles.commentbox}>
+            {
+              allData.needPermission && (
+              
+              <View style={styles.commentbox}>
 
               <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
               <View style={styles.addtask}>
@@ -327,6 +389,8 @@ const TaskDetailsScreen = () => {
 
               </View>
             </View>
+           )}
+            
 
 
             <View style={styles.commentbox}>
@@ -371,6 +435,7 @@ const TaskDetailsScreen = () => {
 
           </View>
         </View>
+}
         {/* <BottomNav /> */}
       </CustomSafeAreaView>
 
