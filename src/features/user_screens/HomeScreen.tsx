@@ -409,7 +409,7 @@ const HomeScreen = () => {
                     personName={item.firstName || 'Unknown'}
                     dateTime={item.createdAt}
                     taskStatus={item.taskStatus}
-                    onPress={() => navigate('TaskDetailsScreen', { task: item })}
+                    onPress={() => navigate('TaskDetailsScreen', { taskId: item.id })}
                     onDelete={() => deleteTask(item.id)}
                   />
                 )}

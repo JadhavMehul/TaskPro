@@ -1,8 +1,11 @@
 import {
   View, Text, StyleSheet, Alert, Button, Image, TouchableOpacity, Modal,
-  Pressable
+  Pressable,
+  ActivityIndicator,
+  FlatList,
+  TouchableWithoutFeedback
 } from 'react-native'
-import React, { useState,useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
@@ -13,6 +16,8 @@ import ReadMoreText from '@components/global/ReadMoreText';
 
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import { useAudio } from '../../components/global/AudioContext';
+import { RouteProp, useRoute } from '@react-navigation/native';
+import firestore from "@react-native-firebase/firestore";
 
 
 
@@ -20,33 +25,63 @@ import { useAudio } from '../../components/global/AudioContext';
 const statuses = ['New', 'Done', 'Approved'];
 
 
-type User2 = {
+// type User2 = {
+//   id: string;
+//   name: string;
+//   image: string;
+// };
+
+// const users2: User2[] = [
+//   {
+//     id: '0',
+//     name: 'Unassign',
+//     image: '',
+//   },
+//   {
+//     id: '1',
+//     name: 'Mehul',
+//     image: 'https://i.imgur.com/1Qf1Z0G.jpg',
+//   },
+//   {
+//     id: '2',
+//     name: 'Chris',
+//     image: 'https://i.imgur.com/1Qf1Z0G.jpg',
+//   },
+// ];
+
+type User = {
   id: string;
   name: string;
-  image: string;
+  profilePicture: string;
+  userEmail: string | null;
 };
 
-const users2: User2[] = [
-  {
-    id: '0',
-    name: 'Unassign',
-    image: '',
-  },
-  {
-    id: '1',
-    name: 'Mehul',
-    image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-  },
-  {
-    id: '2',
-    name: 'Chris',
-    image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-  },
-];
+type RootStackParamList = {
+  TaskDetailsScreen: { taskId: string }; // Replace `any` with your actual task type
+};
 
+type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScreen'>;
 
 
 const TaskDetailsScreen = () => {
+
+  const route = useRoute<TaskDetailsScreenRouteProp>();
+  const { taskId } = route.params;
+
+
+  const [activityIndicator, setActivityIndicator] = useState(false);
+  const [allData, setAllData] = useState({
+    title: '',
+    description: '',
+    recordedSound: '',
+    assignedProfilePicture: '',
+    assignedName: '',
+    taskStatus: '',
+    needPermission: false
+  })
+  const [users, setUsers] = useState([
+    { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
+  ]);
 
   const { audioPath } = useAudio();
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
@@ -75,24 +110,40 @@ const TaskDetailsScreen = () => {
 
 
 
-
-
-
-
-
-
-  const [selectedUser2, setSelectedUser2] = useState<User2 | null>(null);
+  const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
 
-  const handleSelect2 = (user2: User2) => {
-    if (user2.id === '0') {
+  const changeAssignToUserInDB = async (user: any) => {
+    setActivityIndicator(true)
+    try {
+      await firestore().collection('TaskList').doc(taskId).update({
+        assignTo: user.userEmail,
+      });
+      
+      setAllData(prev => ({
+        ...prev,
+        assignedProfilePicture: user.profilePicture,
+        assignedName: user.name
+      }));
+    } catch (error) {
+      console.log(error);
+      
+    } finally {
+      setActivityIndicator(false)
+    }
+  }
+
+  const handleSelect2 = (user: User) => {
+    if (user.id === '0') {
       setSelectedUser2(null);
     } else {
-      setSelectedUser2(user2);
+      setSelectedUser2(user);
+      changeAssignToUserInDB(user)
+      
     }
     setShowDropdown2(false);
   };
-  const renderUser2 = ({ item }: { item: User2 }) => {
+  const renderUser2 = ({ item }: { item: User }) => {
     const isSelected2 = selectedUser2?.id === item.id;
 
     if (item.id === '0') {
@@ -109,7 +160,7 @@ const TaskDetailsScreen = () => {
 
     const content2 = (
       <View style={styles.userInner2}>
-        <Image source={{ uri: item.image }} style={styles.avatar2} />
+        <Image source={{ uri: item.profilePicture }} style={styles.avatar2} />
         <Text style={[styles.userName2, isSelected2 && { color: '#fff' }]}>
           {item.name}
         </Text>
@@ -164,213 +215,329 @@ const TaskDetailsScreen = () => {
 
   const [selected, setSelected] = useState(false);
   const [selected2, setSelected2] = useState(false);
+
+  const updateTaskStatus = async (status: string) => {
+    setActivityIndicator(true)
+    try {
+      await firestore().collection('TaskList').doc(taskId).update({
+        taskStatus: status
+      });
+      setAllData(prev => ({
+        ...prev,
+        taskStatus: status
+      }));
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setSelectedStatus(status);
+      setActivityIndicator(false)
+      setShowDropdown(false);
+    }
+  }
+
+  const fetchTask = async () => {
+    setActivityIndicator(true)
+    try {
+      const taskData = await firestore().collection('TaskList').doc(taskId).get();
+      if (taskData.exists()) {
+        const data = taskData.data();
+        const fetchAssignToData = await firestore().collection('UserAccounts').doc(data?.assignTo).get();
+        const assignToData = fetchAssignToData.data();
+        setAllData({
+          title: data?.title || '',
+          description: data?.description || '',
+          recordedSound: data?.recordedSound || null,
+          assignedProfilePicture: assignToData?.profilePicture || '',
+          assignedName: assignToData?.firstName || '',
+          taskStatus: data?.taskStatus || '',
+          needPermission: data?.needPermission || false,
+        })
+        console.log(data);
+        setSelectedStatus(data?.taskStatus || 'New');
+      }
+
+    } catch (error) {
+      console.log(error);
+
+    } finally {
+      setActivityIndicator(false)
+    }
+  }
+
+  const getEmployees = async () => {
+    setActivityIndicator(true);
+    try {
+      const allEmployeeData = await firestore().collection("UserAccounts").get();
+      const employees = allEmployeeData.docs.map((doc, i) => {
+        const data = doc.data();
+        return {
+          id: (i + 1).toString(),
+          name: data.firstName || '',
+          profilePicture: data.profilePicture || '',
+          userEmail: data.email || null,
+        };
+      });
+
+      const updatedUsers = [
+        { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
+        ...employees,
+      ];
+      setUsers(updatedUsers);
+    } catch (error) {
+      console.log("Error fetching employees:", error);
+    } finally {
+      setActivityIndicator(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTask();
+    getEmployees();
+  }, [])
+
+
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1, backgroundColor:'#FAF8F5'}}>
-          <TouchableOpacity onPress={goBack}>
-            <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center' }} >
-              <Image
-                source={require('../../assets/images/backicon.png')}
-                style={styles.image}
-              />
-              <TitleText style={styles.backtext}>Back</TitleText>
+        {activityIndicator ?
+          <ActivityIndicator size="large" color="#FECC01" /> :
+          <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
+            <TouchableOpacity onPress={goBack}>
+              <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center' }} >
+                <Image
+                  source={require('../../assets/images/backicon.png')}
+                  style={styles.image}
+                />
+                <TitleText style={styles.backtext}>Back</TitleText>
 
-            </View>
-          </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
 
 
-          <View style={{ padding: 16, gap: 16 }}>
+            <View style={{ padding: 16, gap: 16 }}>
 
-            <View style={styles.taskbox}>
+              <View style={styles.taskbox}>
 
-              {/* <TitleText style={styles.tasktitle}>taskTitle</TitleText> */}
+                {/* <TitleText style={styles.tasktitle}>taskTitle</TitleText> */}
 
-              <ReadMoreText
-                text="taskTitle"
-                numberOfLines={1}
-                style={styles.text}
-                toggleTextStyle={styles.readMoreLink}
-              />
+                <ReadMoreText
+                  text={allData.title}
+                  numberOfLines={1}
+                  style={styles.text}
+                  toggleTextStyle={styles.readMoreLink}
+                />
 
-              <ReadMoreText
-                text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-                numberOfLines={1}
-                style={styles.text}
-                toggleTextStyle={styles.readMoreLink}
-              />
-              {/* <TitleText style={styles.taskdescription}>taskDescription</TitleText> */}
+                <ReadMoreText
+                  text={allData.description}
+                  numberOfLines={1}
+                  style={styles.text}
+                  toggleTextStyle={styles.readMoreLink}
+                />
+                {/* <TitleText style={styles.taskdescription}>taskDescription</TitleText> */}
 
-            </View>
-
-            <View style={styles.commentbox}>
-              <TouchableOpacity onPress={onPlaySound} >
-              <Image source={require('../../assets/images/speaker.png')} style={styles.speaker} />
-              </TouchableOpacity>
-
-              
-
-              <View style={styles.righttop}>
-                <View style={styles.circle}>
-                  <Image source={require('../../assets/images/home_fill.png')} style={styles.circleImage} />
-                </View>
-                <Text style={styles.personName}>Mehul</Text>
               </View>
 
-              <View style={{ flexDirection: 'column', gap: 6 }}>
-
-                <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)} >
-                  <View style={[
-                    styles.addtask,
-                    { backgroundColor: getBackgroundColor(selectedStatus) },
-                  ]}>
-                    <TitleText>
-                      {selectedStatus}
-                    </TitleText>
-                    <Image
-                      source={require('../../assets/images/downarrow.png')}
-                      style={styles.image2}
-                    />
-                  </View>
-
+              <View style={styles.commentbox}>
+                <TouchableOpacity onPress={onPlaySound} >
+                  <Image source={require('../../assets/images/speaker.png')} style={styles.speaker} />
                 </TouchableOpacity>
 
 
-                <Modal
-                  transparent
-                  visible={showDropdown}
-                  animationType="fade"
-                  onRequestClose={() => setShowDropdown(false)}
-                >
-                  <Pressable
-                    style={styles.modalBackground}
-                    onPress={() => setShowDropdown(false)}
-                  >
-                    <View style={styles.dropdown}>
-                      {statuses.map((status) => (
-                        <TouchableOpacity
-                          key={status}
-                          style={[styles.option, { backgroundColor: getBackgroundColor(status) }]}
-                          onPress={() => {
-                            setSelectedStatus(status);
-                            setShowDropdown(false);
-                          }}
-                        >
-                          <Text style={styles.optionText}>{status}</Text>
 
-                        </TouchableOpacity>
+                <View style={styles.righttop}>
+                  <View style={styles.circle}>
+                    <Image source={
+                      allData.assignedProfilePicture
+                        ? { uri: allData.assignedProfilePicture } // Remote URL string
+                        : require('@assets/images/profileIcon.png') // Local fallback
+                    } style={styles.circleImage} />
+                  </View>
+                  <Text style={styles.personName}>{allData.assignedName}</Text>
+                </View>
+
+                <View style={{ flexDirection: 'column', gap: 6 }}>
+
+                  <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)} >
+                    <View style={[
+                      styles.addtask,
+                      { backgroundColor: getBackgroundColor(selectedStatus) },
+                    ]}>
+                      <TitleText>
+                        {allData.taskStatus}
+                        {/* {selectedStatus} */}
+                      </TitleText>
+                      <Image
+                        source={require('../../assets/images/downarrow.png')}
+                        style={styles.image2}
+                      />
+                    </View>
+
+                  </TouchableOpacity>
+
+
+                  <Modal
+                    transparent
+                    visible={showDropdown}
+                    animationType="fade"
+                    onRequestClose={() => setShowDropdown(false)}
+                  >
+                    <Pressable
+                      style={styles.modalBackground}
+                      onPress={() => setShowDropdown(false)}
+                    >
+                      <View style={styles.dropdown}>
+                        {statuses.map((status) => (
+                          <TouchableOpacity
+                            key={status}
+                            style={[styles.option, { backgroundColor: getBackgroundColor(status) }]}
+                            onPress={() => {
+                              updateTaskStatus(status);
+                            }}
+                          >
+                            <Text style={styles.optionText}>{status}</Text>
+
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </Pressable>
+                  </Modal>
+
+
+                  <TouchableOpacity
+                    onPress={() => setShowDropdown2(!showDropdown2)}>
+
+                    <View style={styles.addtask}>
+                      <TitleText style={styles.dropdownText2}>
+                        {'Assign To'}
+                        {/* {selectedUser2 ? selectedUser2.name : 'Assign To'} */}
+                      </TitleText>
+                      <Image
+                        source={require('../../assets/images/downarrow.png')}
+                        style={styles.image2}
+                      />
+                    </View>
+
+                  </TouchableOpacity>
+
+
+
+                  {/* {showDropdown2 && (
+                    <View style={styles.dropdownList2}>
+                      {users.map((item) => (
+                        <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
                       ))}
                     </View>
-                  </Pressable>
-                </Modal>
+                  )} */}
+
+                  <Modal
+                    visible={showDropdown2}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setShowDropdown2(false)}
+                  >
+                    <TouchableWithoutFeedback onPress={() => setShowDropdown2(false)}>
+                      <View style={styles.modalOverlay}>
+                        <TouchableWithoutFeedback>
+                          <View style={styles.modalContent}>
+                            <FlatList
+                              data={users}
+                              keyExtractor={(item) => item.id}
+                              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                              renderItem={renderUser2}
+                            />
+                          </View>
+                        </TouchableWithoutFeedback>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </Modal>
 
 
-                <TouchableOpacity
-                  onPress={() => setShowDropdown2(!showDropdown2)}>
-
-                  <View style={styles.addtask}>
-                    <TitleText style={styles.dropdownText2}>
-                      {selectedUser2 ? selectedUser2.name : 'Assign To'}
-                    </TitleText>
-                    <Image
-                      source={require('../../assets/images/downarrow.png')}
-                      style={styles.image2}
-                    />
-                  </View>
-
-                </TouchableOpacity>
-
-
-
-                {showDropdown2 && (
-                  <View style={styles.dropdownList2}>
-                    {users2.map((item) => (
-                      <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
-                    ))}
-                  </View>
-                )}
-
-
+                </View>
               </View>
-            </View>
 
-            {/* <TouchableOpacity onPress={onPlaySound} style={styles.playBtn}>
+              {/* <TouchableOpacity onPress={onPlaySound} style={styles.playBtn}>
         <Text style={styles.btnText}>Play Recording</Text>
       </TouchableOpacity> */}
 
 
-            <View style={styles.commentbox}>
+              {
+                allData.needPermission && (
 
-              <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
-              <View style={styles.addtask}>
-                <TouchableOpacity onPress={() => setSelected(!selected)}>
-                  <Image
-                    source={
-                      selected
-                        ? require('../../assets/images/like_fill.png')
-                        : require('../../assets/images/like_unfill.png')
-                    }
-                    style={styles.icon}
-                  />
-                </TouchableOpacity>
+                  <View style={styles.commentbox}>
 
-                <TouchableOpacity onPress={() => setSelected2(!selected2)}>
-                  <Image
-                    source={
-                      selected2
-                        ? require('../../assets/images/dislike_fill.png')
-                        : require('../../assets/images/dislike_unfill.png')
-                    }
-                    style={styles.icon}
-                  />
-                </TouchableOpacity>
+                    <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
+                    <View style={styles.addtask}>
+                      <TouchableOpacity onPress={() => setSelected(!selected)}>
+                        <Image
+                          source={
+                            selected
+                              ? require('../../assets/images/like_fill.png')
+                              : require('../../assets/images/like_unfill.png')
+                          }
+                          style={styles.icon}
+                        />
+                      </TouchableOpacity>
 
-              </View>
-            </View>
+                      <TouchableOpacity onPress={() => setSelected2(!selected2)}>
+                        <Image
+                          source={
+                            selected2
+                              ? require('../../assets/images/dislike_fill.png')
+                              : require('../../assets/images/dislike_unfill.png')
+                          }
+                          style={styles.icon}
+                        />
+                      </TouchableOpacity>
 
-
-            <View style={styles.commentbox}>
-
-              <TitleText style={styles.textualtext}>Comment</TitleText>
-              <Image
-                source={require('../../assets/images/addicon.png')}
-                style={styles.image2}
-              />
-            </View>
-
-            <View style={styles.commentbox}>
-
-              <View style={{ flexDirection: 'row', gap: 0 }}>
-
-                <View style={styles.righttop}>
-                  <View style={styles.circle}>
-                    <Image source={require('../../assets/images/home_fill.png')} style={styles.circleImage} />
+                    </View>
                   </View>
-                  <Text style={styles.personName}>Mehul</Text>
-                </View>
+                )}
 
-                <View style={{ flexDirection: 'column', gap: 6, maxWidth: '70%' }}>
-                  <TitleText>30 May 2025 11:25 AM</TitleText>
 
-                  <ReadMoreText
-                    text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-                    numberOfLines={2}
-                    style={styles.text}
-                    toggleTextStyle={styles.readMoreLink}
-                  />
-                  {/* <TitleText >Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam.</TitleText> */}
-                </View>
 
+              <View style={styles.commentbox}>
+
+                <TitleText style={styles.textualtext}>Comment</TitleText>
+                <Image
+                  source={require('../../assets/images/addicon.png')}
+                  style={styles.image2}
+                />
               </View>
 
+              <View style={styles.commentbox}>
 
-              <TouchableOpacity onPress={() => { }}>
-                <Feather name="trash" size={24} color="red" />
-              </TouchableOpacity>
+                <View style={{ flexDirection: 'row', gap: 0 }}>
+
+                  <View style={styles.righttop}>
+                    <View style={styles.circle}>
+                      <Image source={require('../../assets/images/home_fill.png')} style={styles.circleImage} />
+                    </View>
+                    <Text style={styles.personName}>Mehul</Text>
+                  </View>
+
+                  <View style={{ flexDirection: 'column', gap: 6, maxWidth: '70%' }}>
+                    <TitleText>30 May 2025 11:25 AM</TitleText>
+
+                    <ReadMoreText
+                      text="Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
+                      numberOfLines={2}
+                      style={styles.text}
+                      toggleTextStyle={styles.readMoreLink}
+                    />
+                    {/* <TitleText >Lorem ipsum is a dummy o jherbsd kwjebna  ljwnde  lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam.</TitleText> */}
+                  </View>
+
+                </View>
+
+
+                <TouchableOpacity onPress={() => { }}>
+                  <Feather name="trash" size={24} color="red" />
+                </TouchableOpacity>
+              </View>
+
             </View>
-
           </View>
-        </View>
+        }
         {/* <BottomNav /> */}
       </CustomSafeAreaView>
 
@@ -386,6 +553,18 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     color: '#333',
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    backgroundColor: '#FFF',
+    width: '50%',
+    borderRadius: 10,
+    padding: 15,
+    height: '70%',
+    elevation: 5,
+    gap: 10,
   },
   readMoreLink: {
     color: 'orange',
@@ -449,18 +628,20 @@ const styles = StyleSheet.create({
   },
 
 
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    height: '50%',
+    borderRadius: 10,
+    padding: 16,
 
-
-
-
-
-
-
-
-
-
-
-
+  },
   modalBackground: {
     flex: 1,
   },
