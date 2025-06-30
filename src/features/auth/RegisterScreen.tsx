@@ -90,7 +90,7 @@ const RegisterScreen: React.FC = () => {
         email,
         gender: selectedGender,
         isAdmin: adminValue,
-        profilePicture: 'https://picsum.photos/200',
+        profilePicture: 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=35dcbb4b-bf4e-4e91-ac0a-25a5b600b422',
       });
 
       await updatePromo(); // optional

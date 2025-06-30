@@ -4,6 +4,7 @@ import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 // import { firebase } from "../../../firebaseConfig";
 import auth from '@react-native-firebase/auth'
+import storage from '@react-native-firebase/storage'
 import messaging from '@react-native-firebase/messaging';
 import TitleText from '@components/global/Titletext';
 import ToggleSwitch from '@components/global/ToggleSwitch';
@@ -12,6 +13,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import BottomModal from '@components/global/BottomModal';
 import firestore from '@react-native-firebase/firestore';
 import { StatusBar } from 'react-native';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 
 
@@ -32,6 +34,7 @@ const ProfileScreen = () => {
 
   // Modal input states
   const [formData, setFormData] = useState({
+    profilePicture: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -51,8 +54,6 @@ const ProfileScreen = () => {
 
   const openModal = () => setVisible(true);
   const closeModal = () => setVisible(false);
-
-
 
 
   const [isOn, setIsOn] = useState(false);
@@ -87,6 +88,7 @@ const ProfileScreen = () => {
         if (storedData.exists()) {
           const data = storedData.data();
           setFormData({
+            profilePicture: data?.profilePicture || 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=35dcbb4b-bf4e-4e91-ac0a-25a5b600b422',
             firstName: data?.firstName || '',
             lastName: data?.lastName || '',
             email: data?.email || '',
@@ -95,6 +97,8 @@ const ProfileScreen = () => {
             addressLineOne: data?.addressLineOne || '',
             addressLineTwo: data?.addressLineTwo || '',
           });
+          console.log(data);
+
           setIsOn(data?.isAdmin || false);
           setUserIsAdmin(data?.isAdmin || false);
         }
@@ -109,6 +113,34 @@ const ProfileScreen = () => {
       console.log(error);
     }
   }
+
+  const handleUploadImage = async () => {
+    console.log('pressed me');
+
+    launchImageLibrary(
+      { mediaType: 'photo', quality: 1 },
+      async (response) => {
+        const asset = response.assets?.[0];
+
+        if (response.didCancel || response.errorCode || !asset?.uri || !asset.type) {
+          console.log('Image selection cancelled or invalid.');
+          return;
+        }
+
+        try {
+          const { uri, type } = asset;
+          // const fileExt = type.split('/')[1] || 'jpg';
+          // const path = `profilePictures/${formData.email}/profile.${fileExt}`;
+          
+          const reference = storage().ref(uri);
+          
+        } catch (err) {
+          console.log('Upload failed:', err);
+        }
+      }
+    );
+  };
+
 
   const handleProfileEdit = async (formData: { firstName: string; lastName: string; phoneNumber: string; addressLineOne: string; addressLineTwo: string; }) => {
     setActivityIndicator(true)
@@ -152,7 +184,7 @@ const ProfileScreen = () => {
     <View style={styles.inner_container}>
 
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1 , backgroundColor: '#FAF8F5' }}>
+        <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 10 }}>
             <TitleText style={styles.tts}>
               Profile
@@ -174,7 +206,7 @@ const ProfileScreen = () => {
                 <View style={styles.overlay}>
                   <TouchableWithoutFeedback>
                     <View style={styles.menuBox}>
-                      <TouchableOpacity style={styles.button}>
+                      <TouchableOpacity style={styles.button} onPress={handleUploadImage}>
                         <Text style={styles.buttonText}>Edit DP</Text>
                       </TouchableOpacity>
 
@@ -305,7 +337,7 @@ const ProfileScreen = () => {
               >
                 <View style={styles.innerCircle}>
                   <Image
-                    source={{ uri: 'https://i.imgur.com/WxNkKAl.jpeg' }}
+                    source={{ uri: formData.profilePicture }}
                     style={styles.image2}
                   />
                 </View>
@@ -358,7 +390,7 @@ const ProfileScreen = () => {
                   placeholder="Enter your email"
                   autoCapitalize="none"
                   value={formData.email}
-                   editable={false}
+                  editable={false}
                 />
 
               </View>
@@ -415,7 +447,7 @@ const ProfileScreen = () => {
           </ScrollView>
 
         </View>
-        <BottomNav backgroundColor="#FAF8F5"/>
+        <BottomNav backgroundColor="#FAF8F5" />
       </CustomSafeAreaView>
 
     </View>
