@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, Button, TouchableOpacity, Image, Animated, ScrollView, TouchableWithoutFeedback, Modal, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, Alert, Button, TouchableOpacity, Image, Animated, ScrollView, TouchableWithoutFeedback, Modal, ActivityIndicator, Dimensions } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -17,7 +17,11 @@ import { launchImageLibrary } from 'react-native-image-picker';
 
 
 
-
+type ImageAsset = {
+  fileName: string,
+  uploadUri: string,
+  fileExt: string,
+};
 
 
 const handleLogout = async () => {
@@ -32,6 +36,7 @@ const handleLogout = async () => {
 
 const ProfileScreen = () => {
 
+  const screenWidth = Dimensions.get('window').width;
   // Modal input states
   const [formData, setFormData] = useState({
     profilePicture: '',
@@ -44,11 +49,17 @@ const ProfileScreen = () => {
     addressLineTwo: '',
   });
 
+  const [newImage, setNewImage] = useState<{
+    fileName: string;
+    uploadUri: string;
+    fileExt: string;
+  } | null>(null);
 
 
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isDpModalVisible, setIsDpModalVisible] = useState(false);
 
   const [visible, setVisible] = useState(false);
 
@@ -114,6 +125,33 @@ const ProfileScreen = () => {
     }
   }
 
+  const uploadDP = async (data: { fileName: string; uploadUri: string; fileExt: string }) => {
+    console.log(data); // ✅ valid
+    setActivityIndicator(true);
+    try {
+      // const reference = storage().ref(`profilePictures/${formData.email}/${fileName}`);
+      const fileExt = data.fileExt.split('/')[1] || 'jpg';
+      const reference = storage().ref(`profilePictures/${formData.email}/profilePicture.${fileExt}`);
+      await reference.putFile(data.uploadUri);
+      const downloadURL = await reference.getDownloadURL();
+
+      await firestore().collection("UserAccounts").doc(formData.email).update({
+        profilePicture: downloadURL,
+      });
+
+      setFormData(prev => ({ ...prev, profilePicture: downloadURL }))
+
+      console.log('Image uploaded:', downloadURL);
+    } catch (err) {
+      console.log('Upload failed:', err);
+    } finally {
+      setActivityIndicator(false);
+      setIsDpModalVisible(false);
+      setVisible(false)
+    }
+  };
+
+
   const handleUploadImage = async () => {
     launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
       const asset = response.assets?.[0];
@@ -126,23 +164,12 @@ const ProfileScreen = () => {
       const fileName = asset.fileName;
       const uploadUri = asset.uri;
 
-      try {
-        // const reference = storage().ref(`profilePictures/${formData.email}/${fileName}`);
-        const fileExt = asset.type.split('/')[1] || 'jpg';
-        const reference = storage().ref(`profilePictures/${formData.email}/profilePicture.${fileExt}`);
-        await reference.putFile(uploadUri);
-        const downloadURL = await reference.getDownloadURL();
 
-        await firestore().collection("UserAccounts").doc(formData.email).update({
-          profilePicture: downloadURL,
-        });
+      setNewImage({ fileName: asset.fileName, uploadUri: asset.uri, fileExt: asset.type })
 
-        setFormData(prev => ({...prev, profilePicture: downloadURL}))
+      setIsDpModalVisible(true);
 
-        console.log('Image uploaded:', downloadURL);
-      } catch (err) {
-        console.log('Upload failed:', err);
-      }
+
     });
   };
 
@@ -167,14 +194,15 @@ const ProfileScreen = () => {
           .doc(currentUser.email)
           .set(updateObject, { merge: true });
         console.log('data updated to Firestore');
-        setActivityIndicator(false)
       } else {
         console.warn('No user signed in, cannot update data');
-        setActivityIndicator(false);
       }
     } catch (error) {
       console.log(error);
+    } finally {
       setActivityIndicator(false);
+      setModalVisible(false);
+      setVisible(false);
     }
 
 
@@ -211,9 +239,47 @@ const ProfileScreen = () => {
                 <View style={styles.overlay}>
                   <TouchableWithoutFeedback>
                     <View style={styles.menuBox}>
-                      <TouchableOpacity style={styles.button} onPress={handleUploadImage}>
+                      <TouchableOpacity style={styles.button} onPress={() => {
+                        handleUploadImage();
+                      }}>
                         <Text style={styles.buttonText}>Edit DP</Text>
                       </TouchableOpacity>
+
+                      {newImage && (
+                        <BottomModal isVisible={isDpModalVisible} onClose={() => setIsDpModalVisible(false)}>
+                          {activityIndicator ?
+                            <>
+                              <ActivityIndicator size="large" color="#FECC01" />
+                            </> :
+                            <>
+                              <ScrollView>
+                                <View style={{ gap: 16 }}>
+                                  <Image
+                                    source={{ uri: newImage.uploadUri }}
+                                    style={{
+                                      width: screenWidth * 0.8,
+                                      height: screenWidth * 0.8,
+                                      borderRadius: 10,
+                                      alignSelf: 'center',
+                                      marginTop: 16,
+                                    }}
+                                  />
+                                </View>
+                              </ScrollView>
+
+                              <View style={styles.endcontainer}>
+                                <TouchableOpacity
+                                  style={styles.orangebutton}
+                                  onPress={() => uploadDP(newImage)}
+                                >
+                                  <TitleText style={styles.orangebtntext}>Upload</TitleText>
+                                </TouchableOpacity>
+                              </View>
+                            </>
+                          }
+                        </BottomModal>
+                      )}
+
 
                       <TouchableOpacity style={styles.button} onPress={() => {
                         loadUserData();
