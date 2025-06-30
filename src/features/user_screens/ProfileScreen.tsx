@@ -115,30 +115,35 @@ const ProfileScreen = () => {
   }
 
   const handleUploadImage = async () => {
-    console.log('pressed me');
+    launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
+      const asset = response.assets?.[0];
 
-    launchImageLibrary(
-      { mediaType: 'photo', quality: 1 },
-      async (response) => {
-        const asset = response.assets?.[0];
-
-        if (response.didCancel || response.errorCode || !asset?.uri || !asset.type) {
-          console.log('Image selection cancelled or invalid.');
-          return;
-        }
-
-        try {
-          const { uri, type } = asset;
-          // const fileExt = type.split('/')[1] || 'jpg';
-          // const path = `profilePictures/${formData.email}/profile.${fileExt}`;
-          
-          const reference = storage().ref(uri);
-          
-        } catch (err) {
-          console.log('Upload failed:', err);
-        }
+      if (!asset?.uri || !asset?.type || !asset?.fileName) {
+        console.log('Image selection failed or cancelled');
+        return;
       }
-    );
+
+      const fileName = asset.fileName;
+      const uploadUri = asset.uri;
+
+      try {
+        // const reference = storage().ref(`profilePictures/${formData.email}/${fileName}`);
+        const fileExt = asset.type.split('/')[1] || 'jpg';
+        const reference = storage().ref(`profilePictures/${formData.email}/profilePicture.${fileExt}`);
+        await reference.putFile(uploadUri);
+        const downloadURL = await reference.getDownloadURL();
+
+        await firestore().collection("UserAccounts").doc(formData.email).update({
+          profilePicture: downloadURL,
+        });
+
+        setFormData(prev => ({...prev, profilePicture: downloadURL}))
+
+        console.log('Image uploaded:', downloadURL);
+      } catch (err) {
+        console.log('Upload failed:', err);
+      }
+    });
   };
 
 
