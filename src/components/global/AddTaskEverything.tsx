@@ -18,6 +18,7 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import RNFS from 'react-native-fs';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { useAudio } from '../global/AudioContext';
+import Icon from '@react-native-vector-icons/feather';
 
 
 
@@ -312,12 +313,28 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 onChangeText={(text) => handleInputChange('description', text)}
               />
 
-              <TouchableOpacity
+<TouchableOpacity style={styles.orangebutton2} >
+          <TitleText style={styles.orangebtntext2}>
+          Upload image
+          </TitleText>
+        </TouchableOpacity>
+
+             
+              {/* <TouchableOpacity
                 onPressIn={onStartRecord}
                 onPressOut={onStopRecord}
                 style={styles.recordBtn}
               >
                 <Text style={styles.btnText}>Hold to Record</Text>
+              </TouchableOpacity> */}
+
+              <TouchableOpacity
+                onPressIn={onStartRecord}
+                onPressOut={onStopRecord}
+                style={styles.commentbox}
+              >
+                <Icon name="mic" size={16} color="#000" />
+                <TitleText style={styles.textualtext}>Hold to Record</TitleText>
               </TouchableOpacity>
 
               <View style={styles.namecard}>
@@ -516,6 +533,27 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
 const styles = StyleSheet.create({
 
+  textualtext: {
+    fontWeight: 'bold',
+    fontSize: 16,
+
+  },
+
+  commentbox: {
+    borderColor: '#FEC601',
+    borderWidth: 1,
+    borderStyle: 'solid',
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row'
+    ,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+
 
   recordBtn: { padding: 20, backgroundColor: '#FF5555', borderRadius: 12 },
   btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
@@ -551,6 +589,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  orangebtntext2: {
+    color: '#0000000',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
   orangebutton: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -558,6 +602,16 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 25,
   },
+
+  orangebutton2: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FCE27A',
+    padding: 12,
+    borderRadius: 25,
+  },
+
+  
 
   text: {
     fontSize: 16,
