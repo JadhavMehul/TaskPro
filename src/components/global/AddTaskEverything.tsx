@@ -160,6 +160,43 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     );
   };
 
+  const callApi = async (formData: any, id: string) => {
+
+    console.log(formData);
+    
+    const payload = {
+      email: formData.assignTo,
+      title: formData.title,
+      body: formData.description,
+      taskTimer: formData.notificationTimer,
+      endTimer: formData.taskEndTime,
+      docId: id,
+    };
+
+    const api = 'http://10.0.2.2:3000/start-reminder-loop-until-end'
+    try {
+      const response = await fetch(api, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ API Response:', data);
+
+    } catch (error) {
+      console.error('❌ Error calling API:', error);
+    }
+
+  }
+
+
   const addTaskFunction = async (formData: any) => {
     const { title, description, assignTo, taskEndTime, notificationTimer, createdBy, taskStatus } = formData;
 
@@ -178,8 +215,11 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
     setActivityIndicator(true);
     try {
-      await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New' });
+      const docRef = await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New', taskDone: false });
       console.log('Task added successfully!');
+
+      await callApi(formData, docRef.id);
+
     } catch (error) {
       console.error('Error adding task:', error);
     } finally {

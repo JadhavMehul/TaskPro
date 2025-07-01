@@ -208,7 +208,8 @@ const TaskDetailsScreen = () => {
     setActivityIndicator(true)
     try {
       await firestore().collection('TaskList').doc(taskId).update({
-        taskStatus: status
+        taskStatus: status,
+        taskDone: true
       });
       setAllData(prev => ({
         ...prev,
