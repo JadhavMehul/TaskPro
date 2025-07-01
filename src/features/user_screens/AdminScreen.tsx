@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList, ScrollView,useWindowDimensions } from 'react-native'
+import { View, Text, StyleSheet, Alert, Button, Switch, Animated, Image, TouchableOpacity, FlatList, ScrollView, useWindowDimensions } from 'react-native'
 import React, { useState, useRef } from 'react';
 import BottomNav from '@components/global/BottomBar'
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
@@ -16,30 +16,13 @@ const AdminScreen = () => {
   const { width } = useWindowDimensions();
   const buttonWidth = 171;
   const gap = 12;
-  // const isWrapped = width < buttonWidth * 2 + gap;
-  // const isWrapped = false;
   const isWrapped = width < (buttonWidth * 2 + gap + 48);
-  
-  
-  
-    // const [isOn, setIsOn] = useState(false);
-    // const knobPosition = useRef(new Animated.Value(6)).current;
-  
-    // const toggleSwitch = () => {
-    //   Animated.timing(knobPosition, {
-    //     toValue: isOn ? 6 : 38,
-    //     duration: 200,
-    //     useNativeDriver: false,
-    //   }).start();
-    //   setIsOn(!isOn);
-    // };
-
   const [refreshing, setRefreshing] = React.useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isModalVisible2, setModalVisible2] = useState(false);
 
   const [cards, setCards] = useState([
-    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(6) },
+    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(6), profilePicture: '' },
   ]);
 
   const toggleSwitch = (index: number) => {
@@ -102,15 +85,17 @@ const AdminScreen = () => {
       const employees = allEmployeeData.docs.map(doc => {
         const data = doc.data();
         console.log(data);
-        
+
         return {
           name: data.firstName || '',
           isOn: data.isAdmin || false,
           userEmail: data.email || null,
           knobPosition: new Animated.Value(data.isAdmin ? 38 : 2),
+          profilePicture: data.profilePicture || 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=35dcbb4b-bf4e-4e91-ac0a-25a5b600b422',
         };
       });
       setCards(employees);
+      
       // console.log("Employees:", JSON.stringify(employees));
     } catch (error) {
       console.log(error);
@@ -141,21 +126,16 @@ const AdminScreen = () => {
     }
   };
 
-  
+
 
 
   return (
     <View style={styles.inner_container}>
       <CustomSafeAreaView style={{ flex: 1 }}>
-        <View style={{ flex: 1, backgroundColor: '#FAF8F5'}}>
+        <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
 
           {/* <View style={{ padding: 24, alignItems: 'center', flexDirection: 'row', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}> */}
-          <View style={{ padding: 24, alignItems: isWrapped ? 'stretch' : 'center', flexDirection: isWrapped ? 'column' : 'row', gap: 16, justifyContent: 'center', flexWrap: isWrapped ? 'nowrap' : 'wrap',  }}>
-
-
-
-
-
+          <View style={{ padding: 24, alignItems: isWrapped ? 'stretch' : 'center', flexDirection: isWrapped ? 'column' : 'row', gap: 16, justifyContent: 'center', flexWrap: isWrapped ? 'nowrap' : 'wrap', }}>
 
             <GradientButton
               imageSource={require('@assets/images/promocode_img.png')}
@@ -167,93 +147,89 @@ const AdminScreen = () => {
             <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
               <ScrollView>
 
-              
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
-                <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
-                  Admin Promo Code
-                </TitleText>
 
-                <TouchableOpacity onPress={handleCopy}>
-                  <Image
-                    source={require('@assets/images/copy.png')}
-                    style={styles.image3}
-                  /></TouchableOpacity>
-
-              </View>
-
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code[0]}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
+                  <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
+                    Admin Promo Code
                   </TitleText>
-                </View>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code[1]}
-                  </TitleText>
-                </View>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code[2]}
-                  </TitleText>
-                </View>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code[3]}
-                  </TitleText>
-                </View>
-              </View>
 
+                  <TouchableOpacity onPress={handleCopy}>
+                    <Image
+                      source={require('@assets/images/copy.png')}
+                      style={styles.image3}
+                    /></TouchableOpacity>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
-                <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
-                  User Promo Code
-                </TitleText>
+                </View>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code[0]}
+                    </TitleText>
+                  </View>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code[1]}
+                    </TitleText>
+                  </View>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code[2]}
+                    </TitleText>
+                  </View>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code[3]}
+                    </TitleText>
+                  </View>
+                </View>
 
 
-                <TouchableOpacity onPress={handleCopy2}>
-                  <Image
-                    source={require('@assets/images/copy.png')}
-                    style={styles.image3}
-                  /></TouchableOpacity>
-              </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
+                  <TitleText style={{ fontSize: 20, fontWeight: 400, }}>
+                    User Promo Code
+                  </TitleText>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code2[0]}
-                  </TitleText>
+
+                  <TouchableOpacity onPress={handleCopy2}>
+                    <Image
+                      source={require('@assets/images/copy.png')}
+                      style={styles.image3}
+                    /></TouchableOpacity>
                 </View>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code2[1]}
-                  </TitleText>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 16, marginTop: 24 }}>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code2[0]}
+                    </TitleText>
+                  </View>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code2[1]}
+                    </TitleText>
+                  </View>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code2[2]}
+                    </TitleText>
+                  </View>
+                  <View style={styles.box_section}>
+                    <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
+                      {code2[3]}
+                    </TitleText>
+                  </View>
                 </View>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code2[2]}
-                  </TitleText>
-                </View>
-                <View style={styles.box_section}>
-                  <TitleText style={{ fontWeight: 500, fontSize: 32 }}>
-                    {code2[3]}
-                  </TitleText>
-                </View>
-              </View>
               </ScrollView>
-              {/* <View style={{ height: 190 }}>
 
-              </View> */}
-              
-              
-<View style={styles.endcontainer}>
-<TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
-                <TitleText style={styles.orangebtntext}>
-                  Regenrate
-                </TitleText>
-              </TouchableOpacity>
+              <View style={styles.endcontainer}>
+                <TouchableOpacity style={styles.orangebutton} onPress={generatePromoCode}>
+                  <TitleText style={styles.orangebtntext}>
+                    Regenrate
+                  </TitleText>
+                </TouchableOpacity>
 
-                        </View>
+              </View>
             </BottomModal>
 
             <GradientButton
@@ -275,69 +251,32 @@ const AdminScreen = () => {
                 </TitleText>
               </View>
 
-
-              {/* <View style={{flexDirection: 'column', gap: 16}}>
-              <NameCard
-                name="Mehul"
-                isOn={isOn}
-                toggleSwitch={toggleSwitch}
-                knobPosition={knobPosition}
-              />
-
-<NameCard
-                name="Tirthak"
-                isOn={isOn}
-                toggleSwitch={toggleSwitch}
-                knobPosition={knobPosition}
-              />
-              </View> */}
-
-              {/* <View style={{ flexDirection: 'column', gap: 16 }}> */}
-
-              
-
-                <FlatList
-                  data={cards}
-                  keyExtractor={(item, index) => index.toString()}
-                  renderItem={({item, index}) => (
-                    <NameCard
-                      key={index}
-                      name={item.name}
-                      imageSource={require('@assets/images/home_fill.png')}
-                      isOn={item.isOn}
-                      toggleSwitch={() => updateUserAdminStatus(item.userEmail, item.isOn, index)}
-                      knobPosition={item.knobPosition}
-                      style={{marginBottom: 16}}
-                    />
-                  )}
-                  showsVerticalScrollIndicator={false}
-                  onRefresh={getEmployees}
-                  refreshing={refreshing}
-                  ListEmptyComponent={<Text>No task dates found</Text>}
-                />
-
-                {/* {cards.map((card, index) => (
+              <FlatList
+                data={cards}
+                keyExtractor={(item, index) => index.toString()}
+                renderItem={({ item, index }) => (
                   <NameCard
                     key={index}
-                    name={card.name}
-                    imageSource={require('../../assets/images/home_fill.png')}
-                    isOn={card.isOn}
-                    toggleSwitch={() => toggleSwitch(index)}
-                    knobPosition={card.knobPosition}
+                    name={item.name}
+                    imageSource={{ uri: item.profilePicture }}
+                    isOn={item.isOn}
+                    toggleSwitch={() => updateUserAdminStatus(item.userEmail, item.isOn, index)}
+                    knobPosition={item.knobPosition}
+                    style={{ marginBottom: 16 }}
                   />
-                ))} */}
-              {/* </View> */}
+                )}
+                showsVerticalScrollIndicator={false}
+                onRefresh={getEmployees}
+                refreshing={refreshing}
+                ListEmptyComponent={<Text>No task dates found</Text>}
+              />
 
             </BottomModal>
 
-
-
-
           </View>
 
-
         </View>
-        <BottomNav  backgroundColor="#FAF8F5"/>
+        <BottomNav backgroundColor="#FAF8F5" />
       </CustomSafeAreaView>
 
     </View>
@@ -345,18 +284,15 @@ const AdminScreen = () => {
 }
 
 const styles = StyleSheet.create({
-
-
   endcontainer: {
     width: '100%',
     paddingTop: 16,
     bottom: 0,
     backgroundColor: '#fff',
-
   },
 
   switch: {
-    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }], 
+    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
   },
 
 
@@ -366,9 +302,6 @@ const styles = StyleSheet.create({
   fullWidth: {
     width: '100%',
   },
-
-
-
 
   orangebtntext: {
     color: '#ffffff',
