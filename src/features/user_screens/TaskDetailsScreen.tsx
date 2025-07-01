@@ -27,30 +27,6 @@ import InputField from '@components/global/InputField';
 const statuses = ['New', 'Done', 'Approved'];
 
 
-// type User2 = {
-//   id: string;
-//   name: string;
-//   image: string;
-// };
-
-// const users2: User2[] = [
-//   {
-//     id: '0',
-//     name: 'Unassign',
-//     image: '',
-//   },
-//   {
-//     id: '1',
-//     name: 'Mehul',
-//     image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-//   },
-//   {
-//     id: '2',
-//     name: 'Chris',
-//     image: 'https://i.imgur.com/1Qf1Z0G.jpg',
-//   },
-// ];
-
 type User = {
   id: string;
   name: string;
@@ -67,20 +43,19 @@ type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScre
 
 const TaskDetailsScreen = () => {
 
-  const [commentmodalVisible, setCommentModalVisible] = useState(false);
-  const [inputValue, setInputValue] = useState('');
-
-  const handleSubmit = () => {
-    console.log('Input Value:', inputValue);
-    setCommentModalVisible(false);
-    setInputValue(''); 
-  };
 
   const route = useRoute<TaskDetailsScreenRouteProp>();
   const { taskId } = route.params;
 
-
+  const [selectedStatus, setSelectedStatus] = useState('New');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [commentmodalVisible, setCommentModalVisible] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
+  const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
+  const [selected, setSelected] = useState(false);
+  const [selected2, setSelected2] = useState(false);
   const [allData, setAllData] = useState({
     title: '',
     description: '',
@@ -119,10 +94,12 @@ const TaskDetailsScreen = () => {
     }
   };
 
+  const handleSubmit = () => {
+    console.log('Input Value:', inputValue);
+    setCommentModalVisible(false);
+    setInputValue('');
+  };
 
-
-  const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
-  const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
 
   const changeAssignToUserInDB = async (user: any) => {
     setActivityIndicator(true)
@@ -130,7 +107,7 @@ const TaskDetailsScreen = () => {
       await firestore().collection('TaskList').doc(taskId).update({
         assignTo: user.userEmail,
       });
-      
+
       setAllData(prev => ({
         ...prev,
         assignedProfilePicture: user.profilePicture,
@@ -138,7 +115,7 @@ const TaskDetailsScreen = () => {
       }));
     } catch (error) {
       console.log(error);
-      
+
     } finally {
       setActivityIndicator(false)
     }
@@ -150,7 +127,7 @@ const TaskDetailsScreen = () => {
     } else {
       setSelectedUser2(user);
       changeAssignToUserInDB(user)
-      
+
     }
     setShowDropdown2(false);
   };
@@ -196,19 +173,6 @@ const TaskDetailsScreen = () => {
     );
   };
 
-
-
-
-
-
-
-
-
-
-  const [selectedStatus, setSelectedStatus] = useState('New');
-  const [showDropdown, setShowDropdown] = useState(false);
-
-
   const getBackgroundColor = (status: string) => {
     switch (status) {
       case 'New':
@@ -223,9 +187,6 @@ const TaskDetailsScreen = () => {
   };
 
 
-
-  const [selected, setSelected] = useState(false);
-  const [selected2, setSelected2] = useState(false);
 
   const updateTaskStatus = async (status: string) => {
     setActivityIndicator(true)
@@ -335,7 +296,7 @@ const TaskDetailsScreen = () => {
                   text={allData.title}
                   numberOfChars={20}
                   textStyle={styles.text}
-        readMoreTextStyle={styles.readMoreLink}
+                  readMoreTextStyle={styles.readMoreLink}
                 />
 
                 <ReadMoreText
@@ -518,41 +479,41 @@ const TaskDetailsScreen = () => {
               </TouchableOpacity>
 
               <Modal
-        animationType="slide"
-        transparent={true}
-        visible={commentmodalVisible}
-        onRequestClose={() => setCommentModalVisible(false)}
-      >
-        <View style={styles.overlay}>
-          <View style={styles.modalView}>
-          <TouchableOpacity style={styles.closeButton} onPress={() => setCommentModalVisible(false)}>
-        <Text style={styles.closeButtonText}>×</Text>
-      </TouchableOpacity>
+                animationType="slide"
+                transparent={true}
+                visible={commentmodalVisible}
+                onRequestClose={() => setCommentModalVisible(false)}
+              >
+                <View style={styles.overlay}>
+                  <View style={styles.modalView}>
+                    <TouchableOpacity style={styles.closeButton} onPress={() => setCommentModalVisible(false)}>
+                      <Text style={styles.closeButtonText}>×</Text>
+                    </TouchableOpacity>
 
-          <TitleText style={styles.poptext}>
-          Add your Comment
-              </TitleText>
+                    <TitleText style={styles.poptext}>
+                      Add your Comment
+                    </TitleText>
 
-              <InputField style={styles.input2}
-              
-                autoCapitalize="none"
-                textAlignVertical="top"
-                multiline
-                numberOfLines={4}
-                placeholder="Type here..."
-              value={inputValue}
-              onChangeText={setInputValue}
-              />
-           
+                    <InputField style={styles.input2}
 
-            
-            {/* Submit Button */}
-            <Pressable style={styles.submitButton} onPress={handleSubmit}>
-              <Text style={styles.buttonText}>Submit</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+                      autoCapitalize="none"
+                      textAlignVertical="top"
+                      multiline
+                      numberOfLines={4}
+                      placeholder="Type here..."
+                      value={inputValue}
+                      onChangeText={setInputValue}
+                    />
+
+
+
+                    {/* Submit Button */}
+                    <Pressable style={styles.submitButton} onPress={handleSubmit}>
+                      <Text style={styles.buttonText}>Submit</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              </Modal>
 
               <View style={styles.commentbox}>
 
@@ -569,11 +530,11 @@ const TaskDetailsScreen = () => {
                     <TitleText>30 May 2025 11:25 AM</TitleText>
 
                     <ReadMoreText
-  text="Lorem ipsum is a dummy o jherbsd kwjebna ljwnde lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-  numberOfChars={65} 
-  textStyle={{ fontSize: 16, color: '#333' }}
-  readMoreTextStyle={{ color: 'orange' }}
-/>
+                      text="Lorem ipsum is a dummy o jherbsd kwjebna ljwnde lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
+                      numberOfChars={65}
+                      textStyle={{ fontSize: 16, color: '#333' }}
+                      readMoreTextStyle={{ color: 'orange' }}
+                    />
                   </View>
 
                 </View>

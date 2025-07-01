@@ -61,11 +61,6 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // const onChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
-  //   const currentDate = selectedDate || date;
-  //   setShow(Platform.OS === 'ios');
-  //   setDate(currentDate);
-  // };
 
   const onChange = (event: any, selectedDate?: Date) => {
     if (event.type === 'dismissed') {
@@ -313,20 +308,11 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 onChangeText={(text) => handleInputChange('description', text)}
               />
 
-<TouchableOpacity style={styles.orangebutton2} >
-          <TitleText style={styles.orangebtntext2}>
-          Upload image
-          </TitleText>
-        </TouchableOpacity>
-
-             
-              {/* <TouchableOpacity
-                onPressIn={onStartRecord}
-                onPressOut={onStopRecord}
-                style={styles.recordBtn}
-              >
-                <Text style={styles.btnText}>Hold to Record</Text>
-              </TouchableOpacity> */}
+              <TouchableOpacity style={styles.orangebutton2} >
+                <TitleText style={styles.orangebtntext2}>
+                  Upload image
+                </TitleText>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 onPressIn={onStartRecord}
@@ -350,26 +336,6 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                   <TitleText style={styles.personName}>{selectedUser3 ? selectedUser3.name : 'User Name'}</TitleText>
                 </View>
 
-                {/* <TouchableOpacity onPress={() => setShowDropdown3(!showDropdown3)}>
-              <View style={styles.addtask}>
-                <TitleText style={styles.dropdownText2}>
-                  {selectedUser3 ? selectedUser3.name : 'Assign To'}
-                </TitleText>
-                <Image
-                  source={require('../../assets/images/downarrow.png')}
-                  style={styles.image2}
-                />
-              </View>
-
-            </TouchableOpacity>
-
-            {showDropdown3 && (
-              <View style={styles.dropdownList2}>
-                {users2.map((item) => (
-                  <React.Fragment key={item.id}>{renderUser3({ item })}</React.Fragment>
-                ))}
-              </View>
-            )} */}
 
                 <TouchableOpacity onPress={() => setShowDropdown3(true)}>
                   <View style={styles.addtask}>
@@ -431,37 +397,6 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 </TitleText>
 
 
-                {/* <TouchableOpacity onPress={showTimepicker}>
-              <View style={styles.addtask}>
-                {timeSet ? (
-                  <TitleText >
-                    {moment(date).format('YYYY-MM-DDTHH:mm:ssZ')}
-                   
-                  </TitleText>
-                ) : (
-                  <>
-                    <TitleText>Add Time</TitleText>
-                    <Image
-                      source={require('../../assets/images/addcircle.png')}
-                      style={styles.image2}
-                    />
-                  </>
-                )}
-              </View>
-            </TouchableOpacity>
-
-            {show && (
-              <DateTimePicker
-                testID="timePicker"
-                value={date}
-                mode="time"
-                is24Hour={true}
-                display="spinner"
-                onChange={onChange}
-              />
-            )} */}
-
-
                 <TouchableOpacity onPress={showDateTimePicker}>
                   <View style={styles.addtask}>
                     {timeSet ? (
@@ -488,32 +423,16 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                   />
                 )}
 
-
-
-
-
-
-
-
               </View>
-
-
-
-
 
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <TitleText style={styles.poptext}>
                   Add Notification Timer
                 </TitleText>
 
-
-
                 <TimePicker onSendData={(timer: string) => handleInputChange('notificationTimer', timer)} />
 
-
               </View>
-
-
             </>
           }
         </View>
@@ -536,7 +455,6 @@ const styles = StyleSheet.create({
   textualtext: {
     fontWeight: 'bold',
     fontSize: 16,
-
   },
 
   commentbox: {
@@ -554,10 +472,8 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
 
-
   recordBtn: { padding: 20, backgroundColor: '#FF5555', borderRadius: 12 },
   btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
-
 
   modalOverlay: {
     flex: 1,
@@ -571,7 +487,6 @@ const styles = StyleSheet.create({
     height: '50%',
     borderRadius: 10,
     padding: 16,
-
   },
 
 
@@ -580,7 +495,6 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     bottom: 0,
     backgroundColor: '#fff',
-
   },
 
   orangebtntext: {
@@ -610,8 +524,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 25,
   },
-
-  
 
   text: {
     fontSize: 16,
@@ -677,12 +589,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-
-
-
-
-
-
 
   namecard: {
     borderWidth: 1,
@@ -786,7 +692,6 @@ const styles = StyleSheet.create({
 
 
   gradientBox: {
-    // ...StyleSheet.absoluteFillObject,
     padding: 16,
     flex: 1,
     borderTopLeftRadius: 12,
@@ -794,12 +699,6 @@ const styles = StyleSheet.create({
   },
 
 
-  // yellow: {
-  //   padding: 16,
-  //   flex: 1, backgroundColor: '#FAB90A',
-  //   borderTopLeftRadius: 12,
-  //   borderTopRightRadius: 12,
-  // },
   inner_container: {
     flex: 1,
     backgroundColor: "#FAF8F5",
