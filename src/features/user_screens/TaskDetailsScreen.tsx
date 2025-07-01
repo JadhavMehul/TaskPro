@@ -4,7 +4,7 @@ import {
   ActivityIndicator,
   FlatList,
   TouchableWithoutFeedback,
-  TextInput
+  TextInput,Dimensions
 } from 'react-native'
 import React, { useState, useRef, useEffect } from 'react';
 import BottomNav from '@components/global/BottomBar'
@@ -20,6 +20,9 @@ import { useAudio } from '../../components/global/AudioContext';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import firestore from "@react-native-firebase/firestore";
 import InputField from '@components/global/InputField';
+import CommentModal from '@components/global/CommentModal';
+import Icon from '@react-native-vector-icons/feather';
+import BottomModal from '@components/global/BottomModal';
 
 
 
@@ -42,6 +45,19 @@ type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScre
 
 
 const TaskDetailsScreen = () => {
+
+  const screenWidth = Dimensions.get('window').width;
+
+  const [ismicModalVisible, setmicModalVisible] = useState(false);
+
+  const openModal = () => setmicModalVisible(true);
+  const closeModal = () => setmicModalVisible(false);
+
+
+  const [ispicModalVisible, setpicModalVisible] = useState(false);
+
+  const openModal2 = () => setpicModalVisible(true);
+  const closeModal2 = () => setpicModalVisible(false);
 
 
   const route = useRoute<TaskDetailsScreenRouteProp>();
@@ -320,8 +336,8 @@ const TaskDetailsScreen = () => {
                   <View style={styles.circle}>
                     <Image source={
                       allData.assignedProfilePicture
-                        ? { uri: allData.assignedProfilePicture } // Remote URL string
-                        : require('@assets/images/profileIcon.png') // Local fallback
+                        ? { uri: allData.assignedProfilePicture } 
+                        : require('@assets/images/profileIcon.png') 
                     } style={styles.circleImage} />
                   </View>
                   <Text style={styles.personName}>{allData.assignedName}</Text>
@@ -478,42 +494,13 @@ const TaskDetailsScreen = () => {
                 </View>
               </TouchableOpacity>
 
-              <Modal
-                animationType="slide"
-                transparent={true}
+              <CommentModal
                 visible={commentmodalVisible}
-                onRequestClose={() => setCommentModalVisible(false)}
-              >
-                <View style={styles.overlay}>
-                  <View style={styles.modalView}>
-                    <TouchableOpacity style={styles.closeButton} onPress={() => setCommentModalVisible(false)}>
-                      <Text style={styles.closeButtonText}>×</Text>
-                    </TouchableOpacity>
-
-                    <TitleText style={styles.poptext}>
-                      Add your Comment
-                    </TitleText>
-
-                    <InputField style={styles.input2}
-
-                      autoCapitalize="none"
-                      textAlignVertical="top"
-                      multiline
-                      numberOfLines={4}
-                      placeholder="Type here..."
-                      value={inputValue}
-                      onChangeText={setInputValue}
-                    />
-
-
-
-                    {/* Submit Button */}
-                    <Pressable style={styles.submitButton} onPress={handleSubmit}>
-                      <Text style={styles.buttonText}>Submit</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              </Modal>
+                onClose={() => setCommentModalVisible(false)}
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+                onSubmit={handleSubmit}
+              />
 
               <View style={styles.commentbox}>
 
@@ -526,15 +513,45 @@ const TaskDetailsScreen = () => {
                     <Text style={styles.personName}>Mehul</Text>
                   </View>
 
-                  <View style={{ flexDirection: 'column', gap: 6, maxWidth: '70%' }}>
+                  <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 6, maxWidth: '70%' }}>
                     <TitleText>30 May 2025 11:25 AM</TitleText>
 
                     <ReadMoreText
                       text="Lorem ipsum is a dummy o jherbsd kwjebna ljwnde lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-                      numberOfChars={65}
+                      numberOfChars={40}
                       textStyle={{ fontSize: 16, color: '#333' }}
                       readMoreTextStyle={{ color: 'orange' }}
                     />
+
+                    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                      <TouchableOpacity onPress={openModal}>
+                        <Icon name="mic" size={16} color="#000" />
+                      </TouchableOpacity>
+
+                      <BottomModal isVisible={ismicModalVisible} onClose={closeModal}>
+                        <View><Text>1</Text></View>
+                      </BottomModal>
+
+                      <TouchableOpacity onPress={openModal2}>
+                        <Icon name="image" size={16} color="#000" />
+                      </TouchableOpacity >
+
+                      <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
+                        <View><Image
+  source={{ uri: 'https://picsum.photos/300' }}
+  style={{
+    width: screenWidth * 0.8,
+    height: screenWidth * 0.8,
+    borderRadius: 10,
+    alignSelf: 'center',
+    marginTop: 16,
+  }}
+/></View>
+                      </BottomModal>
+
+
+
+                    </View>
                   </View>
 
                 </View>
@@ -556,89 +573,6 @@ const TaskDetailsScreen = () => {
 }
 
 const styles = StyleSheet.create({
-
-  closeButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-
-  input2: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#E7E2DA',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    height: 120,
-    borderRadius: 8,
-    color: "#291C0A",
-  },
-
-  poptext: {
-    textAlign: 'left',
-    fontSize: 15,
-    fontWeight: 400,
-    marginBottom: 16,
-  },
-  submitButton: {
-    marginTop: 20,
-    backgroundColor: '#FECC01',
-    padding: 10,
-    borderRadius: 6,
-    width: '100%',
-  },
-  input: {
-    width: '100%',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-
-  openButton: {
-    backgroundColor: '#2196F3',
-    padding: 12,
-    borderRadius: 8,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 10,
-    backgroundColor: '#ddd',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', // transparent black
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalView: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  modalText: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
 
   playBtn: { padding: 20, backgroundColor: '#4CAF50', borderRadius: 12 },
   btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
@@ -810,6 +744,15 @@ const styles = StyleSheet.create({
 
   circle: {
     width: '70%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    backgroundColor: '#ddd',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circle2: {
+    width: '30%',
     aspectRatio: 1,
     borderRadius: 999,
     backgroundColor: '#ddd',
