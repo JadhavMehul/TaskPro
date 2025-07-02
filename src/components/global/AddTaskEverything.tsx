@@ -19,6 +19,10 @@ import RNFS from 'react-native-fs';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { useAudio } from '../global/AudioContext';
 import Icon from '@react-native-vector-icons/feather';
+import { launchImageLibrary } from 'react-native-image-picker';
+import BottomModal from '@components/global/BottomModal';
+import { screenWidth } from '@utils/Scaling';
+import storage from "@react-native-firebase/storage";
 
 
 
@@ -34,6 +38,12 @@ type User = {
   userEmail: string | null;
 };
 
+type AttachedImage = {
+  fileName: string;
+  uploadUri: string;
+  fileExt: string;
+};
+
 const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   const currentUser = auth().currentUser;
   const [date, setDate] = useState(new Date());
@@ -41,6 +51,8 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   const [activityIndicator, setActivityIndicator] = useState(false);
   const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
   const [timeSet, setTimeSet] = useState(false);
+  const [attachedImageModal, setAttachedImageModal] = useState(false);
+  const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
   ]);
@@ -163,7 +175,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   const callApi = async (formData: any, id: string) => {
 
     console.log(formData);
-    
+
     const payload = {
       email: formData.assignTo,
       title: formData.title,
@@ -197,7 +209,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   }
 
 
-  const addTaskFunction = async (formData: any) => {
+  const addTaskFunction = async (formData: any, attachedImage: AttachedImage | null) => {
     const { title, description, assignTo, taskEndTime, notificationTimer, createdBy, taskStatus } = formData;
 
     // Check if any required field is empty
@@ -215,11 +227,19 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
     setActivityIndicator(true);
     try {
-      const docRef = await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New', taskDone: false });
-      console.log('Task added successfully!');
-
-      await callApi(formData, docRef.id);
-
+      if (attachedImage) {
+        const timeNow = Date.now();
+        const reference = storage().ref(`taskAttachments/images/${createdBy}-${timeNow}-${attachedImage.fileName}`);
+        await reference.putFile(attachedImage.uploadUri);
+        const downloadURL = await reference.getDownloadURL();
+        const docRef = await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New', taskDone: false, attachedImage: downloadURL });
+        console.log('Task added successfully!');
+        await callApi(formData, docRef.id);
+      } else {
+        const docRef = await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New', taskDone: false });
+        console.log('Task added successfully!');
+        await callApi(formData, docRef.id);
+      }
     } catch (error) {
       console.error('Error adding task:', error);
     } finally {
@@ -227,6 +247,23 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       onCloseModal();
     }
   };
+
+  const uploadImage = async () => {
+    if (attachedImage?.uploadUri.trim()) {
+      setAttachedImageModal(true)
+    } else {
+      launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
+        const asset = response.assets?.[0];
+        if (!asset?.uri || !asset?.type || !asset?.fileName) {
+          console.log('Image selection failed or cancelled');
+          return;
+        }
+        setAttachedImage({ fileName: asset.fileName, uploadUri: asset.uri, fileExt: asset.type })
+        setAttachedImageModal(true);
+      });
+    }
+  }
+
 
 
   useEffect(() => {
@@ -348,11 +385,52 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 onChangeText={(text) => handleInputChange('description', text)}
               />
 
-              <TouchableOpacity style={styles.orangebutton2} >
+              <TouchableOpacity style={styles.orangebutton2} onPress={() => uploadImage()}>
                 <TitleText style={styles.orangebtntext2}>
-                  Upload image
+                  {attachedImage?.uploadUri ? 'View Image' : 'Upload Image'}
                 </TitleText>
               </TouchableOpacity>
+
+              {attachedImage && (
+                <BottomModal isVisible={attachedImageModal} onClose={() => setAttachedImageModal(false)}>
+                  {activityIndicator ?
+                    <>
+                      <ActivityIndicator size="large" color="#FECC01" />
+                    </> : <>
+                      <ScrollView>
+                        <View style={{ gap: 16 }}>
+                          <Image
+                            source={{ uri: attachedImage.uploadUri }}
+                            style={{
+                              width: screenWidth * 0.8,
+                              height: screenWidth * 0.8,
+                              borderRadius: 10,
+                              alignSelf: 'center',
+                              marginTop: 16,
+                            }}
+                          />
+                        </View>
+                      </ScrollView>
+
+                      <View style={styles.endcontainer}>
+                        <TouchableOpacity
+                          style={styles.orangebutton}
+                          onPress={() => setAttachedImage(null)}
+                        >
+                          <TitleText style={styles.orangebtntext}>Delete Image</TitleText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.orangebutton}
+                          onPress={() => setAttachedImageModal(false)}
+                        >
+                          <TitleText style={styles.orangebtntext}>Done</TitleText>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  }
+                </BottomModal>
+              )}
+
 
               <TouchableOpacity
                 onPressIn={onStartRecord}
@@ -479,7 +557,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       </ScrollView>
 
       <View style={styles.endcontainer}>
-        <TouchableOpacity style={styles.orangebutton} onPress={() => addTaskFunction(formData)}>
+        <TouchableOpacity style={styles.orangebutton} onPress={() => addTaskFunction(formData, attachedImage)}>
           <TitleText style={styles.orangebtntext}>
             Add Task
           </TitleText>

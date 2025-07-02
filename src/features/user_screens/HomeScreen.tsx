@@ -15,6 +15,7 @@ import TaskBox from '@components/global/TaskBox';
 import InputField from '@components/global/InputField';
 import ToggleSwitch from '@components/global/ToggleSwitch';
 import LinearGradient from 'react-native-linear-gradient';
+import storage from "@react-native-firebase/storage";
 
 
 import DateTimePicker, {
@@ -227,16 +228,29 @@ const HomeScreen = () => {
     return unsubscribe;
   };
 
-  const deleteTask = async (taskId: string) => {
-    try {
-      await firestore().collection("TaskList").doc(taskId).delete().then(() => {
-        console.log("Document successfully deleted!");
-      })
-    } catch (error) {
-      console.log(error);
-    }
+  const deleteTask = async (taskId: string, imageUrl: string) => {
+  try {
+    await firestore().collection("TaskList").doc(taskId).delete();
+    console.log("Document successfully deleted!");
 
+    if (imageUrl) {
+      const decodedUrl = decodeURIComponent(imageUrl);
+      const match = decodedUrl.match(/\/o\/(.*?)\?/);
+      const filePath = match?.[1];
+
+      if (filePath) {
+        const imageRef = storage().ref(filePath);
+        await imageRef.delete();
+        console.log("Image successfully deleted from Storage!");
+      } else {
+        console.warn("Could not extract file path from imageUrl.");
+      }
+    }
+  } catch (error) {
+    console.log("Error deleting task or image:", error);
   }
+};
+
 
 
 
@@ -410,7 +424,7 @@ const HomeScreen = () => {
                     dateTime={item.createdAt}
                     taskStatus={item.taskStatus}
                     onPress={() => navigate('TaskDetailsScreen', { taskId: item.id })}
-                    onDelete={() => deleteTask(item.id)}
+                    onDelete={() => deleteTask(item.id, item.attachedImage)}
                   />
                 )}
               />
