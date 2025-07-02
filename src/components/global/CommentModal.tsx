@@ -8,6 +8,7 @@ import RNFS from 'react-native-fs';
 import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { useAudio } from '../global/AudioContext';
 import BottomModal from './BottomModal';
+import AudioPlayerModal from './AudioPlayPause';
 
 
 
@@ -33,15 +34,17 @@ const CommentModal = ({
   const closeModal3 = () => setrecordModalVisible(false);
 
 
-
+  const [modalVisible, setModalVisible] = useState(false);
 
   const { audioPath } = useAudio();
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
 
   const onPlaySound = async () => {
     if (!audioPath) {
       console.warn('No recording available');
       return;
     }
+    setModalVisible(true);
 
     const cleanedPath = audioPath.replace('file://', '');
 
@@ -59,52 +62,106 @@ const CommentModal = ({
     }
   };
 
-   // audio section
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [position, setPosition] = useState(0);
 
-   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
-   const { setAudioPath } = useAudio();
- 
-   const requestMicrophonePermission = async () => {
-     if (Platform.OS === 'android') {
-       const granted = await PermissionsAndroid.requestMultiple([
-         PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-         PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-         PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-       ]);
-       return (
-         granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED
-       );
-     } else {
-       const result = await request(PERMISSIONS.IOS.MICROPHONE);
-       return result === RESULTS.GRANTED;
-     }
-   };
- 
-   const onStartRecord = async () => {
-     const hasPermission = await requestMicrophonePermission();
-     if (!hasPermission) {
-       console.warn('Permission denied');
-       return;
-     }
- 
-     const path = Platform.select({
-       ios: 'sound.m4a',
-       android: `${RNFS.CachesDirectoryPath}/sound.m4a`,
-     });
- 
-     const uri = await audioRecorderPlayer.startRecorder(path as string);
-     audioRecorderPlayer.addRecordBackListener(() => { });
-     console.log('Recording at:', uri);
-     setAudioPath(uri);
-   };
- 
-   const onStopRecord = async () => {
-     const result = await audioRecorderPlayer.stopRecorder();
-     audioRecorderPlayer.removeRecordBackListener();
-     console.log('Stopped recording:', result);
-   };
+  useEffect(() => {
+    return () => {
+      audioRecorderPlayer.stopPlayer();
+      audioRecorderPlayer.removePlayBackListener();
+    };
+  }, []);
 
-  
+  const onTogglePlayPause = async () => {
+    if (!audioPath) {
+      Alert.alert('No Audio', 'There is no audio available to play.');
+      return;
+    }
+
+    const cleanedPath = audioPath.replace('file://', '');
+
+    if (!isPlaying) {
+      try {
+        await audioRecorderPlayer.startPlayer(cleanedPath);
+        setIsPlaying(true);
+        audioRecorderPlayer.addPlayBackListener((e) => {
+          setPosition(e.currentPosition);
+          setDuration(e.duration);
+          if (e.currentPosition >= e.duration) {
+            audioRecorderPlayer.stopPlayer();
+            audioRecorderPlayer.removePlayBackListener();
+            setIsPlaying(false);
+            setPosition(0);
+          }
+          return;
+        });
+      } catch (error) {
+        console.error('Playback failed', error);
+      }
+    } else {
+      await audioRecorderPlayer.pausePlayer();
+      setIsPlaying(false);
+    }
+  };
+
+
+  const onSeek = async (value: number) => {
+    await audioRecorderPlayer.seekToPlayer(value);
+    setPosition(value);
+  };
+
+  const formatTime = (millis: number): string => {
+    const minutes = Math.floor(millis / 60000);
+    const seconds = Math.floor((millis % 60000) / 1000);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  // audio section
+
+  const { setAudioPath } = useAudio();
+
+  const requestMicrophonePermission = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      ]);
+      return (
+        granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } else {
+      const result = await request(PERMISSIONS.IOS.MICROPHONE);
+      return result === RESULTS.GRANTED;
+    }
+  };
+
+  const onStartRecord = async () => {
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) {
+      console.warn('Permission denied');
+      return;
+    }
+
+    const path = Platform.select({
+      ios: 'sound.m4a',
+      android: `${RNFS.CachesDirectoryPath}/sound.m4a`,
+    });
+
+    const uri = await audioRecorderPlayer.startRecorder(path as string);
+    audioRecorderPlayer.addRecordBackListener(() => { });
+    console.log('Recording at:', uri);
+    setAudioPath(uri);
+  };
+
+  const onStopRecord = async () => {
+    const result = await audioRecorderPlayer.stopRecorder();
+    audioRecorderPlayer.removeRecordBackListener();
+    console.log('Stopped recording:', result);
+  };
+
+
   return (
     <Modal
       animationType="slide"
@@ -114,8 +171,8 @@ const CommentModal = ({
     >
       <View style={styles.overlay}>
         <View style={styles.modalView}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Text style={styles.closeButtonText}>×</Text>
+          <TouchableOpacity style={styles.closeButton2} onPress={onClose}>
+            <Text style={styles.closeButtonText2}>×</Text>
           </TouchableOpacity>
 
           <TitleText style={styles.poptext}>Add your Comment</TitleText>
@@ -139,21 +196,21 @@ const CommentModal = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              
+
               style={styles.commentbox}
               onPress={openModal3}
             >
-              
+
               <TitleText style={styles.textualtext}>Record audio</TitleText>
             </TouchableOpacity>
 
             <BottomModal isVisible={isrecordModalVisible} onClose={closeModal3}>
-              <View style={{padding: 24, justifyContent: 'center', alignItems: 'center' , gap: 12}}>
-              <TouchableOpacity
+              <View style={{ padding: 24, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+                <TouchableOpacity
                   onPressIn={onStartRecord}
                   onPressOut={onStopRecord}
                   style={styles.commentbox}
-                
+
                 >
                   <Icon name="mic" size={16} color="#000" />
                   <TitleText style={styles.textualtext}>Hold to Record</TitleText>
@@ -161,24 +218,38 @@ const CommentModal = ({
 
 
                 <TouchableOpacity
-                  onPress={onPlaySound}
+                  onPress={() => setModalVisible(true)}
                   style={styles.commentbox}
-                
+
                 >
                   <Icon name="speaker" size={16} color="#000" />
                   <TitleText style={styles.textualtext}>Play the audio</TitleText>
                 </TouchableOpacity>
 
-                
+                <AudioPlayerModal
+                  visible={modalVisible}
+                  onClose={() => setModalVisible(false)}
+                  isPlaying={isPlaying}
+                  position={position}
+                  duration={duration}
+                  onTogglePlayPause={onTogglePlayPause}
+                  onSeek={onSeek}
+                  title="Audio Player 3"
+                  formatTime={formatTime}
+                  styles={styles}
+                />
+
+
+
 
               </View>
-                
+
             </BottomModal>
 
 
-            
 
-            
+
+
 
           </View>
 
@@ -194,6 +265,51 @@ const CommentModal = ({
 export default CommentModal;
 
 const styles = StyleSheet.create({
+
+  modalOverlayCenter: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  centeredModal: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    width: '80%',
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
+    zIndex: 10,
+  },
+
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+
+  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16 },
+  btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
+
+
+
+  modal: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  slider: { width: '100%', marginTop: 10 },
+  timer: { marginTop: 10, fontSize: 16, color: '#333' },
 
   textualtext: {
     fontWeight: 'bold',
@@ -246,7 +362,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
-  closeButton: {
+  closeButton2: {
     position: 'absolute',
     top: 10,
     right: 10,
@@ -258,7 +374,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeButtonText: {
+  closeButtonText2: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
