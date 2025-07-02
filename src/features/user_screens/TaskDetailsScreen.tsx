@@ -4,7 +4,7 @@ import {
   ActivityIndicator,
   FlatList,
   TouchableWithoutFeedback,
-  TextInput
+  TextInput, Dimensions
 } from 'react-native'
 import React, { useState, useRef, useEffect } from 'react';
 import BottomNav from '@components/global/BottomBar'
@@ -20,7 +20,11 @@ import { useAudio } from '../../components/global/AudioContext';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import firestore from "@react-native-firebase/firestore";
 import InputField from '@components/global/InputField';
-
+import CommentModal from '@components/global/CommentModal';
+import Icon from '@react-native-vector-icons/feather';
+import BottomModal from '@components/global/BottomModal';
+import Slider from '@react-native-community/slider';
+import AudioPlayerModal from '@components/global/AudioPlayPause';
 
 
 
@@ -42,6 +46,24 @@ type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScre
 
 
 const TaskDetailsScreen = () => {
+
+  const screenWidth = Dimensions.get('window').width;
+
+  const [ismicModalVisible, setmicModalVisible] = useState(false);
+
+  const openModal = () => setmicModalVisible(true);
+  const closeModal = () => setmicModalVisible(false);
+
+
+  const [ispicModalVisible, setpicModalVisible] = useState(false);
+
+  const openModal2 = () => setpicModalVisible(true);
+  const closeModal2 = () => setpicModalVisible(false);
+
+  const [ispic2ModalVisible, setpic2ModalVisible] = useState(false);
+
+  const openModal3 = () => setpic2ModalVisible(true);
+  const closeModal3 = () => setpic2ModalVisible(false);
 
 
   const route = useRoute<TaskDetailsScreenRouteProp>();
@@ -69,6 +91,12 @@ const TaskDetailsScreen = () => {
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
   ]);
 
+
+
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible2, setModalVisible2] = useState(false);
+
   const { audioPath } = useAudio();
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
 
@@ -77,6 +105,7 @@ const TaskDetailsScreen = () => {
       console.warn('No recording available');
       return;
     }
+    setModalVisible(true);
 
     const cleanedPath = audioPath.replace('file://', '');
 
@@ -93,6 +122,66 @@ const TaskDetailsScreen = () => {
       console.error('Playback failed', error);
     }
   };
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [position, setPosition] = useState(0);
+
+  useEffect(() => {
+    return () => {
+      audioRecorderPlayer.stopPlayer();
+      audioRecorderPlayer.removePlayBackListener();
+    };
+  }, []);
+
+  const onTogglePlayPause = async () => {
+    if (!audioPath) {
+      Alert.alert('No Audio', 'There is no audio available to play.');
+      return;
+    }
+
+    const cleanedPath = audioPath.replace('file://', '');
+
+    if (!isPlaying) {
+      try {
+        await audioRecorderPlayer.startPlayer(cleanedPath);
+        setIsPlaying(true);
+        audioRecorderPlayer.addPlayBackListener((e) => {
+          setPosition(e.currentPosition);
+          setDuration(e.duration);
+          if (e.currentPosition >= e.duration) {
+            audioRecorderPlayer.stopPlayer();
+            audioRecorderPlayer.removePlayBackListener();
+            setIsPlaying(false);
+            setPosition(0);
+          }
+          return;
+        });
+      } catch (error) {
+        console.error('Playback failed', error);
+      }
+    } else {
+      await audioRecorderPlayer.pausePlayer();
+      setIsPlaying(false);
+    }
+  };
+
+
+  const onSeek = async (value: number) => {
+    await audioRecorderPlayer.seekToPlayer(value);
+    setPosition(value);
+  };
+
+  const formatTime = (millis: number): string => {
+    const minutes = Math.floor(millis / 60000);
+    const seconds = Math.floor((millis % 60000) / 1000);
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+
+
+
+
 
   const handleSubmit = () => {
     console.log('Input Value:', inputValue);
@@ -311,9 +400,46 @@ const TaskDetailsScreen = () => {
               </View>
 
               <View style={styles.commentbox}>
-                <TouchableOpacity onPress={onPlaySound} >
-                  <Image source={require('../../assets/images/speaker.png')} style={styles.speaker} />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
+                  <TouchableOpacity onPress={() => setModalVisible(true)} >
+                  <Icon name="speaker" size={32} color="#000" />
+                  </TouchableOpacity>
+                 
+                  <TouchableOpacity onPress={openModal3}>
+                        <Icon name="image" size={32} color="#000" />
+                      </TouchableOpacity >
+
+                      <BottomModal isVisible={ispic2ModalVisible} onClose={closeModal3}>
+                        <View>
+                          <Text>Task iMAGE
+                            </Text>
+                            <Image
+                          source={{ uri: 'https://picsum.photos/300' }}
+                          style={{
+                            width: screenWidth * 0.8,
+                            height: screenWidth * 0.8,
+                            borderRadius: 10,
+                            alignSelf: 'center',
+                            marginTop: 16,
+                          }}
+                        /></View>
+                      </BottomModal>
+                </View>
+
+
+                <AudioPlayerModal
+  visible={modalVisible}
+  onClose={() => setModalVisible(false)}
+  isPlaying={isPlaying}
+  position={position}
+  duration={duration}
+  onTogglePlayPause={onTogglePlayPause}
+  onSeek={onSeek}
+  formatTime={formatTime}
+  styles={styles}
+/>
+
+
 
 
 
@@ -321,8 +447,8 @@ const TaskDetailsScreen = () => {
                   <View style={styles.circle}>
                     <Image source={
                       allData.assignedProfilePicture
-                        ? { uri: allData.assignedProfilePicture } // Remote URL string
-                        : require('@assets/images/profileIcon.png') // Local fallback
+                        ? { uri: allData.assignedProfilePicture }
+                        : require('@assets/images/profileIcon.png')
                     } style={styles.circleImage} />
                   </View>
                   <Text style={styles.personName}>{allData.assignedName}</Text>
@@ -479,42 +605,13 @@ const TaskDetailsScreen = () => {
                 </View>
               </TouchableOpacity>
 
-              <Modal
-                animationType="slide"
-                transparent={true}
+              <CommentModal
                 visible={commentmodalVisible}
-                onRequestClose={() => setCommentModalVisible(false)}
-              >
-                <View style={styles.overlay}>
-                  <View style={styles.modalView}>
-                    <TouchableOpacity style={styles.closeButton} onPress={() => setCommentModalVisible(false)}>
-                      <Text style={styles.closeButtonText}>×</Text>
-                    </TouchableOpacity>
-
-                    <TitleText style={styles.poptext}>
-                      Add your Comment
-                    </TitleText>
-
-                    <InputField style={styles.input2}
-
-                      autoCapitalize="none"
-                      textAlignVertical="top"
-                      multiline
-                      numberOfLines={4}
-                      placeholder="Type here..."
-                      value={inputValue}
-                      onChangeText={setInputValue}
-                    />
-
-
-
-                    {/* Submit Button */}
-                    <Pressable style={styles.submitButton} onPress={handleSubmit}>
-                      <Text style={styles.buttonText}>Submit</Text>
-                    </Pressable>
-                  </View>
-                </View>
-              </Modal>
+                onClose={() => setCommentModalVisible(false)}
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+                onSubmit={handleSubmit}
+              />
 
               <View style={styles.commentbox}>
 
@@ -527,15 +624,54 @@ const TaskDetailsScreen = () => {
                     <Text style={styles.personName}>Mehul</Text>
                   </View>
 
-                  <View style={{ flexDirection: 'column', gap: 6, maxWidth: '70%' }}>
+                  <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 6, maxWidth: '70%' }}>
                     <TitleText>30 May 2025 11:25 AM</TitleText>
 
                     <ReadMoreText
                       text="Lorem ipsum is a dummy o jherbsd kwjebna ljwnde lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-                      numberOfChars={65}
+                      numberOfChars={40}
                       textStyle={{ fontSize: 16, color: '#333' }}
                       readMoreTextStyle={{ color: 'orange' }}
                     />
+
+                    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                      <TouchableOpacity onPress={() => setModalVisible2(true)}>
+                        <Icon name="mic" size={16} color="#000" />
+                      </TouchableOpacity>
+
+                      <AudioPlayerModal
+                  visible={modalVisible2}
+                  onClose={() => setModalVisible2(false)}
+                  isPlaying={isPlaying}
+                  position={position}
+                  duration={duration}
+                  onTogglePlayPause={onTogglePlayPause}
+                  onSeek={onSeek}
+                  title="Audio Player 2"
+                  formatTime={formatTime}
+                  styles={styles}
+                />
+
+                      <TouchableOpacity onPress={openModal2}>
+                        <Icon name="image" size={16} color="#000" />
+                      </TouchableOpacity >
+
+                      <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
+                        <View><Image
+                          source={{ uri: 'https://picsum.photos/300' }}
+                          style={{
+                            width: screenWidth * 0.8,
+                            height: screenWidth * 0.8,
+                            borderRadius: 10,
+                            alignSelf: 'center',
+                            marginTop: 16,
+                          }}
+                        /></View>
+                      </BottomModal>
+
+
+
+                    </View>
                   </View>
 
                 </View>
@@ -558,90 +694,48 @@ const TaskDetailsScreen = () => {
 
 const styles = StyleSheet.create({
 
+  modalOverlayCenter: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  centeredModal: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    width: '80%',
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
+    zIndex: 10,
+  },
+
   closeButtonText: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
 
-  input2: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#E7E2DA',
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    height: 120,
-    borderRadius: 8,
-    color: "#291C0A",
-  },
 
-  poptext: {
-    textAlign: 'left',
-    fontSize: 15,
-    fontWeight: 400,
-    marginBottom: 16,
-  },
-  submitButton: {
-    marginTop: 20,
-    backgroundColor: '#FECC01',
-    padding: 10,
-    borderRadius: 6,
-    width: '100%',
-  },
-  input: {
-    width: '100%',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-
-  openButton: {
-    backgroundColor: '#2196F3',
-    padding: 12,
-    borderRadius: 8,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 10,
-    backgroundColor: '#ddd',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', // transparent black
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalView: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 16,
+  modal: {
+    backgroundColor: '#fff',
     padding: 24,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    borderRadius: 16,
+    alignItems: 'center',
   },
-  modalText: {
-    fontSize: 18,
-    fontWeight: '500',
-  },
+  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  slider: { width: '100%', marginTop: 10 },
+  timer: { marginTop: 10, fontSize: 16, color: '#333' },
 
-  playBtn: { padding: 20, backgroundColor: '#4CAF50', borderRadius: 12 },
+  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16 },
   btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
 
   text: {
@@ -689,7 +783,7 @@ const styles = StyleSheet.create({
   },
   dropdownList2: {
     position: 'absolute',
-    top: 60, // adjust this based on dropdownHeader height
+    top: 60,
     // left: 0,
     right: 0,
     zIndex: 4,
@@ -799,8 +893,8 @@ const styles = StyleSheet.create({
 
 
   speaker: {
-    width: 44,
-    height: 43,
+    width: 32,
+    height: 32,
   },
 
   circleImage: {
@@ -811,6 +905,15 @@ const styles = StyleSheet.create({
 
   circle: {
     width: '70%',
+    aspectRatio: 1,
+    borderRadius: 999,
+    backgroundColor: '#ddd',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  circle2: {
+    width: '30%',
     aspectRatio: 1,
     borderRadius: 999,
     backgroundColor: '#ddd',
