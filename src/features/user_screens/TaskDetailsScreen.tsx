@@ -328,7 +328,7 @@ const TaskDetailsScreen = () => {
       <CustomSafeAreaView style={{ flex: 1 }}>
         {activityIndicator ?
           <ActivityIndicator size="large" color="#FECC01" /> :
-          <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
+          <View style={{ flex: 1, backgroundColor: '#FAF8F5' ,paddingBottom: 16 }}>
             <TouchableOpacity onPress={goBack}>
               <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center' }} >
                 <Image
@@ -339,6 +339,10 @@ const TaskDetailsScreen = () => {
 
               </View>
             </TouchableOpacity>
+
+            <ScrollView >
+
+           
 
 
             <View style={{ padding: 16, gap: 16 }}>
@@ -579,13 +583,9 @@ const TaskDetailsScreen = () => {
                 onSubmit={handleSubmit}
               />
 
-              <View style={{ height: '60%' }}>
-                <ScrollView
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator={true}
-                  contentContainerStyle={{ gap: 12 }}
-                  
-                >
+          
+
+           
                   {
                     allData.comments && (
                       (allData.comments as {
@@ -595,9 +595,8 @@ const TaskDetailsScreen = () => {
                       }[])
                         .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds)
                         .map((commentData, index) => (
-                          <View style={styles.commentbox} key={index}>
-                            {/* <View style={{ flexDirection: 'row', gap: 10, }}> */}
-                              <View style={styles.righttop}>
+                          <View style={styles.commentbox2} key={index}>
+                              <View style={{flexDirection: 'column' ,justifyContent: 'center', alignItems:'center',}}>
                                 <View style={styles.circle}>
                                   <Image
                                     source={
@@ -611,17 +610,27 @@ const TaskDetailsScreen = () => {
                                 <Text style={styles.personName}>{commentUsers[commentData.commentedBy]?.name ?? 'Unknown'}</Text>
                               </View>
 
-                              <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 6, width: '70%' }}>
-                                <TitleText>
-                                  {moment(new Date(commentData.commentedAt._seconds * 1000)).format('DD MMM YYYY hh:mm A')}
-                                </TitleText>
+                              <View style={{flexDirection: 'column' , flex: 1,justifyContent: 'space-between'}}>
 
-                                <ReadMoreText
-                                  text={commentData.commentedText}
-                                  numberOfChars={40}
-                                  textStyle={{ fontSize: 16, color: '#333' }}
-                                  readMoreTextStyle={{ color: 'orange' }}
-                                />
+                                <View>
+
+                                  <TitleText>
+                                    {moment(new Date(commentData.commentedAt._seconds * 1000)).format('DD MMM YYYY hh:mm A')}
+                                  </TitleText>
+                             
+
+                               
+                                    <ReadMoreText
+                                      text={commentData.commentedText}
+                                      numberOfChars={40}
+                                      textStyle={{ fontSize: 16, color: '#333' }}
+                                      readMoreTextStyle={{ color: 'orange' }}
+                                    />
+                                </View>
+                             
+                                
+
+                               
 
                                 <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                                   <TouchableOpacity onPress={() => setModalVisible2(true)}>
@@ -650,25 +659,22 @@ const TaskDetailsScreen = () => {
 
                               </View>
 
-                              {/* <TouchableOpacity onPress={() => console.log(allData)}>
-                          <Feather name="trash" size={24} color="red" />
-                        </TouchableOpacity> */}
+                            
 
 
                               
                             </View>
-                          // </View>
                         ))
                     )
                   }
-                </ScrollView>
-              </View>
+               
 
 
 
 
 
             </View>
+            </ScrollView>
           </View>
         }
         {/* <BottomNav /> */}
@@ -962,6 +968,18 @@ const styles = StyleSheet.create({
     ,
     justifyContent: 'space-between',
     alignItems: 'center'
+  },
+
+  commentbox2: {
+    
+    flexDirection: 'row' ,padding: 12, gap: 16,borderColor: '#FEC601',
+                          borderWidth: 4,
+                          borderStyle: 'dashed',
+                          width: '100%',
+                          paddingVertical: 12,
+                          paddingHorizontal: 14,
+                          borderRadius: 12,
+                          backgroundColor: '#ffffff',
   },
 
   tasktitle: {
