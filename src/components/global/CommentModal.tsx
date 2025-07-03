@@ -226,7 +226,7 @@ const CommentModal = ({
                   <TitleText style={styles.textualtext}>Play the audio</TitleText>
                 </TouchableOpacity>
 
-                <AudioPlayerModal
+                {/* <AudioPlayerModal
                   visible={modalVisible}
                   onClose={() => setModalVisible(false)}
                   isPlaying={isPlaying}
@@ -237,7 +237,7 @@ const CommentModal = ({
                   title="Audio Player 3"
                   formatTime={formatTime}
                   styles={styles}
-                />
+                /> */}
 
 
 
