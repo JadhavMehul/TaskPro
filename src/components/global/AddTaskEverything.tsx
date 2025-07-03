@@ -53,6 +53,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   const [timeSet, setTimeSet] = useState(false);
   const [attachedImageModal, setAttachedImageModal] = useState(false);
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
+  const [attachedAudio, setAttachedAudio] = useState<string | null>(null);
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
   ]);
@@ -209,7 +210,62 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   }
 
 
-  const addTaskFunction = async (formData: any, attachedImage: AttachedImage | null) => {
+
+
+
+  // audio section
+
+  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
+  const { setAudioPath } = useAudio();
+
+  const requestMicrophonePermission = async () => {
+    if (Platform.OS === 'android') {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      ]);
+      return (
+        granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } else {
+      const result = await request(PERMISSIONS.IOS.MICROPHONE);
+      return result === RESULTS.GRANTED;
+    }
+  };
+
+  const onStartRecord = async () => {
+    const hasPermission = await requestMicrophonePermission();
+    if (!hasPermission) {
+      console.warn('Permission denied');
+      return;
+    }
+
+    const path = Platform.select({
+      ios: 'sound.m4a',
+      android: `${RNFS.CachesDirectoryPath}/sound.m4a`,
+    });
+
+    const uri = await audioRecorderPlayer.startRecorder(path as string);
+    audioRecorderPlayer.addRecordBackListener(() => { });
+    console.log('Recording at:', uri);
+    setAudioPath(uri);
+  };
+
+  const onStopRecord = async () => {
+    const result = await audioRecorderPlayer.stopRecorder();
+    audioRecorderPlayer.removeRecordBackListener();
+    console.log('Stopped recording:', result);
+
+    setAttachedAudio(result)
+  };
+
+
+
+
+
+
+  const addTaskFunction = async (formData: any, attachedImage: AttachedImage | null, attachedAudio: string | null) => {
     const { title, description, assignTo, taskEndTime, notificationTimer, createdBy, taskStatus } = formData;
 
     // Check if any required field is empty
@@ -227,16 +283,69 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
     setActivityIndicator(true);
     try {
-      if (attachedImage) {
-        const timeNow = Date.now();
+      const timeNow = Date.now();
+
+      // Case 1: Both image and audio are attached
+      if (attachedImage && attachedAudio) {
+        const referenceImage = storage().ref(`taskAttachments/images/${createdBy}-${timeNow}-${attachedImage.fileName}`);
+        await referenceImage.putFile(attachedImage.uploadUri);
+        const downloadImageURL = await referenceImage.getDownloadURL();
+
+        const referenceAudio = storage().ref(`taskAttachments/audio/${createdBy}-${timeNow}`);
+        await referenceAudio.putFile(attachedAudio);
+        const downloadAudioURL = await referenceAudio.getDownloadURL();
+
+        const docRef = await firestore().collection("TaskList").add({
+          ...formData,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          taskStatus: 'New',
+          taskDone: false,
+          attachedImage: downloadImageURL,
+          attachedAudio: downloadAudioURL,
+        });
+        console.log('Task added successfully!');
+        await callApi(formData, docRef.id);
+
+        // Case 2: Only image is attached
+      } else if (attachedImage) {
         const reference = storage().ref(`taskAttachments/images/${createdBy}-${timeNow}-${attachedImage.fileName}`);
         await reference.putFile(attachedImage.uploadUri);
         const downloadURL = await reference.getDownloadURL();
-        const docRef = await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New', taskDone: false, attachedImage: downloadURL });
+
+        const docRef = await firestore().collection("TaskList").add({
+          ...formData,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          taskStatus: 'New',
+          taskDone: false,
+          attachedImage: downloadURL,
+        });
         console.log('Task added successfully!');
         await callApi(formData, docRef.id);
+
+        // Case 3: Only audio is attached
+      } else if (attachedAudio) {
+        const reference = storage().ref(`taskAttachments/audio/${createdBy}-${timeNow}`);
+        await reference.putFile(attachedAudio);
+        const downloadURL = await reference.getDownloadURL();
+
+        const docRef = await firestore().collection("TaskList").add({
+          ...formData,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          taskStatus: 'New',
+          taskDone: false,
+          attachedAudio: downloadURL,
+        });
+        console.log('Task added successfully!');
+        await callApi(formData, docRef.id);
+
+        // Case 4: No attachments
       } else {
-        const docRef = await firestore().collection("TaskList").add({ ...formData, createdAt: firestore.FieldValue.serverTimestamp(), taskStatus: 'New', taskDone: false });
+        const docRef = await firestore().collection("TaskList").add({
+          ...formData,
+          createdAt: firestore.FieldValue.serverTimestamp(),
+          taskStatus: 'New',
+          taskDone: false,
+        });
         console.log('Task added successfully!');
         await callApi(formData, docRef.id);
       }
@@ -246,6 +355,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       setActivityIndicator(false);
       onCloseModal();
     }
+
   };
 
   const uploadImage = async () => {
@@ -297,55 +407,6 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     }
     getEmployees();
   }, [])
-
-
-
-  // audio section
-
-  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
-  const { setAudioPath } = useAudio();
-
-  const requestMicrophonePermission = async () => {
-    if (Platform.OS === 'android') {
-      const granted = await PermissionsAndroid.requestMultiple([
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-      ]);
-      return (
-        granted['android.permission.RECORD_AUDIO'] === PermissionsAndroid.RESULTS.GRANTED
-      );
-    } else {
-      const result = await request(PERMISSIONS.IOS.MICROPHONE);
-      return result === RESULTS.GRANTED;
-    }
-  };
-
-  const onStartRecord = async () => {
-    const hasPermission = await requestMicrophonePermission();
-    if (!hasPermission) {
-      console.warn('Permission denied');
-      return;
-    }
-
-    const path = Platform.select({
-      ios: 'sound.m4a',
-      android: `${RNFS.CachesDirectoryPath}/sound.m4a`,
-    });
-
-    const uri = await audioRecorderPlayer.startRecorder(path as string);
-    audioRecorderPlayer.addRecordBackListener(() => { });
-    console.log('Recording at:', uri);
-    setAudioPath(uri);
-  };
-
-  const onStopRecord = async () => {
-    const result = await audioRecorderPlayer.stopRecorder();
-    audioRecorderPlayer.removeRecordBackListener();
-    console.log('Stopped recording:', result);
-  };
-
-
 
 
 
@@ -557,7 +618,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       </ScrollView>
 
       <View style={styles.endcontainer}>
-        <TouchableOpacity style={styles.orangebutton} onPress={() => addTaskFunction(formData, attachedImage)}>
+        <TouchableOpacity style={styles.orangebutton} onPress={() => addTaskFunction(formData, attachedImage, attachedAudio)}>
           <TitleText style={styles.orangebtntext}>
             Add Task
           </TitleText>

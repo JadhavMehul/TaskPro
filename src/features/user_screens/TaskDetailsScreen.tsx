@@ -81,11 +81,11 @@ const TaskDetailsScreen = () => {
   const [allData, setAllData] = useState({
     title: '',
     description: '',
-    recordedSound: '',
+    recordedSound: null,
     assignedProfilePicture: '',
     assignedName: '',
     taskStatus: '',
-    needPermission: false
+    needPermission: false,
   })
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
@@ -96,91 +96,6 @@ const TaskDetailsScreen = () => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalVisible2, setModalVisible2] = useState(false);
-
-  const { audioPath } = useAudio();
-  const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
-
-  const onPlaySound = async () => {
-    if (!audioPath) {
-      console.warn('No recording available');
-      return;
-    }
-    setModalVisible(true);
-
-    const cleanedPath = audioPath.replace('file://', '');
-
-    try {
-      await audioRecorderPlayer.startPlayer(cleanedPath);
-      audioRecorderPlayer.addPlayBackListener((e) => {
-        if (e.currentPosition >= e.duration) {
-          audioRecorderPlayer.stopPlayer();
-          audioRecorderPlayer.removePlayBackListener();
-        }
-        return;
-      });
-    } catch (error) {
-      console.error('Playback failed', error);
-    }
-  };
-
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [position, setPosition] = useState(0);
-
-  useEffect(() => {
-    return () => {
-      audioRecorderPlayer.stopPlayer();
-      audioRecorderPlayer.removePlayBackListener();
-    };
-  }, []);
-
-  const onTogglePlayPause = async () => {
-    if (!audioPath) {
-      Alert.alert('No Audio', 'There is no audio available to play.');
-      return;
-    }
-
-    const cleanedPath = audioPath.replace('file://', '');
-
-    if (!isPlaying) {
-      try {
-        await audioRecorderPlayer.startPlayer(cleanedPath);
-        setIsPlaying(true);
-        audioRecorderPlayer.addPlayBackListener((e) => {
-          setPosition(e.currentPosition);
-          setDuration(e.duration);
-          if (e.currentPosition >= e.duration) {
-            audioRecorderPlayer.stopPlayer();
-            audioRecorderPlayer.removePlayBackListener();
-            setIsPlaying(false);
-            setPosition(0);
-          }
-          return;
-        });
-      } catch (error) {
-        console.error('Playback failed', error);
-      }
-    } else {
-      await audioRecorderPlayer.pausePlayer();
-      setIsPlaying(false);
-    }
-  };
-
-
-  const onSeek = async (value: number) => {
-    await audioRecorderPlayer.seekToPlayer(value);
-    setPosition(value);
-  };
-
-  const formatTime = (millis: number): string => {
-    const minutes = Math.floor(millis / 60000);
-    const seconds = Math.floor((millis % 60000) / 1000);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-  };
-
-
-
-
 
 
   const handleSubmit = () => {
@@ -308,7 +223,7 @@ const TaskDetailsScreen = () => {
         setAllData({
           title: data?.title || '',
           description: data?.description || '',
-          recordedSound: data?.recordedSound || null,
+          recordedSound: data?.attachedAudio || null,
           assignedProfilePicture: assignToData?.profilePicture || '',
           assignedName: assignToData?.firstName || '',
           taskStatus: data?.taskStatus || '',
@@ -402,47 +317,48 @@ const TaskDetailsScreen = () => {
               <View style={styles.commentbox}>
                 <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
                   <TouchableOpacity onPress={() => setModalVisible(true)} >
-                  <Icon name="speaker" size={32} color="#000" />
+                    <Icon name="speaker" size={32} color="#000" />
                   </TouchableOpacity>
-                 
+
+                  {/* <AudioPlayerModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    isPlaying={isPlaying}
+                    position={position}
+                    duration={duration}
+                    onTogglePlayPause={onTogglePlayPause}
+                    onSeek={onSeek}
+                    formatTime={formatTime}
+                    styles={styles}
+                  /> */}
+
+                  <AudioPlayerModal
+                    visible={modalVisible}
+                    onClose={() => setModalVisible(false)}
+                    audioUrl={allData.recordedSound}
+                    styles={styles}
+                  />
+
                   <TouchableOpacity onPress={openModal3}>
-                        <Icon name="image" size={32} color="#000" />
-                      </TouchableOpacity >
+                    <Icon name="image" size={32} color="#000" />
+                  </TouchableOpacity >
 
-                      <BottomModal isVisible={ispic2ModalVisible} onClose={closeModal3}>
-                        <View>
-                          <Text>Task iMAGE
-                            </Text>
-                            <Image
-                          source={{ uri: 'https://picsum.photos/300' }}
-                          style={{
-                            width: screenWidth * 0.8,
-                            height: screenWidth * 0.8,
-                            borderRadius: 10,
-                            alignSelf: 'center',
-                            marginTop: 16,
-                          }}
-                        /></View>
-                      </BottomModal>
+                  <BottomModal isVisible={ispic2ModalVisible} onClose={closeModal3}>
+                    <View>
+                      <Text>Task iMAGE
+                      </Text>
+                      <Image
+                        source={{ uri: 'https://picsum.photos/300' }}
+                        style={{
+                          width: screenWidth * 0.8,
+                          height: screenWidth * 0.8,
+                          borderRadius: 10,
+                          alignSelf: 'center',
+                          marginTop: 16,
+                        }}
+                      /></View>
+                  </BottomModal>
                 </View>
-
-
-                <AudioPlayerModal
-  visible={modalVisible}
-  onClose={() => setModalVisible(false)}
-  isPlaying={isPlaying}
-  position={position}
-  duration={duration}
-  onTogglePlayPause={onTogglePlayPause}
-  onSeek={onSeek}
-  formatTime={formatTime}
-  styles={styles}
-/>
-
-
-
-
-
                 <View style={styles.righttop}>
                   <View style={styles.circle}>
                     <Image source={
@@ -639,18 +555,18 @@ const TaskDetailsScreen = () => {
                         <Icon name="mic" size={16} color="#000" />
                       </TouchableOpacity>
 
-                      <AudioPlayerModal
-                  visible={modalVisible2}
-                  onClose={() => setModalVisible2(false)}
-                  isPlaying={isPlaying}
-                  position={position}
-                  duration={duration}
-                  onTogglePlayPause={onTogglePlayPause}
-                  onSeek={onSeek}
-                  title="Audio Player 2"
-                  formatTime={formatTime}
-                  styles={styles}
-                />
+                      {/* <AudioPlayerModal
+                        visible={modalVisible2}
+                        onClose={() => setModalVisible2(false)}
+                        isPlaying={isPlaying}
+                        position={position}
+                        duration={duration}
+                        onTogglePlayPause={onTogglePlayPause}
+                        onSeek={onSeek}
+                        title="Audio Player 2"
+                        formatTime={formatTime}
+                        styles={styles}
+                      /> */}
 
                       <TouchableOpacity onPress={openModal2}>
                         <Icon name="image" size={16} color="#000" />
