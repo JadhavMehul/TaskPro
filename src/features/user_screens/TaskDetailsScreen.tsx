@@ -119,6 +119,7 @@ const TaskDetailsScreen = () => {
     } finally {
       setCommentModalVisible(false);
       setInputValue('');
+      await fetchTask();
     }
   };
 
@@ -578,80 +579,91 @@ const TaskDetailsScreen = () => {
                 onSubmit={handleSubmit}
               />
 
-              {
-                allData.comments && (
-                  (allData.comments as {
-                    commentedAt: { _seconds: number; _nanoseconds: number };
-                    commentedText: string;
-                    commentedBy: string;
-                  }[])
-                    .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds) // 🔥 Sort: latest first
-                    .map((commentData, index) => (
-                      <View style={styles.commentbox} key={index}>
-                        <View style={{ flexDirection: 'row', gap: 10 }}>
-                          <View style={styles.righttop}>
-                            <View style={styles.circle}>
-                              <Image
-                                source={
-                                  commentUsers[commentData.commentedBy]?.profilePicture
-                                    ? { uri: commentUsers[commentData.commentedBy].profilePicture }
-                                    : require('../../assets/images/profileIcon.png')
-                                }
-                                style={styles.circleImage}
-                              />
-                            </View>
-                            <Text style={styles.personName}>{commentUsers[commentData.commentedBy]?.name ?? 'Unknown'}</Text>
-                            {/* You can use: commentData.commentedBy */}
-                          </View>
-
-                          <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 6, maxWidth: '70%' }}>
-                            <TitleText>
-                              {moment(new Date(commentData.commentedAt._seconds * 1000)).format('DD MMM YYYY hh:mm A')}
-                            </TitleText>
-
-                            <ReadMoreText
-                              text={commentData.commentedText}
-                              numberOfChars={40}
-                              textStyle={{ fontSize: 16, color: '#333' }}
-                              readMoreTextStyle={{ color: 'orange' }}
+              {allData.comments && (
+                <FlatList
+                  data={
+                    [...(allData.comments as {
+                      commentedAt: { _seconds: number; _nanoseconds: number };
+                      commentedText: string;
+                      commentedBy: string;
+                    }[])]
+                      .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds)
+                  }
+                  keyExtractor={(_, index) => index.toString()}
+                  renderItem={({ item }) => (
+                    <View style={styles.commentbox}>
+                      <View style={{ flexDirection: 'row', gap: 10 }}>
+                        <View style={styles.righttop}>
+                          <View style={styles.circle}>
+                            <Image
+                              source={
+                                commentUsers[item.commentedBy]?.profilePicture
+                                  ? { uri: commentUsers[item.commentedBy].profilePicture }
+                                  : require('../../assets/images/profileIcon.png')
+                              }
+                              style={styles.circleImage}
                             />
-
-                            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                              <TouchableOpacity onPress={() => setModalVisible2(true)}>
-                                <Icon name="mic" size={16} color="#000" />
-                              </TouchableOpacity>
-
-                              <TouchableOpacity onPress={openModal2}>
-                                <Icon name="image" size={16} color="#000" />
-                              </TouchableOpacity >
-
-                              <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
-                                <View>
-                                  <Image
-                                    source={{ uri: 'https://picsum.photos/300' }}
-                                    style={{
-                                      width: screenWidth * 0.8,
-                                      height: screenWidth * 0.8,
-                                      borderRadius: 10,
-                                      alignSelf: 'center',
-                                      marginTop: 16,
-                                    }}
-                                  />
-                                </View>
-                              </BottomModal>
-                            </View>
                           </View>
+                          <Text style={styles.personName}>
+                            {commentUsers[item.commentedBy]?.name ?? 'Unknown'}
+                          </Text>
                         </View>
 
-                        {/* <TouchableOpacity onPress={() => console.log(allData)}>
+                        <View
+                          style={{
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: 6,
+                            maxWidth: '70%',
+                          }}
+                        >
+                          <TitleText>
+                            {moment(new Date(item.commentedAt._seconds * 1000)).format(
+                              'DD MMM YYYY hh:mm A'
+                            )}
+                          </TitleText>
+
+                          <ReadMoreText
+                            text={item.commentedText}
+                            numberOfChars={40}
+                            textStyle={{ fontSize: 16, color: '#333' }}
+                            readMoreTextStyle={{ color: 'orange' }}
+                          />
+
+                          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                            <TouchableOpacity onPress={() => setModalVisible2(true)}>
+                              <Icon name="mic" size={16} color="#000" />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity onPress={openModal2}>
+                              <Icon name="image" size={16} color="#000" />
+                            </TouchableOpacity>
+
+                            <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
+                              <View>
+                                <Image
+                                  source={{ uri: 'https://picsum.photos/300' }}
+                                  style={{
+                                    width: screenWidth * 0.8,
+                                    height: screenWidth * 0.8,
+                                    borderRadius: 10,
+                                    alignSelf: 'center',
+                                    marginTop: 16,
+                                  }}
+                                />
+                              </View>
+                            </BottomModal>
+                          </View>
+                        </View>
+                      </View>
+                      {/* <TouchableOpacity onPress={() => console.log(allData)}>
                           <Feather name="trash" size={24} color="red" />
                         </TouchableOpacity> */}
-                      </View>
-                    ))
-                )
-              }
-
-
+                    </View>
+                  )}
+                  contentContainerStyle={{ gap: 16 }} // spacing between comments
+                />
+              )}
 
 
 
