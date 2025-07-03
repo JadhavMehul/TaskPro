@@ -36,35 +36,9 @@ const CommentModal = ({
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  const { audioPath } = useAudio();
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
 
-  const onPlaySound = async () => {
-    if (!audioPath) {
-      console.warn('No recording available');
-      return;
-    }
-    setModalVisible(true);
 
-    const cleanedPath = audioPath.replace('file://', '');
-
-    try {
-      await audioRecorderPlayer.startPlayer(cleanedPath);
-      audioRecorderPlayer.addPlayBackListener((e) => {
-        if (e.currentPosition >= e.duration) {
-          audioRecorderPlayer.stopPlayer();
-          audioRecorderPlayer.removePlayBackListener();
-        }
-        return;
-      });
-    } catch (error) {
-      console.error('Playback failed', error);
-    }
-  };
-
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [duration, setDuration] = useState(0);
-  const [position, setPosition] = useState(0);
 
   useEffect(() => {
     return () => {
@@ -73,49 +47,6 @@ const CommentModal = ({
     };
   }, []);
 
-  const onTogglePlayPause = async () => {
-    if (!audioPath) {
-      Alert.alert('No Audio', 'There is no audio available to play.');
-      return;
-    }
-
-    const cleanedPath = audioPath.replace('file://', '');
-
-    if (!isPlaying) {
-      try {
-        await audioRecorderPlayer.startPlayer(cleanedPath);
-        setIsPlaying(true);
-        audioRecorderPlayer.addPlayBackListener((e) => {
-          setPosition(e.currentPosition);
-          setDuration(e.duration);
-          if (e.currentPosition >= e.duration) {
-            audioRecorderPlayer.stopPlayer();
-            audioRecorderPlayer.removePlayBackListener();
-            setIsPlaying(false);
-            setPosition(0);
-          }
-          return;
-        });
-      } catch (error) {
-        console.error('Playback failed', error);
-      }
-    } else {
-      await audioRecorderPlayer.pausePlayer();
-      setIsPlaying(false);
-    }
-  };
-
-
-  const onSeek = async (value: number) => {
-    await audioRecorderPlayer.seekToPlayer(value);
-    setPosition(value);
-  };
-
-  const formatTime = (millis: number): string => {
-    const minutes = Math.floor(millis / 60000);
-    const seconds = Math.floor((millis % 60000) / 1000);
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-  };
 
   // audio section
 

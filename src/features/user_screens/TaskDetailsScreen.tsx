@@ -19,12 +19,14 @@ import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import { useAudio } from '../../components/global/AudioContext';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import firestore from "@react-native-firebase/firestore";
+import auth from "@react-native-firebase/auth";
 import InputField from '@components/global/InputField';
 import CommentModal from '@components/global/CommentModal';
 import Icon from '@react-native-vector-icons/feather';
 import BottomModal from '@components/global/BottomModal';
 import Slider from '@react-native-community/slider';
 import AudioPlayerModal from '@components/global/AudioPlayPause';
+import moment from 'moment';
 
 
 
@@ -46,7 +48,7 @@ type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScre
 
 
 const TaskDetailsScreen = () => {
-
+  const currentUser = auth().currentUser;
   const screenWidth = Dimensions.get('window').width;
 
   const [ismicModalVisible, setmicModalVisible] = useState(false);
@@ -86,10 +88,15 @@ const TaskDetailsScreen = () => {
     assignedName: '',
     taskStatus: '',
     needPermission: false,
+    comments: [],
   })
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
   ]);
+  const [commentUsers, setCommentUsers] = useState<{
+    [email: string]: { name: string, profilePicture: string }
+  }>({});
+
 
 
 
@@ -98,10 +105,21 @@ const TaskDetailsScreen = () => {
   const [modalVisible2, setModalVisible2] = useState(false);
 
 
-  const handleSubmit = () => {
-    console.log('Input Value:', inputValue);
-    setCommentModalVisible(false);
-    setInputValue('');
+  const handleSubmit = async () => {
+    try {
+      await firestore().collection('TaskList').doc(taskId).update({
+        taskComments: firestore.FieldValue.arrayUnion({
+          commentedAt: new Date(),
+          commentedText: inputValue,
+          commentedBy: currentUser?.email,
+        }),
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setCommentModalVisible(false);
+      setInputValue('');
+    }
   };
 
 
@@ -211,35 +229,66 @@ const TaskDetailsScreen = () => {
       setShowDropdown(false);
     }
   }
+  const fetchCommentUsers = async (emails: string[]) => {
+    const usersMap: { [email: string]: { name: string; profilePicture: string } } = {};
+    await Promise.all(emails.map(async (email) => {
+      const userDoc = await firestore().collection('UserAccounts').doc(email).get();
+      const userData = userDoc.data();
+      if (userData) {
+        usersMap[email] = {
+          name: userData.firstName || '',
+          profilePicture: userData.profilePicture || '',
+        };
+      }
+    }));
+    setCommentUsers(usersMap);
+  };
 
   const fetchTask = async () => {
-    setActivityIndicator(true)
+    setActivityIndicator(true);
     try {
       const taskData = await firestore().collection('TaskList').doc(taskId).get();
-      if (taskData.exists()) {
-        const data = taskData.data();
-        const fetchAssignToData = await firestore().collection('UserAccounts').doc(data?.assignTo).get();
-        const assignToData = fetchAssignToData.data();
-        setAllData({
-          title: data?.title || '',
-          description: data?.description || '',
-          recordedSound: data?.attachedAudio || null,
-          assignedProfilePicture: assignToData?.profilePicture || '',
-          assignedName: assignToData?.firstName || '',
-          taskStatus: data?.taskStatus || '',
-          needPermission: data?.needPermission || false,
-        })
-        console.log(data);
-        setSelectedStatus(data?.taskStatus || 'New');
+      const data = taskData.data();
+
+      if (!data) {
+        console.warn('No task data found');
+        return;
       }
 
-    } catch (error) {
-      console.log(error);
+      let assignToData = null;
+      if (data.assignTo) {
+        const assignToDoc = await firestore().collection('UserAccounts').doc(data.assignTo).get();
+        assignToData = assignToDoc.data();
+      }
 
+      setAllData({
+        title: data.title || '',
+        description: data.description || '',
+        recordedSound: data.attachedAudio || null,
+        assignedProfilePicture: assignToData?.profilePicture || '',
+        assignedName: assignToData?.firstName || '',
+        taskStatus: data.taskStatus || '',
+        needPermission: data.needPermission || false,
+        comments: data.taskComments || [],
+      });
+
+      if (data.taskComments?.length > 0) {
+        const emails = Array.from(
+          new Set((data.taskComments as any[]).map((c) => String(c.commentedBy)))
+        );
+        await fetchCommentUsers(emails);
+      }
+
+      setSelectedStatus(data.taskStatus || 'New');
+
+    } catch (error) {
+      console.error("Error fetching task:", error);
     } finally {
-      setActivityIndicator(false)
+      setActivityIndicator(false);
     }
-  }
+  };
+
+
 
   const getEmployees = async () => {
     setActivityIndicator(true);
@@ -529,74 +578,82 @@ const TaskDetailsScreen = () => {
                 onSubmit={handleSubmit}
               />
 
-              <View style={styles.commentbox}>
+              {
+                allData.comments && (
+                  (allData.comments as {
+                    commentedAt: { _seconds: number; _nanoseconds: number };
+                    commentedText: string;
+                    commentedBy: string;
+                  }[])
+                    .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds) // 🔥 Sort: latest first
+                    .map((commentData, index) => (
+                      <View style={styles.commentbox} key={index}>
+                        <View style={{ flexDirection: 'row', gap: 10 }}>
+                          <View style={styles.righttop}>
+                            <View style={styles.circle}>
+                              <Image
+                                source={
+                                  commentUsers[commentData.commentedBy]?.profilePicture
+                                    ? { uri: commentUsers[commentData.commentedBy].profilePicture }
+                                    : require('../../assets/images/profileIcon.png')
+                                }
+                                style={styles.circleImage}
+                              />
+                            </View>
+                            <Text style={styles.personName}>{commentUsers[commentData.commentedBy]?.name ?? 'Unknown'}</Text>
+                            {/* You can use: commentData.commentedBy */}
+                          </View>
 
-                <View style={{ flexDirection: 'row', gap: 0 }}>
+                          <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 6, maxWidth: '70%' }}>
+                            <TitleText>
+                              {moment(new Date(commentData.commentedAt._seconds * 1000)).format('DD MMM YYYY hh:mm A')}
+                            </TitleText>
 
-                  <View style={styles.righttop}>
-                    <View style={styles.circle}>
-                      <Image source={require('../../assets/images/home_fill.png')} style={styles.circleImage} />
-                    </View>
-                    <Text style={styles.personName}>Mehul</Text>
-                  </View>
+                            <ReadMoreText
+                              text={commentData.commentedText}
+                              numberOfChars={40}
+                              textStyle={{ fontSize: 16, color: '#333' }}
+                              readMoreTextStyle={{ color: 'orange' }}
+                            />
 
-                  <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 6, maxWidth: '70%' }}>
-                    <TitleText>30 May 2025 11:25 AM</TitleText>
+                            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                              <TouchableOpacity onPress={() => setModalVisible2(true)}>
+                                <Icon name="mic" size={16} color="#000" />
+                              </TouchableOpacity>
 
-                    <ReadMoreText
-                      text="Lorem ipsum is a dummy o jherbsd kwjebna ljwnde lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, lukjbweda j dejklwj hkbrjfsd kjwne, d kjwf esd ensma wedjnsam."
-                      numberOfChars={40}
-                      textStyle={{ fontSize: 16, color: '#333' }}
-                      readMoreTextStyle={{ color: 'orange' }}
-                    />
+                              <TouchableOpacity onPress={openModal2}>
+                                <Icon name="image" size={16} color="#000" />
+                              </TouchableOpacity >
 
-                    <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                      <TouchableOpacity onPress={() => setModalVisible2(true)}>
-                        <Icon name="mic" size={16} color="#000" />
-                      </TouchableOpacity>
+                              <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
+                                <View>
+                                  <Image
+                                    source={{ uri: 'https://picsum.photos/300' }}
+                                    style={{
+                                      width: screenWidth * 0.8,
+                                      height: screenWidth * 0.8,
+                                      borderRadius: 10,
+                                      alignSelf: 'center',
+                                      marginTop: 16,
+                                    }}
+                                  />
+                                </View>
+                              </BottomModal>
+                            </View>
+                          </View>
+                        </View>
 
-                      {/* <AudioPlayerModal
-                        visible={modalVisible2}
-                        onClose={() => setModalVisible2(false)}
-                        isPlaying={isPlaying}
-                        position={position}
-                        duration={duration}
-                        onTogglePlayPause={onTogglePlayPause}
-                        onSeek={onSeek}
-                        title="Audio Player 2"
-                        formatTime={formatTime}
-                        styles={styles}
-                      /> */}
-
-                      <TouchableOpacity onPress={openModal2}>
-                        <Icon name="image" size={16} color="#000" />
-                      </TouchableOpacity >
-
-                      <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
-                        <View><Image
-                          source={{ uri: 'https://picsum.photos/300' }}
-                          style={{
-                            width: screenWidth * 0.8,
-                            height: screenWidth * 0.8,
-                            borderRadius: 10,
-                            alignSelf: 'center',
-                            marginTop: 16,
-                          }}
-                        /></View>
-                      </BottomModal>
+                        {/* <TouchableOpacity onPress={() => console.log(allData)}>
+                          <Feather name="trash" size={24} color="red" />
+                        </TouchableOpacity> */}
+                      </View>
+                    ))
+                )
+              }
 
 
 
-                    </View>
-                  </View>
 
-                </View>
-
-
-                <TouchableOpacity onPress={() => { }}>
-                  <Feather name="trash" size={24} color="red" />
-                </TouchableOpacity>
-              </View>
 
             </View>
           </View>
