@@ -16,6 +16,8 @@ interface AudioPlayerModalProps {
   title?: string;
   audioUrl: string | null;
   styles: any;
+  localAudio?: boolean;
+  deleteAudio?: () => void;
 }
 
 const AudioPlayerModal: React.FC<AudioPlayerModalProps> = ({
@@ -24,6 +26,8 @@ const AudioPlayerModal: React.FC<AudioPlayerModalProps> = ({
   title = 'Audio Player',
   audioUrl,
   styles,
+  localAudio,
+  deleteAudio
 }) => {
   const audioRecorderPlayer = useRef(new AudioRecorderPlayer()).current;
 
@@ -31,7 +35,7 @@ const AudioPlayerModal: React.FC<AudioPlayerModalProps> = ({
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasEnded, setHasEnded] = useState(false); 
+  const [hasEnded, setHasEnded] = useState(false);
 
   const formatTime = (millis: number): string => {
     const minutes = Math.floor(millis / 60000);
@@ -42,7 +46,7 @@ const AudioPlayerModal: React.FC<AudioPlayerModalProps> = ({
   const stopAudio = async () => {
     try {
       await audioRecorderPlayer.stopPlayer();
-    } catch (_) {}
+    } catch (_) { }
     audioRecorderPlayer.removePlayBackListener();
     setIsPlaying(false);
     setPosition(0);
@@ -126,7 +130,7 @@ const AudioPlayerModal: React.FC<AudioPlayerModalProps> = ({
       Alert.alert('Seek Error', 'Could not seek. Try playing again.');
     }
   };
-  
+
 
   const handlePlayPause = async () => {
     if (hasEnded) {
@@ -190,6 +194,26 @@ const AudioPlayerModal: React.FC<AudioPlayerModalProps> = ({
               </TouchableOpacity>
             </>
           )}
+
+
+
+          {
+            localAudio && (
+              <View>
+                <TouchableOpacity onPress={onClose} style={styles.playBtn}>
+                  <Text style={styles.btnText}>
+                    Done
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={deleteAudio} style={styles.playBtn}>
+                  <Text style={styles.btnText}>
+                    Delete
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )
+          }
+
         </View>
       </View>
     </Modal>

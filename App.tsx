@@ -18,6 +18,7 @@ import TaskDetailsScreen from '@features/user_screens/TaskDetailsScreen';
 
 import notifee, { AndroidImportance, AndroidStyle, AuthorizationStatus, EventType } from '@notifee/react-native';
 import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import firestore from "@react-native-firebase/firestore";
 import messaging from "@react-native-firebase/messaging";
 import Recorder from '@features/user_screens/Recorder';
 import { AudioProvider } from '@components/global/AudioContext';
@@ -103,6 +104,7 @@ const App = () => {
       }
     });
 
+  
 
 
     const subscriber = auth().onAuthStateChanged((user) => {
@@ -121,6 +123,31 @@ const App = () => {
     };
   }, []);
 
+  const subscribeToTopic = async () => {
+    try {
+      const token = await messaging().getToken();
+      await messaging().subscribeToTopic('all_users');
+      console.log('Subscribed to topic: ', token);
+
+      const currentUser = auth().currentUser;
+
+      if (currentUser?.email) {
+        await firestore()
+          .collection('UserAccounts')
+          .doc(currentUser.email)
+          .update({
+            fcmToken: token,
+        });
+        console.log('Token saved to Firestore');
+      } else {
+        console.warn('No user signed in, cannot save token');
+      }
+
+    } catch (error) {
+      console.error('Subscription to topic failed:', error);
+    }
+  };
+
   useEffect(() => {
     if (!isShowSplash) {
       if (!user) {
@@ -133,6 +160,7 @@ const App = () => {
           index: 0,
           routes: [{ name: "HomeScreen" }],
         });
+        subscribeToTopic();
       }
     }
   }, [isShowSplash, user]);

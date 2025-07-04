@@ -23,6 +23,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import BottomModal from '@components/global/BottomModal';
 import { screenWidth } from '@utils/Scaling';
 import storage from "@react-native-firebase/storage";
+import AudioPlayerModal from './AudioPlayPause';
 
 
 
@@ -52,11 +53,16 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
   const [timeSet, setTimeSet] = useState(false);
   const [attachedImageModal, setAttachedImageModal] = useState(false);
+  const [attachedAudioModal, setAttachedAudioModal] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+  
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
   const [attachedAudio, setAttachedAudio] = useState<string | null>(null);
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
   ]);
+
+  console.log(attachedAudio);
 
 
   const [formData, setFormData] = useState({
@@ -186,7 +192,8 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       docId: id,
     };
 
-    const api = 'http://10.0.2.2:3000/start-reminder-loop-until-end'
+    const api = 'http://154.53.44.112:3000/start-reminder-loop-until-end'
+    // const api = 'http://10.0.2.2:3000/start-reminder-loop-until-end'
     try {
       const response = await fetch(api, {
         method: 'POST',
@@ -253,11 +260,12 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   };
 
   const onStopRecord = async () => {
-    const result = await audioRecorderPlayer.stopRecorder();
-    audioRecorderPlayer.removeRecordBackListener();
-    console.log('Stopped recording:', result);
-
-    setAttachedAudio(result)
+     setTimeout(async () => {
+       const result = await audioRecorderPlayer.stopRecorder();
+        audioRecorderPlayer.removeRecordBackListener();
+        console.log('Stopped recording:', result);
+        setAttachedAudio(result)
+    }, 1000);
   };
 
 
@@ -371,6 +379,16 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
         setAttachedImage({ fileName: asset.fileName, uploadUri: asset.uri, fileExt: asset.type })
         setAttachedImageModal(true);
       });
+    }
+  }
+
+  const uploadAudio = async () => {
+    if (attachedAudio?.trim()) {
+
+      setAttachedAudioModal(true)
+
+    } else {
+      Alert.alert('Error', 'Something went wrong please close the app and re-open it');
     }
   }
 
@@ -492,15 +510,43 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 </BottomModal>
               )}
 
+              {attachedAudio?.trim() ?
+                <TouchableOpacity
+                  onPressIn={uploadAudio}
+                  style={styles.commentbox}
+                >
+                  <Icon name="mic" size={16} color="#000" />
+                  <TitleText style={styles.textualtext}>
+                    Listen Audio
+                  </TitleText>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                onPressIn={onStartRecord}
-                onPressOut={onStopRecord}
-                style={styles.commentbox}
-              >
-                <Icon name="mic" size={16} color="#000" />
-                <TitleText style={styles.textualtext}>Hold to Record</TitleText>
-              </TouchableOpacity>
+                :
+
+                <TouchableOpacity
+                  onPressIn={onStartRecord}
+                  onPressOut={onStopRecord}
+                  style={styles.commentbox}
+                >
+                  <Icon name="mic" size={16} color="#000" />
+                  <TitleText style={styles.textualtext}>
+                    Hold to Record
+                  </TitleText>
+                </TouchableOpacity>
+              }
+
+              {
+                attachedAudio?.trim() && (
+                  <AudioPlayerModal
+                    visible={attachedAudioModal}
+                    onClose={() => setAttachedAudioModal(false)}
+                    audioUrl={attachedAudio}
+                    localAudio={true}
+                    deleteAudio={() => setAttachedAudio(null)}
+                    styles={styles}
+                  />
+                )
+              }
 
               <View style={styles.namecard}>
                 <View style={styles.row}>
@@ -631,6 +677,53 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
 const styles = StyleSheet.create({
 
+
+  modalOverlayCenter: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  centeredModal: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    width: '80%',
+    alignItems: 'center',
+    position: 'relative',
+  },
+
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 4,
+    zIndex: 10,
+  },
+
+  closeButtonText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+
+
+  modal: {
+    backgroundColor: '#fff',
+    padding: 24,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  slider: { width: '100%', marginTop: 10 },
+  timer: { marginTop: 10, fontSize: 16, color: '#333' },
+
+  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16 },
+  btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
+
+
+
   textualtext: {
     fontWeight: 'bold',
     fontSize: 16,
@@ -652,7 +745,6 @@ const styles = StyleSheet.create({
   },
 
   recordBtn: { padding: 20, backgroundColor: '#FF5555', borderRadius: 12 },
-  btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
 
   modalOverlay: {
     flex: 1,
@@ -882,10 +974,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#FAF8F5",
     borderRadius: 12,
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20
   },
   itemText: { fontSize: 16 },
   emptyText: { textAlign: 'center', marginTop: 20, fontStyle: 'italic', color: '#555' },

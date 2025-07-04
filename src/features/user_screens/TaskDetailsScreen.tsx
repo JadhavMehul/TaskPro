@@ -90,6 +90,7 @@ const TaskDetailsScreen = () => {
     taskStatus: '',
     needPermission: false,
     comments: [],
+    attachedImage: null,
   })
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
@@ -107,20 +108,24 @@ const TaskDetailsScreen = () => {
 
 
   const handleSubmit = async () => {
-    try {
-      await firestore().collection('TaskList').doc(taskId).update({
-        taskComments: firestore.FieldValue.arrayUnion({
-          commentedAt: new Date(),
-          commentedText: inputValue,
-          commentedBy: currentUser?.email,
-        }),
-      });
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setCommentModalVisible(false);
-      setInputValue('');
-      await fetchTask();
+    if (!inputValue.trim()) {
+      Alert.alert('Error', 'Please add comment before submitting.');
+    } else {
+      try {
+        await firestore().collection('TaskList').doc(taskId).update({
+          taskComments: firestore.FieldValue.arrayUnion({
+            commentedAt: new Date(),
+            commentedText: inputValue,
+            commentedBy: currentUser?.email,
+          }),
+        });
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setCommentModalVisible(false);
+        setInputValue('');
+        await fetchTask();
+      }
     }
   };
 
@@ -272,7 +277,10 @@ const TaskDetailsScreen = () => {
         taskStatus: data.taskStatus || '',
         needPermission: data.needPermission || false,
         comments: data.taskComments || [],
+        attachedImage: data.attachedImage || null,
       });
+      console.log(data);
+
 
       if (data.taskComments?.length > 0) {
         const emails = Array.from(
@@ -329,9 +337,9 @@ const TaskDetailsScreen = () => {
       <CustomSafeAreaView style={{ flex: 1 }}>
         {activityIndicator ?
           <ActivityIndicator size="large" color="#FECC01" /> :
-          <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
+          <View style={{ flex: 1, backgroundColor: '#FAF8F5', paddingBottom: 16 }}>
             <TouchableOpacity onPress={goBack}>
-              <View style={{ flexDirection: 'row', gap: 6, paddingVertical: 8, paddingHorizontal: 10, alignItems: 'center' }} >
+              <View style={{ flexDirection: 'row', gap: 6, paddingTop: 16, paddingHorizontal: 16, alignItems: 'center' }} >
                 <Image
                   source={require('../../assets/images/backicon.png')}
                   style={styles.image}
@@ -341,153 +349,155 @@ const TaskDetailsScreen = () => {
               </View>
             </TouchableOpacity>
 
+            <ScrollView>
+              <View style={{ padding: 16, gap: 16 }}>
 
-            <View style={{ padding: 16, gap: 16 }}>
+                <View style={styles.taskbox}>
 
-              <View style={styles.taskbox}>
+                  {/* <TitleText style={styles.tasktitle}>taskTitle</TitleText> */}
 
-                {/* <TitleText style={styles.tasktitle}>taskTitle</TitleText> */}
-
-                <ReadMoreText
-                  text={allData.title}
-                  numberOfChars={20}
-                  textStyle={styles.text}
-                  readMoreTextStyle={styles.readMoreLink}
-                />
-
-                <ReadMoreText
-                  text={allData.description}
-                  numberOfChars={100}
-                  textStyle={styles.text}
-                  readMoreTextStyle={styles.readMoreLink}
-                />
-                {/* <TitleText style={styles.taskdescription}>taskDescription</TitleText> */}
-
-              </View>
-
-              <View style={styles.commentbox}>
-                <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
-                  <TouchableOpacity onPress={() => setModalVisible(true)} >
-                    <Icon name="speaker" size={32} color="#000" />
-                  </TouchableOpacity>
-
-                  {/* <AudioPlayerModal
-                    visible={modalVisible}
-                    onClose={() => setModalVisible(false)}
-                    isPlaying={isPlaying}
-                    position={position}
-                    duration={duration}
-                    onTogglePlayPause={onTogglePlayPause}
-                    onSeek={onSeek}
-                    formatTime={formatTime}
-                    styles={styles}
-                  /> */}
-
-                  <AudioPlayerModal
-                    visible={modalVisible}
-                    onClose={() => setModalVisible(false)}
-                    audioUrl={allData.recordedSound}
-                    styles={styles}
+                  <ReadMoreText
+                    text={allData.title}
+                    numberOfChars={20}
+                    textStyle={styles.text}
+                    readMoreTextStyle={styles.readMoreLink}
                   />
 
-                  <TouchableOpacity onPress={openModal3}>
-                    <Icon name="image" size={32} color="#000" />
-                  </TouchableOpacity >
+                  <ReadMoreText
+                    text={allData.description}
+                    numberOfChars={100}
+                    textStyle={styles.text}
+                    readMoreTextStyle={styles.readMoreLink}
+                  />
+                  {/* <TitleText style={styles.taskdescription}>taskDescription</TitleText> */}
 
-                  <BottomModal isVisible={ispic2ModalVisible} onClose={closeModal3}>
-                    <View>
-                      <Text>Task iMAGE
-                      </Text>
-                      <Image
-                        source={{ uri: 'https://picsum.photos/300' }}
-                        style={{
-                          width: screenWidth * 0.8,
-                          height: screenWidth * 0.8,
-                          borderRadius: 10,
-                          alignSelf: 'center',
-                          marginTop: 16,
-                        }}
-                      /></View>
-                  </BottomModal>
                 </View>
-                <View style={styles.righttop}>
-                  <View style={styles.circle}>
-                    <Image source={
-                      allData.assignedProfilePicture
-                        ? { uri: allData.assignedProfilePicture }
-                        : require('@assets/images/profileIcon.png')
-                    } style={styles.circleImage} />
+
+                <View style={styles.commentbox}>
+                  <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
+                    <TouchableOpacity onPress={() =>
+                      allData.recordedSound
+                        ? setModalVisible(true)
+                        : Alert.alert("No Audio", "There was no task audio added")
+                    }>
+                      <Icon name="speaker" size={32} color="#000" />
+                    </TouchableOpacity>
+                    {
+                      allData.recordedSound && (
+                        <AudioPlayerModal
+                          visible={modalVisible}
+                          onClose={() => setModalVisible(false)}
+                          audioUrl={allData.recordedSound}
+                          styles={styles}
+                        />
+                      )}
+
+
+                    <TouchableOpacity onPress={() =>
+                      allData.attachedImage
+                        ? setpic2ModalVisible(true)
+                        : Alert.alert("No Image", "There was no task image added")
+                    }>
+                      <Icon name="image" size={32} color="#000" />
+                    </TouchableOpacity >
+
+                    {
+                      allData.attachedImage && (
+                        <BottomModal isVisible={ispic2ModalVisible} onClose={closeModal3}>
+                          <View>
+                            <Image
+                              source={{ uri: allData.attachedImage }}
+                              style={{
+                                width: screenWidth * 0.8,
+                                height: screenWidth * 0.8,
+                                borderRadius: 10,
+                                alignSelf: 'center',
+                                marginTop: 16,
+                              }}
+                            /></View>
+                        </BottomModal>
+                      )
+                    }
+
                   </View>
-                  <Text style={styles.personName}>{allData.assignedName}</Text>
-                </View>
-
-                <View style={{ flexDirection: 'column', gap: 6 }}>
-
-                  <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)} >
-                    <View style={[
-                      styles.addtask,
-                      { backgroundColor: getBackgroundColor(selectedStatus) },
-                    ]}>
-                      <TitleText>
-                        {allData.taskStatus}
-                        {/* {selectedStatus} */}
-                      </TitleText>
-                      <Image
-                        source={require('../../assets/images/downarrow.png')}
-                        style={styles.image2}
-                      />
+                  <View style={styles.righttop}>
+                    <View style={styles.circle}>
+                      <Image source={
+                        allData.assignedProfilePicture
+                          ? { uri: allData.assignedProfilePicture }
+                          : require('@assets/images/profileIcon.png')
+                      } style={styles.circleImage} />
                     </View>
+                    <Text style={styles.personName}>{allData.assignedName}</Text>
+                  </View>
 
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'column', gap: 6 }}>
 
-
-                  <Modal
-                    transparent
-                    visible={showDropdown}
-                    animationType="fade"
-                    onRequestClose={() => setShowDropdown(false)}
-                  >
-                    <Pressable
-                      style={styles.modalBackground}
-                      onPress={() => setShowDropdown(false)}
-                    >
-                      <View style={styles.dropdown}>
-                        {statuses.map((status) => (
-                          <TouchableOpacity
-                            key={status}
-                            style={[styles.option, { backgroundColor: getBackgroundColor(status) }]}
-                            onPress={() => {
-                              updateTaskStatus(status);
-                            }}
-                          >
-                            <Text style={styles.optionText}>{status}</Text>
-
-                          </TouchableOpacity>
-                        ))}
+                    <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)} >
+                      <View style={[
+                        styles.addtask,
+                        { backgroundColor: getBackgroundColor(selectedStatus) },
+                      ]}>
+                        <TitleText>
+                          {allData.taskStatus}
+                          {/* {selectedStatus} */}
+                        </TitleText>
+                        <Image
+                          source={require('../../assets/images/downarrow.png')}
+                          style={styles.image2}
+                        />
                       </View>
-                    </Pressable>
-                  </Modal>
+
+                    </TouchableOpacity>
 
 
-                  <TouchableOpacity
-                    onPress={() => setShowDropdown2(!showDropdown2)}>
+                    <Modal
+                      transparent
+                      visible={showDropdown}
+                      animationType="fade"
+                      onRequestClose={() => setShowDropdown(false)}
+                    >
+                      <Pressable
+                        style={styles.modalBackground}
+                        onPress={() => setShowDropdown(false)}
+                      >
+                        <View style={styles.dropdown}>
+                          {statuses.map((status) => (
+                            <TouchableOpacity
+                              key={status}
+                              style={[styles.option, { backgroundColor: getBackgroundColor(status) }]}
+                              onPress={() => {
+                                updateTaskStatus(status);
+                              }}
+                            >
+                              <Text style={styles.optionText}>{status}</Text>
 
-                    <View style={styles.addtask}>
-                      <TitleText style={styles.dropdownText2}>
-                        {'Assign To'}
-                        {/* {selectedUser2 ? selectedUser2.name : 'Assign To'} */}
-                      </TitleText>
-                      <Image
-                        source={require('../../assets/images/downarrow.png')}
-                        style={styles.image2}
-                      />
-                    </View>
-
-                  </TouchableOpacity>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </Pressable>
+                    </Modal>
 
 
+                    <TouchableOpacity
+                      onPress={() => setShowDropdown2(!showDropdown2)}>
 
-                  {/* {showDropdown2 && (
+                      <View style={styles.addtask}>
+                        <TitleText style={styles.dropdownText2}>
+                          {'Assign To'}
+                          {/* {selectedUser2 ? selectedUser2.name : 'Assign To'} */}
+                        </TitleText>
+                        <Image
+                          source={require('../../assets/images/downarrow.png')}
+                          style={styles.image2}
+                        />
+                      </View>
+
+                    </TouchableOpacity>
+
+
+
+                    {/* {showDropdown2 && (
                     <View style={styles.dropdownList2}>
                       {users.map((item) => (
                         <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
@@ -495,181 +505,174 @@ const TaskDetailsScreen = () => {
                     </View>
                   )} */}
 
-                  <Modal
-                    visible={showDropdown2}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setShowDropdown2(false)}
-                  >
-                    <TouchableWithoutFeedback onPress={() => setShowDropdown2(false)}>
-                      <View style={styles.modalOverlay}>
-                        <TouchableWithoutFeedback>
-                          <View style={styles.modalContent}>
-                            <FlatList
-                              data={users}
-                              keyExtractor={(item) => item.id}
-                              ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                              renderItem={renderUser2}
-                            />
-                          </View>
-                        </TouchableWithoutFeedback>
-                      </View>
-                    </TouchableWithoutFeedback>
-                  </Modal>
+                    <Modal
+                      visible={showDropdown2}
+                      transparent
+                      animationType="fade"
+                      onRequestClose={() => setShowDropdown2(false)}
+                    >
+                      <TouchableWithoutFeedback onPress={() => setShowDropdown2(false)}>
+                        <View style={styles.modalOverlay}>
+                          <TouchableWithoutFeedback>
+                            <View style={styles.modalContent}>
+                              <FlatList
+                                data={users}
+                                keyExtractor={(item) => item.id}
+                                ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                                renderItem={renderUser2}
+                              />
+                            </View>
+                          </TouchableWithoutFeedback>
+                        </View>
+                      </TouchableWithoutFeedback>
+                    </Modal>
 
 
+                  </View>
                 </View>
-              </View>
 
-              {/* <TouchableOpacity onPress={onPlaySound} style={styles.playBtn}>
+                {/* <TouchableOpacity onPress={onPlaySound} style={styles.playBtn}>
         <Text style={styles.btnText}>Play Recording</Text>
       </TouchableOpacity> */}
 
 
-              {
-                allData.needPermission && (
+                {
+                  allData.needPermission && (
 
+                    <View style={styles.commentbox}>
+
+                      <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
+                      <View style={styles.addtask}>
+                        <TouchableOpacity onPress={() => setSelected(!selected)}>
+                          <Image
+                            source={
+                              selected
+                                ? require('../../assets/images/like_fill.png')
+                                : require('../../assets/images/like_unfill.png')
+                            }
+                            style={styles.icon}
+                          />
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={() => setSelected2(!selected2)}>
+                          <Image
+                            source={
+                              selected2
+                                ? require('../../assets/images/dislike_fill.png')
+                                : require('../../assets/images/dislike_unfill.png')
+                            }
+                            style={styles.icon}
+                          />
+                        </TouchableOpacity>
+
+                      </View>
+                    </View>
+                  )}
+
+
+
+                <TouchableOpacity onPress={() => setCommentModalVisible(true)}>
                   <View style={styles.commentbox}>
 
-                    <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
-                    <View style={styles.addtask}>
-                      <TouchableOpacity onPress={() => setSelected(!selected)}>
-                        <Image
-                          source={
-                            selected
-                              ? require('../../assets/images/like_fill.png')
-                              : require('../../assets/images/like_unfill.png')
-                          }
-                          style={styles.icon}
-                        />
-                      </TouchableOpacity>
-
-                      <TouchableOpacity onPress={() => setSelected2(!selected2)}>
-                        <Image
-                          source={
-                            selected2
-                              ? require('../../assets/images/dislike_fill.png')
-                              : require('../../assets/images/dislike_unfill.png')
-                          }
-                          style={styles.icon}
-                        />
-                      </TouchableOpacity>
-
-                    </View>
+                    <TitleText style={styles.textualtext}>Comment</TitleText>
+                    <Image
+                      source={require('../../assets/images/addicon.png')}
+                      style={styles.image2}
+                    />
                   </View>
-                )}
+                </TouchableOpacity>
+
+                <CommentModal
+                  visible={commentmodalVisible}
+                  onClose={() => setCommentModalVisible(false)}
+                  inputValue={inputValue}
+                  setInputValue={setInputValue}
+                  onSubmit={handleSubmit}
+                />
+
+
+                {
+                  allData.comments && (
+                    (allData.comments as {
+                      commentedAt: { _seconds: number; _nanoseconds: number };
+                      commentedText: string;
+                      commentedBy: string;
+                    }[])
+                      .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds)
+                      .map((commentData, index) => (
+                        <View style={styles.commentbox2} key={index}>
+                          <View style={{ flexDirection: 'column', justifyContent: 'center', alignItems: 'center', }}>
+                            <View style={styles.circle}>
+                              <Image
+                                source={
+                                  commentUsers[commentData.commentedBy]?.profilePicture
+                                    ? { uri: commentUsers[commentData.commentedBy].profilePicture }
+                                    : require('../../assets/images/profileIcon.png')
+                                }
+                                style={styles.circleImage}
+                              />
+                            </View>
+                            <Text style={styles.personName}>{commentUsers[commentData.commentedBy]?.name ?? 'Unknown'}</Text>
+                          </View>
+
+                          <View style={{ flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+
+                            <View>
+
+                              <TitleText>
+                                {moment(new Date(commentData.commentedAt._seconds * 1000)).format('DD MMM YYYY hh:mm A')}
+                              </TitleText>
 
 
 
-              <TouchableOpacity onPress={() => setCommentModalVisible(true)}>
-                <View style={styles.commentbox}>
+                              <ReadMoreText
+                                text={commentData.commentedText}
+                                numberOfChars={40}
+                                textStyle={{ fontSize: 16, color: '#333' }}
+                                readMoreTextStyle={{ color: 'orange' }}
+                              />
+                            </View>
 
-                  <TitleText style={styles.textualtext}>Comment</TitleText>
-                  <Image
-                    source={require('../../assets/images/addicon.png')}
-                    style={styles.image2}
-                  />
-                </View>
-              </TouchableOpacity>
 
-              <CommentModal
-                visible={commentmodalVisible}
-                onClose={() => setCommentModalVisible(false)}
-                inputValue={inputValue}
-                setInputValue={setInputValue}
-                onSubmit={handleSubmit}
-              />
 
-              <View style={{ height: '60%' }}>
-                <ScrollView
-                  nestedScrollEnabled
-                  showsVerticalScrollIndicator={true}
-                  contentContainerStyle={{ gap: 12 }}
-                  
-                >
-                  {
-                    allData.comments && (
-                      (allData.comments as {
-                        commentedAt: { _seconds: number; _nanoseconds: number };
-                        commentedText: string;
-                        commentedBy: string;
-                      }[])
-                        .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds)
-                        .map((commentData, index) => (
-                          <View style={styles.commentbox} key={index}>
-                            {/* <View style={{ flexDirection: 'row', gap: 10, }}> */}
-                              <View style={styles.righttop}>
-                                <View style={styles.circle}>
+
+
+                            <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                              <TouchableOpacity onPress={() => setModalVisible2(true)}>
+                                <Icon name="mic" size={16} color="#000" />
+                              </TouchableOpacity>
+
+                              <TouchableOpacity onPress={openModal2}>
+                                <Icon name="image" size={16} color="#000" />
+                              </TouchableOpacity>
+
+                              <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
+                                <View>
                                   <Image
-                                    source={
-                                      commentUsers[commentData.commentedBy]?.profilePicture
-                                        ? { uri: commentUsers[commentData.commentedBy].profilePicture }
-                                        : require('../../assets/images/profileIcon.png')
-                                    }
-                                    style={styles.circleImage}
+                                    source={{ uri: 'https://picsum.photos/300' }}
+                                    style={{
+                                      width: screenWidth * 0.8,
+                                      height: screenWidth * 0.8,
+                                      borderRadius: 10,
+                                      alignSelf: 'center',
+                                      marginTop: 16,
+                                    }}
                                   />
                                 </View>
-                                <Text style={styles.personName}>{commentUsers[commentData.commentedBy]?.name ?? 'Unknown'}</Text>
-                              </View>
-
-                              <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 6, width: '70%' }}>
-                                <TitleText>
-                                  {moment(new Date(commentData.commentedAt._seconds * 1000)).format('DD MMM YYYY hh:mm A')}
-                                </TitleText>
-
-                                <ReadMoreText
-                                  text={commentData.commentedText}
-                                  numberOfChars={40}
-                                  textStyle={{ fontSize: 16, color: '#333' }}
-                                  readMoreTextStyle={{ color: 'orange' }}
-                                />
-
-                                <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                                  <TouchableOpacity onPress={() => setModalVisible2(true)}>
-                                    <Icon name="mic" size={16} color="#000" />
-                                  </TouchableOpacity>
-
-                                  <TouchableOpacity onPress={openModal2}>
-                                    <Icon name="image" size={16} color="#000" />
-                                  </TouchableOpacity>
-
-                                  <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
-                                    <View>
-                                      <Image
-                                        source={{ uri: 'https://picsum.photos/300' }}
-                                        style={{
-                                          width: screenWidth * 0.8,
-                                          height: screenWidth * 0.8,
-                                          borderRadius: 10,
-                                          alignSelf: 'center',
-                                          marginTop: 16,
-                                        }}
-                                      />
-                                    </View>
-                                  </BottomModal>
-                                </View>
-
-                              </View>
-
-                              {/* <TouchableOpacity onPress={() => console.log(allData)}>
-                          <Feather name="trash" size={24} color="red" />
-                        </TouchableOpacity> */}
-
-
-                              
+                              </BottomModal>
                             </View>
-                          // </View>
-                        ))
-                    )
-                  }
-                </ScrollView>
+
+                          </View>
+                        </View>
+                      ))
+                  )
+                }
+
+
+
+
               </View>
-
-
-
-
-
-            </View>
+            </ScrollView>
           </View>
         }
         {/* <BottomNav /> */}
@@ -680,6 +683,18 @@ const TaskDetailsScreen = () => {
 }
 
 const styles = StyleSheet.create({
+
+  commentbox2: {
+
+    flexDirection: 'row', padding: 12, gap: 16, borderColor: '#FEC601',
+    borderWidth: 4,
+    borderStyle: 'dashed',
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: '#ffffff',
+  },
 
   modalOverlayCenter: {
     flex: 1,
@@ -950,7 +965,7 @@ const styles = StyleSheet.create({
   },
 
   commentbox: {
-    
+
     borderColor: '#FEC601',
     borderWidth: 4,
     borderStyle: 'dashed',

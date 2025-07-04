@@ -57,7 +57,7 @@ const LoginScreen = () => {
     setModalVisible(true);
     try {
       await auth().signInWithEmailAndPassword(email, password)
-      await subscribeToTopic();
+      // await subscribeToTopic();
       setModalVisible(false);
     } catch (error: unknown) {
       const firebaseError = error as { code: string; message: string };
