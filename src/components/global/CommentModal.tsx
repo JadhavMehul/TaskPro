@@ -22,6 +22,8 @@ type CommentModalProps = {
   onSubmit: () => void;
   attachedImage: AttachedImage | null;
   setAttachedImage: (image: AttachedImage | null) => void;
+  attachedAudio: string | null;
+  setAttachedAudio: (text: string | null) => void;
 };
 
 type AttachedImage = {
@@ -38,11 +40,15 @@ const CommentModal = ({
   onSubmit,
   attachedImage,
   setAttachedImage,
+  attachedAudio,
+  setAttachedAudio
 }: CommentModalProps) => {
 
   const [activityIndicator, setActivityIndicator] = useState(false);
   const [isrecordModalVisible, setrecordModalVisible] = useState(false);
   const [attachedImageModal, setAttachedImageModal] = useState(false);
+  const [attachedAudioModal, setAttachedAudioModal] = useState(false);
+
 
   const openModal3 = () => setrecordModalVisible(true);
   const closeModal3 = () => setrecordModalVisible(false);
@@ -101,25 +107,38 @@ const CommentModal = ({
   };
 
   const onStopRecord = async () => {
-    const result = await audioRecorderPlayer.stopRecorder();
-    audioRecorderPlayer.removeRecordBackListener();
-    console.log('Stopped recording:', result);
+    setTimeout(async () => {
+      const result = await audioRecorderPlayer.stopRecorder();
+      audioRecorderPlayer.removeRecordBackListener();
+      console.log('Stopped recording:', result);
+      setAttachedAudio(result)
+    }, 1000);
   };
 
   const selectImageToUpload = () => {
-      if (attachedImage?.uploadUri.trim()) {
-        setAttachedImageModal(true)
-      } else {
-        launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
-          const asset = response.assets?.[0];
-          if (!asset?.uri || !asset?.type || !asset?.fileName) {
-            console.log('Image selection failed or cancelled');
-            return;
-          }
-          setAttachedImage({ fileName: asset.fileName, uploadUri: asset.uri, fileExt: asset.type })
-          setAttachedImageModal(true);
-        });
-      }
+    if (attachedImage?.uploadUri.trim()) {
+      setAttachedImageModal(true)
+    } else {
+      launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
+        const asset = response.assets?.[0];
+        if (!asset?.uri || !asset?.type || !asset?.fileName) {
+          console.log('Image selection failed or cancelled');
+          return;
+        }
+        setAttachedImage({ fileName: asset.fileName, uploadUri: asset.uri, fileExt: asset.type })
+        setAttachedImageModal(true);
+      });
+    }
+  }
+
+  const uploadAudio = async () => {
+    if (attachedAudio?.trim()) {
+
+      setAttachedAudioModal(true)
+
+    } else {
+      Alert.alert('Error', 'Something went wrong please close the app and re-open it');
+    }
   }
 
 
@@ -157,100 +176,83 @@ const CommentModal = ({
             </TouchableOpacity>
 
             {attachedImage && (
-                <BottomModal isVisible={attachedImageModal} onClose={() => setAttachedImageModal(false)}>
-                  {activityIndicator ?
-                    <>
-                      <ActivityIndicator size="large" color="#FECC01" />
-                    </> : <>
-                      <ScrollView>
-                        <View style={{ gap: 16 }}>
-                          <Image
-                            source={{ uri: attachedImage.uploadUri }}
-                            style={{
-                              width: screenWidth * 0.8,
-                              height: screenWidth * 0.8,
-                              borderRadius: 10,
-                              alignSelf: 'center',
-                              marginTop: 16,
-                            }}
-                          />
-                        </View>
-                      </ScrollView>
-
-                      <View style={styles.endcontainer}>
-                        <TouchableOpacity
-                          style={styles.orangebutton}
-                          onPress={() => setAttachedImage(null)}
-                        >
-                          <TitleText style={styles.orangebtntext}>Delete Image</TitleText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={styles.orangebutton}
-                          onPress={() => setAttachedImageModal(false)}
-                        >
-                          <TitleText style={styles.orangebtntext}>Done</TitleText>
-                        </TouchableOpacity>
+              <BottomModal isVisible={attachedImageModal} onClose={() => setAttachedImageModal(false)}>
+                {activityIndicator ?
+                  <>
+                    <ActivityIndicator size="large" color="#FECC01" />
+                  </> : <>
+                    <ScrollView>
+                      <View style={{ gap: 16 }}>
+                        <Image
+                          source={{ uri: attachedImage.uploadUri }}
+                          style={{
+                            width: screenWidth * 0.8,
+                            height: screenWidth * 0.8,
+                            borderRadius: 10,
+                            alignSelf: 'center',
+                            marginTop: 16,
+                          }}
+                        />
                       </View>
-                    </>
-                  }
-                </BottomModal>
-              )}
+                    </ScrollView>
 
-            <TouchableOpacity
-
-              style={styles.commentbox}
-              onPress={openModal3}
-            >
-
-              <TitleText style={styles.textualtext}>Record audio</TitleText>
-            </TouchableOpacity>
-
-            <BottomModal isVisible={isrecordModalVisible} onClose={closeModal3}>
-              <View style={{ padding: 24, justifyContent: 'center', alignItems: 'center', gap: 12 }}>
-                <TouchableOpacity
-                  onPressIn={onStartRecord}
-                  onPressOut={onStopRecord}
-                  style={styles.commentbox}
-
-                >
-                  <Icon name="mic" size={16} color="#000" />
-                  <TitleText style={styles.textualtext}>Hold to Record</TitleText>
-                </TouchableOpacity>
-
-
-                <TouchableOpacity
-                  onPress={() => setModalVisible(true)}
-                  style={styles.commentbox}
-
-                >
-                  <Icon name="speaker" size={16} color="#000" />
-                  <TitleText style={styles.textualtext}>Play the audio</TitleText>
-                </TouchableOpacity>
-
-                {/* <AudioPlayerModal
-                  visible={modalVisible}
-                  onClose={() => setModalVisible(false)}
-                  isPlaying={isPlaying}
-                  position={position}
-                  duration={duration}
-                  onTogglePlayPause={onTogglePlayPause}
-                  onSeek={onSeek}
-                  title="Audio Player 3"
-                  formatTime={formatTime}
-                  styles={styles}
-                /> */}
+                    <View style={styles.endcontainer}>
+                      <TouchableOpacity
+                        style={styles.orangebutton}
+                        onPress={() => setAttachedImage(null)}
+                      >
+                        <TitleText style={styles.orangebtntext}>Delete Image</TitleText>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.orangebutton}
+                        onPress={() => setAttachedImageModal(false)}
+                      >
+                        <TitleText style={styles.orangebtntext}>Done</TitleText>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                }
+              </BottomModal>
+            )}
 
 
 
+            {attachedAudio?.trim() ?
+              <TouchableOpacity
+                onPressIn={uploadAudio}
+                style={styles.commentbox}
+              >
+                <Icon name="mic" size={16} color="#000" />
+                <TitleText style={styles.textualtext}>
+                  Listen Audio
+                </TitleText>
+              </TouchableOpacity>
 
-              </View>
+              :
 
-            </BottomModal>
-
-
-
-
-
+              <TouchableOpacity
+                onPressIn={onStartRecord}
+                onPressOut={onStopRecord}
+                style={styles.commentbox}
+              >
+                <Icon name="mic" size={16} color="#000" />
+                <TitleText style={styles.textualtext}>
+                  Hold to Record
+                </TitleText>
+              </TouchableOpacity>
+            }
+            {
+                attachedAudio?.trim() && (
+                  <AudioPlayerModal
+                    visible={attachedAudioModal}
+                    onClose={() => setAttachedAudioModal(false)}
+                    audioUrl={attachedAudio}
+                    localAudio={true}
+                    deleteAudio={() => setAttachedAudio(null)}
+                    styles={styles}
+                  />
+                )
+              }
 
           </View>
 
@@ -297,7 +299,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 
-  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16 },
+  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16, width: '100%' },
   btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
 
 
@@ -316,6 +318,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
+  playBtn2: { padding: 12, backgroundColor: '#FECC01', borderRadius: 12, marginTop: 16, flex:1},
+  playBtn3: { padding: 12, backgroundColor: '#FF3B30', borderRadius: 12, marginTop: 16, flex:1 },
 
   commentbox: {
     borderColor: '#FEC601',

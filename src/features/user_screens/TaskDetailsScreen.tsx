@@ -63,6 +63,7 @@ const TaskDetailsScreen = () => {
   const openModal = () => setmicModalVisible(true);
   const closeModal = () => setmicModalVisible(false);
   const [selectedCommentImage, setSelectedCommentImage] = useState<string | null>(null);
+  const [selectedCommentAudio, setSelectedCommentAudio] = useState<string | null>(null);
 
 
 
@@ -73,6 +74,12 @@ const TaskDetailsScreen = () => {
     setSelectedCommentImage(x);
     setpicModalVisible(true);
   }
+  const openAudioModal = (x: string) => {
+
+    setSelectedCommentAudio(x);
+    setModalVisible2(true);
+  }
+
   const closeModal2 = () => setpicModalVisible(false);
 
   const [ispic2ModalVisible, setpic2ModalVisible] = useState(false);
@@ -89,6 +96,7 @@ const TaskDetailsScreen = () => {
   const [commentmodalVisible, setCommentModalVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
+  const [attachedAudio, setAttachedAudio] = useState<string | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
@@ -124,9 +132,42 @@ const TaskDetailsScreen = () => {
     setActivityIndicator(true);
     if (!inputValue.trim()) {
       Alert.alert('Error', 'Please add comment before submitting.');
+      setActivityIndicator(false);
     } else {
       try {
-        if (attachedImage) {
+        if (attachedAudio && attachedImage) {
+          const referenceAudio = storage().ref(`commentAttachments/audio/${currentUser?.email}-${Date.now()}`);
+          await referenceAudio.putFile(attachedAudio);
+          const downloadAudioURL = await referenceAudio.getDownloadURL();
+
+          const referenceImage = storage().ref(`commentAttachments/images/${currentUser?.email}-${Date.now()}-${attachedImage.fileName}`);
+          await referenceImage.putFile(attachedImage.uploadUri);
+          const downloadImageURL = await referenceImage.getDownloadURL();
+
+          await firestore().collection('TaskList').doc(taskId).update({
+            taskComments: firestore.FieldValue.arrayUnion({
+              commentedAt: new Date(),
+              commentedText: inputValue,
+              commentedBy: currentUser?.email,
+              commentedAudio: downloadAudioURL,
+              commentedImage: downloadImageURL
+            }),
+          });
+
+        } else if (attachedAudio) {
+          const reference = storage().ref(`commentAttachments/audio/${currentUser?.email}-${Date.now()}`);
+          await reference.putFile(attachedAudio);
+          const downloadURL = await reference.getDownloadURL();
+
+          await firestore().collection('TaskList').doc(taskId).update({
+            taskComments: firestore.FieldValue.arrayUnion({
+              commentedAt: new Date(),
+              commentedText: inputValue,
+              commentedBy: currentUser?.email,
+              commentedAudio: downloadURL,
+            }),
+          });
+        } else if (attachedImage) {
           const reference = storage().ref(`commentAttachments/images/${currentUser?.email}-${Date.now()}-${attachedImage.fileName}`);
           await reference.putFile(attachedImage.uploadUri);
           const downloadURL = await reference.getDownloadURL();
@@ -613,6 +654,8 @@ const TaskDetailsScreen = () => {
                   onSubmit={handleSubmit}
                   attachedImage={attachedImage}
                   setAttachedImage={setAttachedImage}
+                  attachedAudio={attachedAudio}
+                  setAttachedAudio={setAttachedAudio}
                 />
 
 
@@ -623,6 +666,7 @@ const TaskDetailsScreen = () => {
                       commentedText: string;
                       commentedBy: string;
                       commentedImage: string
+                      commentedAudio: string
                     }[])
                       .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds)
                       .map((commentData, index) => (
@@ -664,13 +708,27 @@ const TaskDetailsScreen = () => {
 
 
                             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                              <TouchableOpacity onPress={() => setModalVisible2(true)}>
+                              <TouchableOpacity onPress={() =>
+                                commentData.commentedAudio
+                                  ? openAudioModal(commentData.commentedAudio)
+                                  : Alert.alert("No Audio", "There was no audio added on comment")
+                              }>
                                 <Icon name="mic" size={16} color="#000" />
                               </TouchableOpacity>
 
+                              {
+                                commentData.commentedAudio && (
+                                  <AudioPlayerModal
+                                    visible={modalVisible2}
+                                    onClose={() => setModalVisible2(false)}
+                                    audioUrl={selectedCommentAudio}
+                                    styles={styles}
+                                  />
+                                )}
+
                               <TouchableOpacity onPress={() => commentData.commentedImage
                                 ? openModal2(commentData.commentedImage)
-                                : Alert.alert("No Image", "There was no task image added")
+                                : Alert.alert("No Image", "There was no image added on comment")
                               }>
                                 <Icon name="image" size={16} color="#000" />
                               </TouchableOpacity>
