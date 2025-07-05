@@ -198,7 +198,7 @@ const CommentModal = ({
 
                     <View style={styles.endcontainer}>
                       <TouchableOpacity
-                        style={styles.orangebutton}
+                        style={styles.redbutton}
                         onPress={() => setAttachedImage(null)}
                       >
                         <TitleText style={styles.orangebtntext}>Delete Image</TitleText>
@@ -268,6 +268,14 @@ const CommentModal = ({
 export default CommentModal;
 
 const styles = StyleSheet.create({
+  redbutton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF3B30',
+    padding: 12,
+    borderRadius: 25,
+    marginBottom: 16,
+  },
 
   modalOverlayCenter: {
     flex: 1,

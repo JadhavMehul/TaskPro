@@ -197,11 +197,18 @@ const TaskDetailsScreen = () => {
         setActivityIndicator(false);
         setCommentModalVisible(false);
         setInputValue('');
-        setAttachedImage(null)
+        setAttachedImage(null);
+        setAttachedAudio(null);
         await fetchTask();
       }
     }
   };
+  const commentModalClose = () => {
+    setInputValue('');
+    setAttachedImage(null);
+    setAttachedAudio(null);
+    setCommentModalVisible(false)
+  }
 
 
   const changeAssignToUserInDB = async (user: any) => {
@@ -648,7 +655,7 @@ const TaskDetailsScreen = () => {
 
                 <CommentModal
                   visible={commentmodalVisible}
-                  onClose={() => setCommentModalVisible(false)}
+                  onClose={() => commentModalClose()}
                   inputValue={inputValue}
                   setInputValue={setInputValue}
                   onSubmit={handleSubmit}
@@ -716,7 +723,7 @@ const TaskDetailsScreen = () => {
                                 <Icon name="mic" size={16} color="#000" />
                               </TouchableOpacity>
 
-                              {
+                              {/* {
                                 commentData.commentedAudio && (
                                   <AudioPlayerModal
                                     visible={modalVisible2}
@@ -724,7 +731,7 @@ const TaskDetailsScreen = () => {
                                     audioUrl={selectedCommentAudio}
                                     styles={styles}
                                   />
-                                )}
+                                )} */}
 
                               <TouchableOpacity onPress={() => commentData.commentedImage
                                 ? openModal2(commentData.commentedImage)
@@ -756,6 +763,15 @@ const TaskDetailsScreen = () => {
                       ))
                   )
                 }
+
+
+                <AudioPlayerModal
+                  visible={modalVisible2}
+                  onClose={() => setModalVisible2(false)}
+                  audioUrl={selectedCommentAudio}
+                  styles={styles}
+                />
+
 
 
 
