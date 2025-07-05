@@ -24,14 +24,6 @@ type ImageAsset = {
 };
 
 
-const handleLogout = async () => {
-  try {
-    await auth().signOut();
-  } catch (error) {
-    Alert.alert('Error', 'Failed to logout. Try again.');
-    console.error('Logout error:', error);
-  }
-};
 
 
 const ProfileScreen = () => {
@@ -58,6 +50,7 @@ const ProfileScreen = () => {
 
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
+  const [logoutActivityIndicator, setLogoutActivityIndicator] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
   const [isDpModalVisible, setIsDpModalVisible] = useState(false);
 
@@ -207,6 +200,19 @@ const ProfileScreen = () => {
 
 
   }
+
+
+  const handleLogout = async () => {
+    setLogoutActivityIndicator(true)
+    try {
+      await auth().signOut();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Try again.');
+      console.error('Logout error:', error);
+    } finally {
+      setLogoutActivityIndicator(false)
+    }
+  };
 
   useEffect(() => {
     loadUserData()
@@ -386,7 +392,11 @@ const ProfileScreen = () => {
                       </BottomModal>
 
                       <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText} onPress={handleLogout}>Logout</Text>
+                        <Text style={styles.buttonText} onPress={handleLogout}>
+                          {
+                            logoutActivityIndicator ? <ActivityIndicator size="large" color="#FECC01" /> : 'Logout'
+                          }
+                        </Text>
 
                       </TouchableOpacity>
                     </View>
