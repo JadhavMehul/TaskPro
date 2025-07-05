@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 // import { firebase } from "../../../firebaseConfig";
 import { Picker } from '@react-native-picker/picker';
 
-import { View, Text, StyleSheet, TouchableOpacity, Button, TextInput, Alert, Modal, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity,Platform, Button, TextInput, Alert, Modal, ActivityIndicator, KeyboardAvoidingView } from 'react-native'
 import { navigate } from '@utils/NavigationUtils';
 import CustomSafeAreaView from '@components/global/CustomSafeAreaView';
 import TitleText from '@components/global/Titletext';
@@ -159,10 +159,16 @@ const RegisterScreen: React.FC = () => {
             </View>
           </Modal>
           <View style={{ flex: 1 , backgroundColor: '#FAF8F5'}}>
+          <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20} // adjust if needed
+    >
             <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 120 }}
-              style= {{paddingHorizontal: 24, paddingTop:24}}
+               showsVerticalScrollIndicator={false}
+               contentContainerStyle={{ paddingBottom: 120 }}
+               keyboardShouldPersistTaps="handled"
+               style={{ paddingHorizontal: 24, paddingTop: 24 }}
             >
               <TitleText style={styles.titletext}>Sign Up</TitleText>
 
@@ -324,6 +330,7 @@ const RegisterScreen: React.FC = () => {
               {/* <Button title="Register" onPress={passChecker} /> */}
 
             </ScrollView>
+            </KeyboardAvoidingView>
             <View style={styles.endcontainer}>
               <YellowButton title="Register" onPress={passChecker} disabled={!email || !password || !firstName || !lastName || !selectedGender || !cnfPassword || !promoCode || !checked} />
               <TouchableOpacity onPress={() => navigate('LoginScreen')}>

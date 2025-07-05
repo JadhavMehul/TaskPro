@@ -199,13 +199,13 @@ const AudioPlayerModal: React.FC<AudioPlayerModalProps> = ({
 
           {
             localAudio && (
-              <View>
-                <TouchableOpacity onPress={onClose} style={styles.playBtn}>
+              <View style={{flexDirection: 'row', gap: 16}}>
+                <TouchableOpacity onPress={onClose} style={styles.playBtn2}>
                   <Text style={styles.btnText}>
                     Done
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={deleteAudio} style={styles.playBtn}>
+                <TouchableOpacity onPress={deleteAudio} style={styles.playBtn3}>
                   <Text style={styles.btnText}>
                     Delete
                   </Text>
