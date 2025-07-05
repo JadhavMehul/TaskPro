@@ -9,6 +9,8 @@ import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { useAudio } from '../global/AudioContext';
 import BottomModal from './BottomModal';
 import AudioPlayerModal from './AudioPlayPause';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { screenWidth } from '@utils/Scaling';
 
 
 
@@ -18,6 +20,14 @@ type CommentModalProps = {
   inputValue: string;
   setInputValue: (text: string) => void;
   onSubmit: () => void;
+  attachedImage: AttachedImage | null;
+  setAttachedImage: (image: AttachedImage | null) => void;
+};
+
+type AttachedImage = {
+  fileName: string;
+  uploadUri: string;
+  fileExt: string;
 };
 
 const CommentModal = ({
@@ -26,9 +36,13 @@ const CommentModal = ({
   inputValue,
   setInputValue,
   onSubmit,
+  attachedImage,
+  setAttachedImage,
 }: CommentModalProps) => {
 
+  const [activityIndicator, setActivityIndicator] = useState(false);
   const [isrecordModalVisible, setrecordModalVisible] = useState(false);
+  const [attachedImageModal, setAttachedImageModal] = useState(false);
 
   const openModal3 = () => setrecordModalVisible(true);
   const closeModal3 = () => setrecordModalVisible(false);
@@ -92,6 +106,22 @@ const CommentModal = ({
     console.log('Stopped recording:', result);
   };
 
+  const selectImageToUpload = () => {
+      if (attachedImage?.uploadUri.trim()) {
+        setAttachedImageModal(true)
+      } else {
+        launchImageLibrary({ mediaType: 'photo', quality: 1 }, async (response) => {
+          const asset = response.assets?.[0];
+          if (!asset?.uri || !asset?.type || !asset?.fileName) {
+            console.log('Image selection failed or cancelled');
+            return;
+          }
+          setAttachedImage({ fileName: asset.fileName, uploadUri: asset.uri, fileExt: asset.type })
+          setAttachedImageModal(true);
+        });
+      }
+  }
+
 
   return (
     <Modal
@@ -120,11 +150,51 @@ const CommentModal = ({
           />
           <View style={{ flexDirection: 'row', gap: 6, marginTop: 16 }}>
 
-            <TouchableOpacity style={styles.orangebutton2} >
+            <TouchableOpacity style={styles.orangebutton2} onPress={selectImageToUpload}>
               <TitleText style={styles.orangebtntext2}>
-                Upload image
+                {attachedImage?.uploadUri ? 'View Image' : 'Upload Image'}
               </TitleText>
             </TouchableOpacity>
+
+            {attachedImage && (
+                <BottomModal isVisible={attachedImageModal} onClose={() => setAttachedImageModal(false)}>
+                  {activityIndicator ?
+                    <>
+                      <ActivityIndicator size="large" color="#FECC01" />
+                    </> : <>
+                      <ScrollView>
+                        <View style={{ gap: 16 }}>
+                          <Image
+                            source={{ uri: attachedImage.uploadUri }}
+                            style={{
+                              width: screenWidth * 0.8,
+                              height: screenWidth * 0.8,
+                              borderRadius: 10,
+                              alignSelf: 'center',
+                              marginTop: 16,
+                            }}
+                          />
+                        </View>
+                      </ScrollView>
+
+                      <View style={styles.endcontainer}>
+                        <TouchableOpacity
+                          style={styles.orangebutton}
+                          onPress={() => setAttachedImage(null)}
+                        >
+                          <TitleText style={styles.orangebtntext}>Delete Image</TitleText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.orangebutton}
+                          onPress={() => setAttachedImageModal(false)}
+                        >
+                          <TitleText style={styles.orangebtntext}>Done</TitleText>
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  }
+                </BottomModal>
+              )}
 
             <TouchableOpacity
 
@@ -184,9 +254,9 @@ const CommentModal = ({
 
           </View>
 
-          <Pressable style={styles.submitButton} onPress={onSubmit}>
+          <TouchableOpacity style={styles.submitButton} onPress={onSubmit}>
             <Text style={styles.buttonText}>Submit</Text>
-          </Pressable>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -339,5 +409,26 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     textAlign: 'center',
+  },
+
+  endcontainer: {
+    width: '100%',
+    paddingTop: 16,
+    bottom: 0,
+    backgroundColor: '#fff',
+  },
+
+  orangebtntext: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  orangebutton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FECC01',
+    padding: 12,
+    borderRadius: 25,
   },
 });

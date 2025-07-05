@@ -21,6 +21,7 @@ import { useAudio } from '../../components/global/AudioContext';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import firestore from "@react-native-firebase/firestore";
 import auth from "@react-native-firebase/auth";
+import storage from "@react-native-firebase/storage";
 import InputField from '@components/global/InputField';
 import CommentModal from '@components/global/CommentModal';
 import Icon from '@react-native-vector-icons/feather';
@@ -47,6 +48,11 @@ type RootStackParamList = {
 
 type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScreen'>;
 
+type AttachedImage = {
+  fileName: string;
+  uploadUri: string;
+  fileExt: string;
+};
 
 const TaskDetailsScreen = () => {
   const currentUser = auth().currentUser;
@@ -56,11 +62,17 @@ const TaskDetailsScreen = () => {
 
   const openModal = () => setmicModalVisible(true);
   const closeModal = () => setmicModalVisible(false);
+  const [selectedCommentImage, setSelectedCommentImage] = useState<string | null>(null);
+
 
 
   const [ispicModalVisible, setpicModalVisible] = useState(false);
 
-  const openModal2 = () => setpicModalVisible(true);
+  const openModal2 = (x: string) => {
+
+    setSelectedCommentImage(x);
+    setpicModalVisible(true);
+  }
   const closeModal2 = () => setpicModalVisible(false);
 
   const [ispic2ModalVisible, setpic2ModalVisible] = useState(false);
@@ -76,6 +88,7 @@ const TaskDetailsScreen = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [commentmodalVisible, setCommentModalVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
@@ -108,22 +121,42 @@ const TaskDetailsScreen = () => {
 
 
   const handleSubmit = async () => {
+    setActivityIndicator(true);
     if (!inputValue.trim()) {
       Alert.alert('Error', 'Please add comment before submitting.');
     } else {
       try {
-        await firestore().collection('TaskList').doc(taskId).update({
-          taskComments: firestore.FieldValue.arrayUnion({
-            commentedAt: new Date(),
-            commentedText: inputValue,
-            commentedBy: currentUser?.email,
-          }),
-        });
+        if (attachedImage) {
+          const reference = storage().ref(`commentAttachments/images/${currentUser?.email}-${Date.now()}-${attachedImage.fileName}`);
+          await reference.putFile(attachedImage.uploadUri);
+          const downloadURL = await reference.getDownloadURL();
+
+          await firestore().collection('TaskList').doc(taskId).update({
+            taskComments: firestore.FieldValue.arrayUnion({
+              commentedAt: new Date(),
+              commentedText: inputValue,
+              commentedBy: currentUser?.email,
+              commentedImage: downloadURL,
+            }),
+          });
+        } else {
+          await firestore().collection('TaskList').doc(taskId).update({
+            taskComments: firestore.FieldValue.arrayUnion({
+              commentedAt: new Date(),
+              commentedText: inputValue,
+              commentedBy: currentUser?.email,
+            }),
+          })
+        }
+
+
       } catch (error) {
         console.log(error);
       } finally {
+        setActivityIndicator(false);
         setCommentModalVisible(false);
         setInputValue('');
+        setAttachedImage(null)
         await fetchTask();
       }
     }
@@ -495,16 +528,6 @@ const TaskDetailsScreen = () => {
 
                     </TouchableOpacity>
 
-
-
-                    {/* {showDropdown2 && (
-                    <View style={styles.dropdownList2}>
-                      {users.map((item) => (
-                        <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
-                      ))}
-                    </View>
-                  )} */}
-
                     <Modal
                       visible={showDropdown2}
                       transparent
@@ -588,6 +611,8 @@ const TaskDetailsScreen = () => {
                   inputValue={inputValue}
                   setInputValue={setInputValue}
                   onSubmit={handleSubmit}
+                  attachedImage={attachedImage}
+                  setAttachedImage={setAttachedImage}
                 />
 
 
@@ -597,6 +622,7 @@ const TaskDetailsScreen = () => {
                       commentedAt: { _seconds: number; _nanoseconds: number };
                       commentedText: string;
                       commentedBy: string;
+                      commentedImage: string
                     }[])
                       .sort((a, b) => b.commentedAt._seconds - a.commentedAt._seconds)
                       .map((commentData, index) => (
@@ -642,14 +668,19 @@ const TaskDetailsScreen = () => {
                                 <Icon name="mic" size={16} color="#000" />
                               </TouchableOpacity>
 
-                              <TouchableOpacity onPress={openModal2}>
+                              <TouchableOpacity onPress={() => commentData.commentedImage
+                                ? openModal2(commentData.commentedImage)
+                                : Alert.alert("No Image", "There was no task image added")
+                              }>
                                 <Icon name="image" size={16} color="#000" />
                               </TouchableOpacity>
 
                               <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
                                 <View>
                                   <Image
-                                    source={{ uri: 'https://picsum.photos/300' }}
+                                    source={
+                                      selectedCommentImage ? { uri: selectedCommentImage } : require('../../assets/images/profileIcon.png')
+                                    }
                                     style={{
                                       width: screenWidth * 0.8,
                                       height: screenWidth * 0.8,

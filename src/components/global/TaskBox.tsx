@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ImageSourcePropType } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, ImageSourcePropType, ActivityIndicator } from 'react-native';
 import Feather from '@react-native-vector-icons/feather';
 import TitleText from './Titletext';
 
@@ -24,6 +24,9 @@ const TaskBox = ({
   onPress,
   onDelete
 }: TaskBoxProps) => {
+
+  const [isDeleting, setIsDeleting] = useState(false)
+
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={[
@@ -54,8 +57,13 @@ const TaskBox = ({
           <View style={styles.leftbottom}>
             <Text style={styles.datetime}>{dateTime}</Text>
           </View>
-          <TouchableOpacity onPress={onDelete}>
-            <Feather name="trash" size={24} color="red" />
+          <TouchableOpacity onPress={() => {setIsDeleting(true); onDelete()}}>
+            {
+              isDeleting ? 
+              <ActivityIndicator size={24} color="red" /> :
+              <Feather name="trash" size={24} color="red" />
+            }
+            
           </TouchableOpacity>
         </View>
       </View>
