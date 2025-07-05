@@ -493,7 +493,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
                       <View style={styles.endcontainer}>
                         <TouchableOpacity
-                          style={styles.orangebutton}
+                          style={styles.redbutton}
                           onPress={() => setAttachedImage(null)}
                         >
                           <TitleText style={styles.orangebtntext}>Delete Image</TitleText>
@@ -502,7 +502,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                           style={styles.orangebutton}
                           onPress={() => setAttachedImageModal(false)}
                         >
-                          <TitleText style={styles.orangebtntext}>Done</TitleText>
+                          <TitleText style={styles.orangebtntext2}>Done</TitleText>
                         </TouchableOpacity>
                       </View>
                     </>
@@ -718,8 +718,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   slider: { width: '100%', marginTop: 10 },
   timer: { marginTop: 10, fontSize: 16, color: '#333' },
+  playBtn2: { padding: 12, backgroundColor: '#FECC01', borderRadius: 12, marginTop: 16, flex:1},
+  playBtn3: { padding: 12, backgroundColor: '#FF3B30', borderRadius: 12, marginTop: 16, flex:1 },
 
-  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16 },
+  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16, width: '100%'},
   btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
 
 
@@ -768,16 +770,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 
+  
+
   orangebtntext: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
+ 
 
   orangebtntext2: {
     color: '#0000000',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  redbutton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FF3B30',
+    padding: 12,
+    borderRadius: 25,
+    marginBottom: 16,
   },
 
   orangebutton: {
