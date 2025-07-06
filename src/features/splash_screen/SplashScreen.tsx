@@ -38,8 +38,8 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   logoImage: {
-    height: screenHeight * 0.2,
-    width: screenWidth * 0.2,
+    height: screenHeight * 0.3,
+    width: screenWidth * 0.3,
     resizeMode: 'contain'
   }
 })
