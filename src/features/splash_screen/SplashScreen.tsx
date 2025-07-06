@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image } from 'react-native'
+import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native'
 import React, { useEffect } from 'react'
 import { Colors } from '@utils/Constants'
 import AppLogo from "@assets/images/AppLogo.png";
@@ -25,7 +25,8 @@ const SplashScreen = () => {
 
   return (
     <View style={styles.splashScreenBackground}>
-      <Image source={AppLogo} style={styles.logoImage} />
+      <ActivityIndicator size="large" color="#FECC01" />
+      {/* <Image source={AppLogo} style={styles.logoImage} /> */}
     </View>
   )
 }
