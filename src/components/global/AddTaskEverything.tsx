@@ -192,7 +192,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       docId: id,
     };
 
-    const api = 'http://154.53.44.112:3000/start-reminder-loop-until-end'
+    const api = 'http://89.117.145.28:3000/start-reminder-loop-until-end'
     // const api = 'http://10.0.2.2:3000/start-reminder-loop-until-end'
     try {
       const response = await fetch(api, {

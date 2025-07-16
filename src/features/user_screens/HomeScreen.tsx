@@ -307,46 +307,7 @@ const HomeScreen = () => {
                     <AddTaskEverything onCloseModal={() => setModalVisible(false)} />
                   </BottomModal>
 
-                  {/* <TouchableOpacity
-              onPress={() => setShowDropdown2(!showDropdown2)}>
-
-              <View style={styles.addtask}>
-                <TitleText style={styles.dropdownText2}>
-                  {selectedUser2 ? selectedUser2.name : 'Assigned To'}
-                </TitleText>
-                <Image
-                  source={require('../../assets/images/downarrow.png')}
-                  style={styles.image2}
-                />
-              </View>
-
-            </TouchableOpacity>
-
-
-
-
-
-            {showDropdown2 && (
-              <View style={styles.dropdownList2}>
-                {users2.map((item) => (
-                  <React.Fragment key={item.id}>{renderUser2({ item })}</React.Fragment>
-                ))}
-              </View>
-            )} */}
-
-                  {/* <TouchableOpacity onPress={() => setModalVisible(true)}>
-
-<View style={styles.addtask}>
-  <TitleText>
-    Add task
-  </TitleText>
-  <Image
-    source={require('../../assets/images/edit.png')}
-    style={styles.image}
-  />
-</View>
-
-</TouchableOpacity> */}
+                  
 
                   <TouchableOpacity onPress={() => setShowDropdown2(true)}>
                     <View style={styles.addtask}>

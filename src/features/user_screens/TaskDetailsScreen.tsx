@@ -100,6 +100,7 @@ const TaskDetailsScreen = () => {
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
   const [selected, setSelected] = useState(false);
   const [selected2, setSelected2] = useState(false);
   const [allData, setAllData] = useState({
@@ -486,6 +487,12 @@ const TaskDetailsScreen = () => {
                       allData.attachedImage && (
                         <BottomModal isVisible={ispic2ModalVisible} onClose={closeModal3}>
                           <View>
+                            {imageLoading && (
+                              <ActivityIndicator
+                                size="large" color="#FECC01"
+                                style={{ position: 'absolute', top: screenWidth * 0.4 + 16, alignSelf: 'center', zIndex: 1 }}
+                              />
+                            )}
                             <Image
                               source={{ uri: allData.attachedImage }}
                               style={{
@@ -495,7 +502,10 @@ const TaskDetailsScreen = () => {
                                 alignSelf: 'center',
                                 marginTop: 16,
                               }}
-                            /></View>
+                              onLoadStart={() => setImageLoading(true)}
+                              onLoadEnd={() => setImageLoading(false)}
+                            />
+                          </View>
                         </BottomModal>
                       )
                     }
@@ -742,6 +752,12 @@ const TaskDetailsScreen = () => {
 
                               <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
                                 <View>
+                                  {imageLoading && (
+                                    <ActivityIndicator
+                                      size="large" color="#FECC01"
+                                      style={{ position: 'absolute', top: screenWidth * 0.4 + 16, alignSelf: 'center', zIndex: 1 }}
+                                    />
+                                  )}
                                   <Image
                                     source={
                                       selectedCommentImage ? { uri: selectedCommentImage } : require('../../assets/images/profileIcon.png')
@@ -753,6 +769,8 @@ const TaskDetailsScreen = () => {
                                       alignSelf: 'center',
                                       marginTop: 16,
                                     }}
+                                    onLoadStart={() => setImageLoading(true)}
+                                    onLoadEnd={() => setImageLoading(false)}
                                   />
                                 </View>
                               </BottomModal>
