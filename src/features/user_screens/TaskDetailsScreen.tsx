@@ -430,8 +430,8 @@ const TaskDetailsScreen = () => {
 
 
   const updatePermission = async (permission: boolean) => {
-    // const api = 'http://89.117.145.28:3000/permission-status'
-    const api = 'http://10.0.2.2:3000/permission-status'
+    const api = 'http://89.117.145.28:3000/permission-status'
+    // const api = 'http://10.0.2.2:3000/permission-status'
 
     const payload = {
       createdByEmail: allData.createdBy,
