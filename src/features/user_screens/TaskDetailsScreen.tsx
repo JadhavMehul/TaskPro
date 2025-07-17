@@ -108,6 +108,7 @@ const TaskDetailsScreen = () => {
     description: '',
     recordedSound: null,
     assignedProfilePicture: '',
+    assignedTo: '',
     assignedName: '',
     taskStatus: '',
     needPermission: false,
@@ -355,6 +356,7 @@ const TaskDetailsScreen = () => {
         description: data.description || '',
         recordedSound: data.attachedAudio || null,
         assignedProfilePicture: assignToData?.profilePicture || '',
+        assignedTo: data?.assignTo || '',
         assignedName: assignToData?.firstName || '',
         taskStatus: data.taskStatus || '',
         needPermission: data.needPermission || false,
@@ -619,35 +621,42 @@ const TaskDetailsScreen = () => {
 
                 {
                   allData.needPermission && (
+                    <>
+                      {
+                        allData.assignedTo == currentUser?.email && (
 
-                    <View style={styles.commentbox}>
+                          <View style={styles.commentbox}>
 
-                      <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
-                      <View style={styles.addtask}>
-                        <TouchableOpacity onPress={() => setSelected(!selected)}>
-                          <Image
-                            source={
-                              selected
-                                ? require('../../assets/images/like_fill.png')
-                                : require('../../assets/images/like_unfill.png')
-                            }
-                            style={styles.icon}
-                          />
-                        </TouchableOpacity>
+                            <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
+                            <View style={styles.addtask}>
+                              <TouchableOpacity onPress={() => setSelected(!selected)}>
+                                <Image
+                                  source={
+                                    selected
+                                      ? require('../../assets/images/like_fill.png')
+                                      : require('../../assets/images/like_unfill.png')
+                                  }
+                                  style={styles.icon}
+                                />
+                              </TouchableOpacity>
 
-                        <TouchableOpacity onPress={() => setSelected2(!selected2)}>
-                          <Image
-                            source={
-                              selected2
-                                ? require('../../assets/images/dislike_fill.png')
-                                : require('../../assets/images/dislike_unfill.png')
-                            }
-                            style={styles.icon}
-                          />
-                        </TouchableOpacity>
+                              <TouchableOpacity onPress={() => setSelected2(!selected2)}>
+                                <Image
+                                  source={
+                                    selected2
+                                      ? require('../../assets/images/dislike_fill.png')
+                                      : require('../../assets/images/dislike_unfill.png')
+                                  }
+                                  style={styles.icon}
+                                />
+                              </TouchableOpacity>
 
-                      </View>
-                    </View>
+                            </View>
+                          </View>
+                        )
+                      }
+
+                    </>
                   )}
 
 
@@ -725,13 +734,19 @@ const TaskDetailsScreen = () => {
 
 
                             <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                              <TouchableOpacity onPress={() =>
-                                commentData.commentedAudio
-                                  ? openAudioModal(commentData.commentedAudio)
-                                  : Alert.alert("No Audio", "There was no audio added on comment")
-                              }>
-                                <Icon name="mic" size={16} color="#000" />
-                              </TouchableOpacity>
+                              {
+                                commentData.commentedAudio && (
+                                  <TouchableOpacity onPress={() =>
+                                    commentData.commentedAudio
+                                      ? openAudioModal(commentData.commentedAudio)
+                                      : Alert.alert("No Audio", "There was no audio added on comment")
+                                  }>
+                                    <Icon name="mic" size={16} color="#000" />
+                                  </TouchableOpacity>
+                                )
+
+                              }
+
 
                               {/* {
                                 commentData.commentedAudio && (
@@ -743,12 +758,17 @@ const TaskDetailsScreen = () => {
                                   />
                                 )} */}
 
-                              <TouchableOpacity onPress={() => commentData.commentedImage
-                                ? openModal2(commentData.commentedImage)
-                                : Alert.alert("No Image", "There was no image added on comment")
-                              }>
-                                <Icon name="image" size={16} color="#000" />
-                              </TouchableOpacity>
+                              {
+                                commentData.commentedImage && (
+                                  <TouchableOpacity onPress={() => commentData.commentedImage
+                                    ? openModal2(commentData.commentedImage)
+                                    : Alert.alert("No Image", "There was no image added on comment")
+                                  }>
+                                    <Icon name="image" size={16} color="#000" />
+                                  </TouchableOpacity>
+                                )
+                              }
+
 
                               <BottomModal isVisible={ispicModalVisible} onClose={closeModal2}>
                                 <View>
