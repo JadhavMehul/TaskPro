@@ -46,6 +46,9 @@ type AttachedImage = {
 };
 
 const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
+  const [isRecording, setIsRecording] = useState(false);
+  const blinkingAnim = useRef(new Animated.Value(1)).current;
+
   const currentUser = auth().currentUser;
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
@@ -54,8 +57,8 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   const [timeSet, setTimeSet] = useState(false);
   const [attachedImageModal, setAttachedImageModal] = useState(false);
   const [attachedAudioModal, setAttachedAudioModal] = useState(false);
-    const [modalVisible, setModalVisible] = useState(false);
-  
+  const [modalVisible, setModalVisible] = useState(false);
+
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
   const [attachedAudio, setAttachedAudio] = useState<string | null>(null);
   const [users, setUsers] = useState([
@@ -243,10 +246,9 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
   const onStartRecord = async () => {
     const hasPermission = await requestMicrophonePermission();
-    if (!hasPermission) {
-      console.warn('Permission denied');
-      return;
-    }
+    if (!hasPermission) return;
+
+    setIsRecording(true); // update state
 
     const path = Platform.select({
       ios: 'sound.m4a',
@@ -255,18 +257,41 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
     const uri = await audioRecorderPlayer.startRecorder(path as string);
     audioRecorderPlayer.addRecordBackListener(() => { });
-    console.log('Recording at:', uri);
     setAudioPath(uri);
   };
 
   const onStopRecord = async () => {
-     setTimeout(async () => {
-       const result = await audioRecorderPlayer.stopRecorder();
-        audioRecorderPlayer.removeRecordBackListener();
-        console.log('Stopped recording:', result);
-        setAttachedAudio(result)
+    setTimeout(async () => {
+      const result = await audioRecorderPlayer.stopRecorder();
+      audioRecorderPlayer.removeRecordBackListener();
+      setAttachedAudio(result);
+      setIsRecording(false); // stop recording UI
     }, 1000);
   };
+
+
+  useEffect(() => {
+    if (isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(blinkingAnim, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(blinkingAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      blinkingAnim.stopAnimation();
+      blinkingAnim.setValue(1); 
+    }
+  }, [isRecording]);
+
 
 
 
@@ -510,7 +535,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 </BottomModal>
               )}
 
-              {attachedAudio?.trim() ?
+              {/* {attachedAudio?.trim() ?
                 <TouchableOpacity
                   onPressIn={uploadAudio}
                   style={styles.commentbox}
@@ -533,7 +558,41 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                     Hold to Record
                   </TitleText>
                 </TouchableOpacity>
-              }
+              } */}
+
+              {attachedAudio?.trim() ? (
+                <TouchableOpacity onPressIn={uploadAudio} style={styles.commentbox}>
+                  <Icon name="mic" size={16} color="#000" />
+                  <TitleText style={styles.textualtext}>Listen Audio</TitleText>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPressIn={onStartRecord}
+                  onPressOut={onStopRecord}
+                  activeOpacity={1}
+                  style={styles.commentbox}
+                >
+                  {isRecording ? (
+                    <View style={styles.recordingUI}>
+                      <Animated.View style={[styles.blinkingDot, { opacity: blinkingAnim }]} />
+                      <TitleText style={styles.textualtext}>Recording...</TitleText>
+                    </View>
+                  ) : (
+                    <View style={{
+                      flexDirection: 'row'
+                      ,
+                      justifyContent: 'center',
+                      alignItems: 'center'
+                    }}>
+                      <Icon name="mic" size={16} color="#000" />
+                      <TitleText style={styles.textualtext}>Hold to Record</TitleText>
+                    </View>
+
+
+                  )}
+                </TouchableOpacity>
+              )}
+
 
               {
                 attachedAudio?.trim() && (
@@ -677,6 +736,20 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
 const styles = StyleSheet.create({
 
+  recordingUI: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8, // spacing between dot and text (use paddingHorizontal if needed)
+  },
+  blinkingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+  },
+
+
+
 
   modalOverlayCenter: {
     flex: 1,
@@ -718,10 +791,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   slider: { width: '100%', marginTop: 10 },
   timer: { marginTop: 10, fontSize: 16, color: '#333' },
-  playBtn2: { padding: 12, backgroundColor: '#FECC01', borderRadius: 12, marginTop: 16, flex:1},
-  playBtn3: { padding: 12, backgroundColor: '#FF3B30', borderRadius: 12, marginTop: 16, flex:1 },
+  playBtn2: { padding: 12, backgroundColor: '#FECC01', borderRadius: 12, marginTop: 16, flex: 1 },
+  playBtn3: { padding: 12, backgroundColor: '#FF3B30', borderRadius: 12, marginTop: 16, flex: 1 },
 
-  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16, width: '100%'},
+  playBtn: { padding: 12, backgroundColor: '#F49D16', borderRadius: 12, marginTop: 16, width: '100%' },
   btnText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
 
 
@@ -770,14 +843,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 
-  
+
 
   orangebtntext: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
- 
+
 
   orangebtntext2: {
     color: '#0000000',

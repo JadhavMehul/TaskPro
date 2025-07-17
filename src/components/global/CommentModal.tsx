@@ -43,6 +43,8 @@ const CommentModal = ({
   attachedAudio,
   setAttachedAudio
 }: CommentModalProps) => {
+  const [isRecording, setIsRecording] = useState(false);
+  const blinkingAnim = useRef(new Animated.Value(1)).current;
 
   const [activityIndicator, setActivityIndicator] = useState(false);
   const [isrecordModalVisible, setrecordModalVisible] = useState(false);
@@ -90,10 +92,9 @@ const CommentModal = ({
 
   const onStartRecord = async () => {
     const hasPermission = await requestMicrophonePermission();
-    if (!hasPermission) {
-      console.warn('Permission denied');
-      return;
-    }
+    if (!hasPermission) return;
+
+    setIsRecording(true); // update state
 
     const path = Platform.select({
       ios: 'sound.m4a',
@@ -102,7 +103,6 @@ const CommentModal = ({
 
     const uri = await audioRecorderPlayer.startRecorder(path as string);
     audioRecorderPlayer.addRecordBackListener(() => { });
-    console.log('Recording at:', uri);
     setAudioPath(uri);
   };
 
@@ -110,10 +110,33 @@ const CommentModal = ({
     setTimeout(async () => {
       const result = await audioRecorderPlayer.stopRecorder();
       audioRecorderPlayer.removeRecordBackListener();
-      console.log('Stopped recording:', result);
-      setAttachedAudio(result)
+      setAttachedAudio(result);
+      setIsRecording(false); // stop recording UI
     }, 1000);
   };
+
+
+  useEffect(() => {
+    if (isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(blinkingAnim, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(blinkingAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      blinkingAnim.stopAnimation();
+      blinkingAnim.setValue(1); 
+    }
+  }, [isRecording]);
 
   const selectImageToUpload = () => {
     if (attachedImage?.uploadUri.trim()) {
@@ -216,7 +239,7 @@ const CommentModal = ({
             )}
 
 
-
+            {/* 
             {attachedAudio?.trim() ?
               <TouchableOpacity
                 onPressIn={uploadAudio}
@@ -240,19 +263,54 @@ const CommentModal = ({
                   Hold to Record
                 </TitleText>
               </TouchableOpacity>
-            }
+            } */}
+
+            {attachedAudio?.trim() ? (
+              <TouchableOpacity onPressIn={uploadAudio} style={styles.commentbox}>
+                <Icon name="mic" size={16} color="#000" />
+                <TitleText style={styles.textualtext}>Listen Audio</TitleText>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPressIn={onStartRecord}
+                onPressOut={onStopRecord}
+                activeOpacity={1}
+                style={styles.commentbox}
+              >
+                {isRecording ? (
+                  <View style={styles.recordingUI}>
+                    <Animated.View style={[styles.blinkingDot, { opacity: blinkingAnim }]} />
+                    <TitleText style={styles.textualtext}>Recording...</TitleText>
+                  </View>
+                ) : (
+                  <View style={{
+                    flexDirection: 'row'
+                    ,
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                  }}>
+                    <Icon name="mic" size={16} color="#000" />
+                    <TitleText style={styles.textualtext}>Hold to Record</TitleText>
+                  </View>
+
+
+                )}
+              </TouchableOpacity>
+            )}
+
+
             {
-                attachedAudio?.trim() && (
-                  <AudioPlayerModal
-                    visible={attachedAudioModal}
-                    onClose={() => setAttachedAudioModal(false)}
-                    audioUrl={attachedAudio}
-                    localAudio={true}
-                    deleteAudio={() => setAttachedAudio(null)}
-                    styles={styles}
-                  />
-                )
-              }
+              attachedAudio?.trim() && (
+                <AudioPlayerModal
+                  visible={attachedAudioModal}
+                  onClose={() => setAttachedAudioModal(false)}
+                  audioUrl={attachedAudio}
+                  localAudio={true}
+                  deleteAudio={() => setAttachedAudio(null)}
+                  styles={styles}
+                />
+              )
+            }
 
           </View>
 
@@ -268,6 +326,19 @@ const CommentModal = ({
 export default CommentModal;
 
 const styles = StyleSheet.create({
+
+  recordingUI: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8, // spacing between dot and text (use paddingHorizontal if needed)
+  },
+  blinkingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'red',
+  },
+
   redbutton: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -326,8 +397,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  playBtn2: { padding: 12, backgroundColor: '#FECC01', borderRadius: 12, marginTop: 16, flex:1},
-  playBtn3: { padding: 12, backgroundColor: '#FF3B30', borderRadius: 12, marginTop: 16, flex:1 },
+  playBtn2: { padding: 12, backgroundColor: '#FECC01', borderRadius: 12, marginTop: 16, flex: 1 },
+  playBtn3: { padding: 12, backgroundColor: '#FF3B30', borderRadius: 12, marginTop: 16, flex: 1 },
 
   commentbox: {
     borderColor: '#FEC601',
