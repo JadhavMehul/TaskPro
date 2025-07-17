@@ -53,6 +53,20 @@ type AttachedImage = {
   uploadUri: string;
   fileExt: string;
 };
+type TaskData = {
+  title: string;
+  description: string;
+  recordedSound: null;
+  assignedProfilePicture: string;
+  assignedTo: string;
+  assignedName: string;
+  taskStatus: string;
+  needPermission: boolean;
+  permissionStatus: boolean | null;
+  comments: any[];
+  attachedImage: string | null;
+  createdBy: string
+};
 
 const TaskDetailsScreen = () => {
   const currentUser = auth().currentUser;
@@ -103,7 +117,7 @@ const TaskDetailsScreen = () => {
   const [imageLoading, setImageLoading] = useState(false);
   const [selected, setSelected] = useState(false);
   const [selected2, setSelected2] = useState(false);
-  const [allData, setAllData] = useState({
+  const [allData, setAllData] = useState<TaskData>({
     title: '',
     description: '',
     recordedSound: null,
@@ -112,8 +126,10 @@ const TaskDetailsScreen = () => {
     assignedName: '',
     taskStatus: '',
     needPermission: false,
+    permissionStatus: null,
     comments: [],
     attachedImage: null,
+    createdBy: ''
   })
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
@@ -360,8 +376,10 @@ const TaskDetailsScreen = () => {
         assignedName: assignToData?.firstName || '',
         taskStatus: data.taskStatus || '',
         needPermission: data.needPermission || false,
+        permissionStatus: typeof data.permissionStatus === 'boolean' ? data.permissionStatus : null,
         comments: data.taskComments || [],
         attachedImage: data.attachedImage || null,
+        createdBy: data.createdBy || ''
       });
       console.log(data);
 
@@ -409,6 +427,56 @@ const TaskDetailsScreen = () => {
       setActivityIndicator(false);
     }
   };
+
+
+  const updatePermission = async (permission: boolean) => {
+    // const api = 'http://89.117.145.28:3000/permission-status'
+    const api = 'http://10.0.2.2:3000/permission-status'
+
+    const payload = {
+      createdByEmail: allData.createdBy,
+      title: allData.title,
+    };
+    if (permission) {
+      setSelected(permission);
+      setSelected2(!permission);
+    } else {
+      setSelected(permission);
+      setSelected2(!permission);
+    }
+    try {
+      await firestore().collection('TaskList').doc(taskId).update({
+        permissionStatus: permission,
+      });
+      setAllData(prev => ({
+        ...prev,
+        permissionStatus: permission,
+      }));
+
+
+      const response = await fetch(api, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ API Response:', data);
+
+
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Error", "Error occured please try again later");
+    }
+  }
+
+
 
   useEffect(() => {
     fetchTask();
@@ -629,10 +697,10 @@ const TaskDetailsScreen = () => {
 
                             <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
                             <View style={styles.addtask}>
-                              <TouchableOpacity onPress={() => setSelected(!selected)}>
+                              <TouchableOpacity onPress={() => updatePermission(true)}>
                                 <Image
                                   source={
-                                    selected
+                                    allData?.permissionStatus === true
                                       ? require('../../assets/images/like_fill.png')
                                       : require('../../assets/images/like_unfill.png')
                                   }
@@ -640,10 +708,10 @@ const TaskDetailsScreen = () => {
                                 />
                               </TouchableOpacity>
 
-                              <TouchableOpacity onPress={() => setSelected2(!selected2)}>
+                              <TouchableOpacity onPress={() => updatePermission(false)}>
                                 <Image
                                   source={
-                                    selected2
+                                    allData?.permissionStatus === false
                                       ? require('../../assets/images/dislike_fill.png')
                                       : require('../../assets/images/dislike_unfill.png')
                                   }
