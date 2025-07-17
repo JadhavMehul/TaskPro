@@ -86,12 +86,20 @@ const HomeScreen = () => {
     if (item.id === '0') {
       return (
         <TouchableOpacity onPress={() => handleSelect2(item)}>
-          <View style={[styles.userContainer2, { backgroundColor: '#fff', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center' }]}>
-            <Text style={styles.crossIcon2}>❌</Text>
-            <Text style={styles.userName2}>{item.name}</Text>
-            <Text style={styles.crossIcon2}>❌</Text>
-          </View>
-        </TouchableOpacity>
+        <View
+          style={[
+            styles.userContainer2,
+            {
+              backgroundColor: '#fff',
+               justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center'
+            },
+          ]}
+        >
+          <Text style={styles.crossIcon2}>🔄</Text>
+        <Text style={[styles.userName2, { color: '#F00', fontWeight: '600' }]}>Reset</Text>
+        <Text style={styles.crossIcon2}>🔄</Text>
+        </View>
+      </TouchableOpacity>
       );
     }
 
@@ -440,7 +448,7 @@ const styles = StyleSheet.create({
   },
 
   crossIcon2: {
-    fontSize: 8,
+    fontSize: 14,
     color: '#999',
     paddingHorizontal: 4,
   },
