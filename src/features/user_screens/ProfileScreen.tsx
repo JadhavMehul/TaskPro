@@ -311,7 +311,6 @@ const ProfileScreen = () => {
                                   <InputField
                                     style={styles.input1}
                                     placeholder="First Name"
-                                    autoCapitalize="none"
                                     value={formData.firstName}
                                     onChangeText={(text) => handleInputChange('firstName', text)}
                                   />
@@ -323,7 +322,6 @@ const ProfileScreen = () => {
                                   <InputField
                                     style={styles.input1}
                                     placeholder="Last Name"
-                                    autoCapitalize="none"
                                     value={formData.lastName}
                                     onChangeText={(text) => handleInputChange('lastName', text)}
                                   />
@@ -349,7 +347,6 @@ const ProfileScreen = () => {
                                   <InputField
                                     style={styles.input1}
                                     placeholder="Flat No / Apartment Name / Street"
-                                    autoCapitalize="none"
                                     value={formData.addressLineOne}
                                     onChangeText={(text) => handleInputChange('addressLineOne', text)}
                                   />

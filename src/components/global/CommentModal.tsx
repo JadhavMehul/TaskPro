@@ -215,7 +215,6 @@ const CommentModal = ({
 
           <InputField
             style={styles.input2}
-            autoCapitalize="none"
             textAlignVertical="top"
             multiline
             numberOfLines={4}

@@ -502,7 +502,6 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
               </TitleText>
               <InputField style={styles.input1}
                 placeholder="Task title"
-                autoCapitalize="none"
                 value={formData.title}
                 onChangeText={(text) => handleInputChange('title', text)}
               />
@@ -513,7 +512,6 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
               <InputField style={styles.input2}
                 placeholder="Description"
-                autoCapitalize="none"
                 textAlignVertical="top"
                 multiline
                 numberOfLines={4}
