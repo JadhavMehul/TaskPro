@@ -69,6 +69,42 @@ type TaskData = {
 };
 
 const TaskDetailsScreen = () => {
+  const AutoSizedImage = ({ uri }: { uri: string }) => {
+    const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+
+    useEffect(() => {
+      if (uri) {
+        Image.getSize(uri, (width, height) => {
+          const maxWidth = screenWidth * 0.9;
+          const ratio = maxWidth / width;
+          setImageSize({
+            width: maxWidth,
+            height: height * ratio,
+          });
+        }, error => {
+          console.error("Image size fetch error", error);
+        });
+      }
+    }, [uri]);
+
+    if (!imageSize) return <ActivityIndicator size="small" color="#FECC01" />;
+
+    return (
+      <Image
+        source={{ uri }}
+        style={{
+          width: imageSize.width,
+          height: imageSize.height,
+          borderRadius: 10,
+        }}
+        onLoadStart={() => setImageLoading(true)}
+        onLoadEnd={() => setImageLoading(false)}
+        resizeMode="contain"
+
+      />
+    );
+  };
+
   const currentUser = auth().currentUser;
   const screenWidth = Dimensions.get('window').width;
 
@@ -563,7 +599,12 @@ const TaskDetailsScreen = () => {
                                 style={{ position: 'absolute', top: screenWidth * 0.4 + 16, alignSelf: 'center', zIndex: 1 }}
                               />
                             )}
-                            <Image
+
+                            <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}>
+                              <AutoSizedImage uri={allData.attachedImage} 
+                                />
+                            </ScrollView>
+                            {/* <Image
                               source={{ uri: allData.attachedImage }}
                               style={{
                                 width: screenWidth * 0.8,
@@ -574,7 +615,7 @@ const TaskDetailsScreen = () => {
                               }}
                               onLoadStart={() => setImageLoading(true)}
                               onLoadEnd={() => setImageLoading(false)}
-                            />
+                            /> */}
                           </View>
                         </BottomModal>
                       )
@@ -688,7 +729,7 @@ const TaskDetailsScreen = () => {
 
 
                 {
-                  allData.needPermission && (
+                  allData.needPermission && allData.permissionStatus === null && (
                     <>
                       {
                         allData.assignedTo == currentUser?.email && (

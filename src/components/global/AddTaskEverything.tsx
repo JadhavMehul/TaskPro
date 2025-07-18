@@ -46,6 +46,39 @@ type AttachedImage = {
 };
 
 const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
+  const AutoSizedImage = ({ uri }: { uri: string }) => {
+    const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
+
+    useEffect(() => {
+      if (uri) {
+        Image.getSize(uri, (width, height) => {
+          const maxWidth = screenWidth * 0.9;
+          const ratio = maxWidth / width;
+          setImageSize({
+            width: maxWidth,
+            height: height * ratio,
+          });
+        }, error => {
+          console.error("Image size fetch error", error);
+        });
+      }
+    }, [uri]);
+
+    if (!imageSize) return <ActivityIndicator size="small" color="#FECC01" />;
+
+    return (
+      <Image
+        source={{ uri }}
+        style={{
+          width: imageSize.width,
+          height: imageSize.height,
+          borderRadius: 10,
+        }}
+        resizeMode="contain"
+      />
+    );
+  };
+
   const [isRecording, setIsRecording] = useState(false);
   const blinkingAnim = useRef(new Animated.Value(1)).current;
 
@@ -287,7 +320,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       ).start();
     } else {
       blinkingAnim.stopAnimation();
-      blinkingAnim.setValue(1); 
+      blinkingAnim.setValue(1);
     }
   }, [isRecording]);
 
@@ -500,19 +533,8 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                     <>
                       <ActivityIndicator size="large" color="#FECC01" />
                     </> : <>
-                      <ScrollView>
-                        <View style={{ gap: 16 }}>
-                          <Image
-                            source={{ uri: attachedImage.uploadUri }}
-                            style={{
-                              width: screenWidth * 0.8,
-                              height: screenWidth * 0.8,
-                              borderRadius: 10,
-                              alignSelf: 'center',
-                              marginTop: 16,
-                            }}
-                          />
-                        </View>
+                      <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}>
+                        <AutoSizedImage uri={attachedImage?.uploadUri} />
                       </ScrollView>
 
                       <View style={styles.endcontainer}>
