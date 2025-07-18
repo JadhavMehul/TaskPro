@@ -248,7 +248,7 @@ const ProfileScreen = () => {
                       <TouchableOpacity style={styles.button} onPress={() => {
                         handleUploadImage();
                       }}>
-                        <Text style={styles.buttonText}>Edit DP</Text>
+                        <Text style={styles.buttonText}>Edit Photo</Text>
                       </TouchableOpacity>
 
                       {newImage && (

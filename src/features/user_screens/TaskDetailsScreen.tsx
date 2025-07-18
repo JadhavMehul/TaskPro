@@ -65,7 +65,8 @@ type TaskData = {
   permissionStatus: boolean | null;
   comments: any[];
   attachedImage: string | null;
-  createdBy: string
+  createdBy: string;
+  taskEndTime: string;
 };
 
 const TaskDetailsScreen = () => {
@@ -165,7 +166,8 @@ const TaskDetailsScreen = () => {
     permissionStatus: null,
     comments: [],
     attachedImage: null,
-    createdBy: ''
+    createdBy: '',
+    taskEndTime: '',
   })
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
@@ -403,6 +405,7 @@ const TaskDetailsScreen = () => {
         assignToData = assignToDoc.data();
       }
 
+     
       setAllData({
         title: data.title || '',
         description: data.description || '',
@@ -415,7 +418,8 @@ const TaskDetailsScreen = () => {
         permissionStatus: typeof data.permissionStatus === 'boolean' ? data.permissionStatus : null,
         comments: data.taskComments || [],
         attachedImage: data.attachedImage || null,
-        createdBy: data.createdBy || ''
+        createdBy: data.createdBy || '',
+        taskEndTime: moment(data.taskEndTime).format('DD MMM YYYY - hh:mm A') || '',
       });
       console.log(data);
 
@@ -542,7 +546,6 @@ const TaskDetailsScreen = () => {
 
                 <View style={styles.taskbox}>
 
-                  {/* <TitleText style={styles.tasktitle}>taskTitle</TitleText> */}
 
                   <ReadMoreText
                     text={allData.title}
@@ -557,9 +560,14 @@ const TaskDetailsScreen = () => {
                     textStyle={styles.text}
                     readMoreTextStyle={styles.readMoreLink}
                   />
-                  {/* <TitleText style={styles.taskdescription}>taskDescription</TitleText> */}
-
+                 
+                    
                 </View>
+                <View style={styles.taskbox}>
+                <TitleText>
+                    Finish before: {allData.taskEndTime}
+                  </TitleText>
+                </View> 
 
                 <View style={styles.commentbox}>
                   <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
