@@ -187,7 +187,6 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     console.log(formData);
 
     const payload = {
-      email: formData.assignTo,
       title: formData.title,
       body: formData.description,
       taskTimer: formData.notificationTimer,
