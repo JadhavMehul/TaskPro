@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Image, StyleSheet, ViewStyle, TextStyle,Animated, TouchableOpacity } from 'react-native';
 import TitleText from '@components/global/Titletext';
 import ToggleSwitch from '@components/global/ToggleSwitch';
+import Feather from '@react-native-vector-icons/feather';
 
 interface NameCardProps {
   name: string;
@@ -38,11 +39,19 @@ const NameCard: React.FC<NameCardProps> = ({
         <TitleText style={styles.personName}>{name}</TitleText>
       </View>
 
+      <View style={{flexDirection: 'row', gap: 6}}>
+      <TouchableOpacity>
+                  <Feather name="trash" size={24} color="red" />
+                  </TouchableOpacity>
+
       <ToggleSwitch
         isOn={isOn}
         toggleSwitch={toggleSwitch}
         knobPosition={knobPosition}
       />
+      </View>
+
+      
     </View>
     </TouchableOpacity>
   );

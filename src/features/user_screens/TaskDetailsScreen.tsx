@@ -563,10 +563,15 @@ const TaskDetailsScreen = () => {
                  
                     
                 </View>
-                <View style={styles.taskbox}>
+                <View style={styles.taskbox2}>
                 <TitleText>
                     Finish before: {allData.taskEndTime}
                   </TitleText>
+                  <TouchableOpacity>
+                  <Feather name="trash" size={24} color="red" />
+                  </TouchableOpacity>
+                               
+
                 </View> 
 
                 <View style={styles.commentbox}>
@@ -858,7 +863,7 @@ const TaskDetailsScreen = () => {
                                       ? openAudioModal(commentData.commentedAudio)
                                       : Alert.alert("No Audio", "There was no audio added on comment")
                                   }>
-                                    <Icon name="mic" size={16} color="#000" />
+                                    <Icon name="mic" size={20} color="#000" />
                                   </TouchableOpacity>
                                 )
 
@@ -881,7 +886,7 @@ const TaskDetailsScreen = () => {
                                     ? openModal2(commentData.commentedImage)
                                     : Alert.alert("No Image", "There was no image added on comment")
                                   }>
-                                    <Icon name="image" size={16} color="#000" />
+                                    <Icon name="image" size={20} color="#000" />
                                   </TouchableOpacity>
                                 )
                               }
@@ -1262,6 +1267,18 @@ const styles = StyleSheet.create({
 
     flexDirection: 'column',
     gap: 8,
+  },
+
+  taskbox2: {
+
+    width: '100%',
+    padding: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 
   image2: {
