@@ -22,6 +22,7 @@ import firestore from "@react-native-firebase/firestore";
 import messaging from "@react-native-firebase/messaging";
 import Recorder from '@features/user_screens/Recorder';
 import { AudioProvider } from '@components/global/AudioContext';
+import NewScreen from '@features/user_screens/NewScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -185,6 +186,8 @@ const App = () => {
         <Stack.Screen name="AdminScreen" component={AdminScreen} />
         <Stack.Screen name="TaskDetailsScreen" component={TaskDetailsScreen} />
         <Stack.Screen name="Recorder" component={Recorder} />
+        <Stack.Screen name="NewScreen" component={NewScreen} />
+
 
       </Stack.Navigator>
     </NavigationContainer>

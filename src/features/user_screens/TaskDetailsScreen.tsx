@@ -15,7 +15,7 @@ import { goBack } from '@utils/NavigationUtils';
 import Feather from '@react-native-vector-icons/feather';
 import LinearGradient from 'react-native-linear-gradient';
 import ReadMoreText from '@components/global/ReadMoreText';
-
+import { navigate } from '@utils/NavigationUtils';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 import { useAudio } from '../../components/global/AudioContext';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -792,6 +792,12 @@ const TaskDetailsScreen = () => {
                       style={styles.image2}
                     />
                   </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => navigate('NewScreen')}>
+                  <TitleText>
+                    the other screen
+                  </TitleText>
                 </TouchableOpacity>
 
                 <CommentModal
