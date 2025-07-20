@@ -11,7 +11,6 @@ type TaskBoxProps = {
   dateTime: string;
   taskStatus: string;
   onPress: () => void;
-  onDelete: () => void;
 };
 
 const TaskBox = ({
@@ -22,10 +21,8 @@ const TaskBox = ({
   dateTime,
   taskStatus,
   onPress,
-  onDelete
 }: TaskBoxProps) => {
 
-  const [isDeleting, setIsDeleting] = useState(false)
 
   return (
     <TouchableOpacity onPress={onPress}>
@@ -57,14 +54,7 @@ const TaskBox = ({
           <View style={styles.leftbottom}>
             <Text style={styles.datetime}>{dateTime}</Text>
           </View>
-          <TouchableOpacity onPress={() => {setIsDeleting(true); onDelete()}}>
-            {
-              isDeleting ? 
-              <ActivityIndicator size={24} color="red" /> :
-              <Feather name="trash" size={24} color="red" />
-            }
-            
-          </TouchableOpacity>
+          
         </View>
       </View>
     </TouchableOpacity>

@@ -489,13 +489,15 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
     <View style={{ flex: 1 }}>
 
+{activityIndicator ?
+            <ActivityIndicator size="large" color="#FECC01" /> :
+            <>
       <ScrollView>
         <View style={{ flexDirection: 'column', gap: 16 }}>
 
-          {activityIndicator ?
-            <ActivityIndicator size="large" color="#FECC01" /> :
+          
 
-            <>
+            
 
               <TitleText style={styles.poptext}>
                 Title
@@ -736,8 +738,8 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 <TimePicker onSendData={(timer: string) => handleInputChange('notificationTimer', timer)} />
 
               </View>
-            </>
-          }
+            
+          
         </View>
       </ScrollView>
 
@@ -748,6 +750,8 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
           </TitleText>
         </TouchableOpacity>
       </View>
+      </>
+      }
     </View>
 
   )

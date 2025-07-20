@@ -65,6 +65,7 @@ type TaskData = {
   permissionStatus: boolean | null;
   comments: any[];
   attachedImage: string | null;
+  attachedAudio: string | null;
   createdBy: string;
   taskEndTime: string;
 };
@@ -116,8 +117,7 @@ const TaskDetailsScreen = () => {
   const [selectedCommentImage, setSelectedCommentImage] = useState<string | null>(null);
   const [selectedCommentAudio, setSelectedCommentAudio] = useState<string | null>(null);
 
-
-
+  const [isDeleting, setIsDeleting] = useState(false)
   const [ispicModalVisible, setpicModalVisible] = useState(false);
 
   const openModal2 = (x: string) => {
@@ -166,6 +166,7 @@ const TaskDetailsScreen = () => {
     permissionStatus: null,
     comments: [],
     attachedImage: null,
+    attachedAudio: null,
     createdBy: '',
     taskEndTime: '',
   })
@@ -418,6 +419,7 @@ const TaskDetailsScreen = () => {
         permissionStatus: typeof data.permissionStatus === 'boolean' ? data.permissionStatus : null,
         comments: data.taskComments || [],
         attachedImage: data.attachedImage || null,
+        attachedAudio: data.attachedAudio || null,
         createdBy: data.createdBy || '',
         taskEndTime: moment(data.taskEndTime).format('DD MMM YYYY - hh:mm A') || '',
       });
@@ -516,6 +518,84 @@ const TaskDetailsScreen = () => {
     }
   }
 
+  const deleteTask = async (taskId: string, imageUrl?: string | null, audioUrl?: string | null) => {
+    setIsDeleting(true)
+    try {
+      if (imageUrl) {
+        const decodedUrl = decodeURIComponent(imageUrl);
+        const match = decodedUrl.match(/\/o\/(.*?)\?/);
+        const filePath = match?.[1];
+
+        if (filePath) {
+          const imageRef = storage().ref(filePath);
+          await imageRef.delete();
+          console.log("Image successfully deleted from Storage!");
+        } else {
+          console.warn("Could not extract file path from imageUrl.");
+        }
+      }
+
+      if (audioUrl) {
+        const decodedUrl = decodeURIComponent(audioUrl);
+        const match = decodedUrl.match(/\/o\/(.*?)\?/);
+        const filePath = match?.[1];
+
+        if (filePath) {
+          const audioRef = storage().ref(filePath);
+          await audioRef.delete();
+          console.log("Audio successfully deleted from Storage!");
+        } else {
+          console.warn("Could not extract file path from audioUrl.");
+        }
+      }
+
+      if (allData.comments) {
+        allData.comments.map(async (x) => {
+          if (x.commentedImage) {
+            const decodedUrl = decodeURIComponent(x.commentedImage);
+            const match = decodedUrl.match(/\/o\/(.*?)\?/);
+            const filePath = match?.[1];
+
+            if (filePath) {
+              const imageRef = storage().ref(filePath);
+              await imageRef.delete();
+              console.log("Image successfully deleted from Storage!");
+            } else {
+              console.warn("Could not extract file path from imageUrl.");
+            }
+          }
+        })
+      }
+
+      if (allData.comments) {
+        allData.comments.map(async (x) => {
+          if (x.commentedAudio) {
+            const decodedUrl = decodeURIComponent(x.commentedAudio);
+            const match = decodedUrl.match(/\/o\/(.*?)\?/);
+            const filePath = match?.[1];
+
+            if (filePath) {
+              const audioRef = storage().ref(filePath);
+              await audioRef.delete();
+              console.log("Audion successfully deleted from Storage!");
+            } else {
+              console.warn("Could not extract file path from imageUrl.");
+            }
+          }
+        })
+      }
+
+      await firestore().collection("TaskList").doc(taskId).delete();
+      console.log("Document successfully deleted!");
+
+      navigate("HomeScreen");
+    } catch (error) {
+      console.log("Error deleting task or image:", error);
+    } finally {
+      setIsDeleting(false)
+    }
+  };
+
 
 
   useEffect(() => {
@@ -567,8 +647,12 @@ const TaskDetailsScreen = () => {
                 <TitleText>
                     Finish before: {allData.taskEndTime}
                   </TitleText>
-                  <TouchableOpacity>
-                  <Feather name="trash" size={24} color="red" />
+                  <TouchableOpacity onPress={() => deleteTask(taskId, allData.attachedImage, allData.attachedAudio)}>
+                    {
+                      isDeleting ? 
+                      <ActivityIndicator size={24} color="red" /> :
+                      <Feather name="trash" size={24} color="red" />
+                    }
                   </TouchableOpacity>
                                
 

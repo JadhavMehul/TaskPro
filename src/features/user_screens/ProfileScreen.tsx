@@ -92,7 +92,7 @@ const ProfileScreen = () => {
         if (storedData.exists()) {
           const data = storedData.data();
           setFormData({
-            profilePicture: data?.profilePicture || 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=35dcbb4b-bf4e-4e91-ac0a-25a5b600b422',
+            profilePicture: data?.profilePicture || 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=dd2559a9-8702-4276-a438-3a83550935e4',
             firstName: data?.firstName || '',
             lastName: data?.lastName || '',
             email: data?.email || '',

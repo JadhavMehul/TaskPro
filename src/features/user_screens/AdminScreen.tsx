@@ -11,6 +11,9 @@ import ToggleSwitch from '@components/global/ToggleSwitch';
 import NameCard from '@components/global/Namecard';
 // import { firebase } from "../../../firebaseConfig";
 import firestore from "@react-native-firebase/firestore";
+import storage from "@react-native-firebase/storage";
+import auth from '@react-native-firebase/auth';
+
 
 const AdminScreen = () => {
   const { width } = useWindowDimensions();
@@ -22,7 +25,7 @@ const AdminScreen = () => {
   const [isModalVisible2, setModalVisible2] = useState(false);
 
   const [cards, setCards] = useState([
-    { name: '', isOn: false, userEmail: null, knobPosition: new Animated.Value(6), profilePicture: '' },
+    { name: '', isOn: false, userEmail: null, userId: '', knobPosition: new Animated.Value(6), profilePicture: '' },
   ]);
 
   const toggleSwitch = (index: number) => {
@@ -90,12 +93,13 @@ const AdminScreen = () => {
           name: data.firstName || '',
           isOn: data.isAdmin || false,
           userEmail: data.email || null,
+          userId: data.userId || null,
           knobPosition: new Animated.Value(data.isAdmin ? 38 : 2),
-          profilePicture: data.profilePicture || 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=35dcbb4b-bf4e-4e91-ac0a-25a5b600b422',
+          profilePicture: data.profilePicture || 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=dd2559a9-8702-4276-a438-3a83550935e4',
         };
       });
       setCards(employees);
-      
+
       // console.log("Employees:", JSON.stringify(employees));
     } catch (error) {
       console.log(error);
@@ -125,6 +129,69 @@ const AdminScreen = () => {
       console.error('Error updating admin status:', error);
     }
   };
+
+  const callDeleteUserAPI = async (userEmailId: string) => {
+
+    const api = 'http://89.117.145.28:3000/delete-user'
+      // const api = 'http://10.0.2.2:3000/delete-user'
+
+      const payload = {
+        email: userEmailId,
+      };
+      try {
+        const response = await fetch(api, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ API Response:', data);
+
+      } catch (error) {
+        console.error('❌ Error calling API:', error);
+      }
+
+  }
+
+  const deleteUser = async (userEmailId: string | null, profilePicture: string | null, userId: string | null, i: any) => {
+    if (!userEmailId) {
+      console.warn('User email is null, cannot update admin status.');
+      return;
+    }
+
+    try {
+      if (profilePicture && !profilePicture.includes("global")) {
+        const decodedUrl = decodeURIComponent(profilePicture);
+        const match = decodedUrl.match(/\/o\/(.*?)\?/);
+        const filePath = match?.[1];
+
+        if (filePath) {
+          const imageRef = storage().ref(filePath);
+          await imageRef.delete();
+          console.log("Profile picture successfully deleted from Storage!");
+        } else {
+          console.warn("Could not extract file path from profilePicture.");
+        }
+      }
+      
+      await firestore().collection('UserAccounts').doc(userEmailId).delete();
+
+      callDeleteUserAPI(userEmailId)
+      
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setModalVisible2(false)
+    }
+
+  }
 
 
 
@@ -262,6 +329,7 @@ const AdminScreen = () => {
                     isOn={item.isOn}
                     toggleSwitch={() => updateUserAdminStatus(item.userEmail, item.isOn, index)}
                     knobPosition={item.knobPosition}
+                    onDelete={() => deleteUser(item.userEmail, item.profilePicture, item.userId, index)}
                     style={{ marginBottom: 16 }}
                   />
                 )}

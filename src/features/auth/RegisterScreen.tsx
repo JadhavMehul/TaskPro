@@ -90,7 +90,7 @@ const RegisterScreen: React.FC = () => {
         email,
         gender: selectedGender,
         isAdmin: adminValue,
-        profilePicture: 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=35dcbb4b-bf4e-4e91-ac0a-25a5b600b422',
+        profilePicture: 'https://firebasestorage.googleapis.com/v0/b/task-pro-1.firebasestorage.app/o/global%2FprofileIcon.png?alt=media&token=dd2559a9-8702-4276-a438-3a83550935e4',
       });
 
       await updatePromo(); // optional

@@ -211,33 +211,7 @@ const HomeScreen = () => {
     return unsubscribe;
   };
 
-  const deleteTask = async (taskId: string, imageUrl: string) => {
-    try {
-      await firestore().collection("TaskList").doc(taskId).delete();
-      console.log("Document successfully deleted!");
-
-      if (imageUrl) {
-        const decodedUrl = decodeURIComponent(imageUrl);
-        const match = decodedUrl.match(/\/o\/(.*?)\?/);
-        const filePath = match?.[1];
-
-        if (filePath) {
-          const imageRef = storage().ref(filePath);
-          await imageRef.delete();
-          console.log("Image successfully deleted from Storage!");
-        } else {
-          console.warn("Could not extract file path from imageUrl.");
-        }
-      }
-    } catch (error) {
-      console.log("Error deleting task or image:", error);
-    }
-  };
-
-
-
-
-
+  
 
   useEffect(() => {
     const getEmployees = async () => {
@@ -368,7 +342,6 @@ const HomeScreen = () => {
                         dateTime={item.createdAt}
                         taskStatus={item.taskStatus}
                         onPress={() => navigate('TaskDetailsScreen', { taskId: item.id })}
-                        onDelete={() => deleteTask(item.id, item.attachedImage)}
                       />
                     )}
                   />
