@@ -57,6 +57,7 @@ type UserInfo = {
   firstName: string;
   profilePicture: string;
 };
+type NewEmailList = string[];
 type TaskData = {
   title: string;
   description: string;
@@ -150,11 +151,13 @@ const TaskDetailsScreen = () => {
   const [inputValue, setInputValue] = useState('');
   const [attachedImage, setAttachedImage] = useState<AttachedImage | null>(null);
   const [attachedAudio, setAttachedAudio] = useState<string | null>(null);
-  const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
+  const [selectedUser2, setSelectedUser2] = useState<User[]>([]);
+  const [tempSelectedUsers2, setTempSelectedUsers2] = useState<User[]>([]);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [selected, setSelected] = useState(false);
+  const [showSelectedModal, setShowSelectedModal] = useState(false);
   const [selected2, setSelected2] = useState(false);
   const [allData, setAllData] = useState<TaskData>({
     title: '',
@@ -267,19 +270,20 @@ const TaskDetailsScreen = () => {
     setCommentModalVisible(false)
   }
 
+  const [updatedUsers, setUpdatedUsers] = useState<string[]>([]);
 
-  const changeAssignToUserInDB = async (user: any) => {
+  const changeAssignToUserInDB = async (emails: string[]) => {
     setActivityIndicator(true)
     try {
       await firestore().collection('TaskList').doc(taskId).update({
-        assignTo: user.userEmail,
+        assignTo: emails,
       });
 
-      setAllData(prev => ({
-        ...prev,
-        assignedProfilePicture: user.profilePicture,
-        assignedName: user.name
-      }));
+      // setAllData(prev => ({
+      //   ...prev,
+      //   assignedProfilePicture: user.profilePicture,
+      //   assignedName: user.name
+      // }));
     } catch (error) {
       console.log(error);
 
@@ -289,17 +293,73 @@ const TaskDetailsScreen = () => {
   }
 
   const handleSelect2 = (user: User) => {
+
     if (user.id === '0') {
-      setSelectedUser2(null);
+      setTempSelectedUsers2([]);
+      // setSelectedUser2(null);
     } else {
-      setSelectedUser2(user);
-      changeAssignToUserInDB(user)
+
+      const already = tempSelectedUsers2.find(u => u.id === user.id);
+
+      const updatedList: UserInfo[] = already
+        ? tempSelectedUsers2.filter(u => u.id !== user.id).map(u => ({
+          firstName: u.name, // mapping 'name' from User to 'firstName' in UserInfo
+          profilePicture: u.profilePicture,
+        }))
+        : [...tempSelectedUsers2, user].map(u => ({
+          firstName: u.name,
+          profilePicture: u.profilePicture,
+        }));
+
+      setTempSelectedUsers2(already
+        ? tempSelectedUsers2.filter(u => u.id !== user.id)
+        : [...tempSelectedUsers2, user]);
+
+      console.log(already ? 'Removed user, new list:' : 'Added user, new list:', updatedList);
+
+
+      const newEmailList: string[] = already
+        ? tempSelectedUsers2
+          .filter(u => u.id !== user.id)
+          .map(u => u.userEmail)
+          .filter((email): email is string => !!email)
+        : [...tempSelectedUsers2, user]
+          .map(u => u.userEmail)
+          .filter((email): email is string => !!email);
+
+
+
+
+
+
+      setAllData(prev => ({
+        ...prev,
+        assignedTo: updatedList
+      }));
+
+      setUpdatedUsers(newEmailList);
+
+      // changeAssignToUserInDB(newEmailList);
+
+
+      // if (user.userEmail && !updatedUsers.includes(user.userEmail)) {
+      //   setUpdatedUsers(prev => [...prev, user.userEmail]);
+      // }
+
+
+
+
+
+
+
+      // setSelectedUser2(user);
+      // changeAssignToUserInDB(user)
 
     }
-    setShowDropdown2(false);
+    // setShowDropdown2(false);
   };
   const renderUser2 = ({ item }: { item: User }) => {
-    const isSelected2 = selectedUser2?.id === item.id;
+    const isSelected2 = tempSelectedUsers2.some(u => u.id === item.id);
 
     if (item.id === '0') {
       return (
@@ -740,7 +800,13 @@ const TaskDetailsScreen = () => {
                     }
 
                   </View>
-                  <View style={styles.righttop}>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (Array.isArray(allData.assignedTo) && allData.assignedTo.length > 0) {
+                        setShowSelectedModal(true);
+                      }
+                    }} style={styles.righttop}>
                     <View style={styles.circle}>
                       <Image
                         source={
@@ -769,7 +835,39 @@ const TaskDetailsScreen = () => {
                           : allData.assignedTo.firstName
                       }
                     </Text>
-                  </View>
+                  </TouchableOpacity>
+
+
+
+                  <Modal
+                    visible={showSelectedModal}
+                    transparent
+                    animationType="fade"
+                    onRequestClose={() => setShowSelectedModal(false)}
+                  >
+                    <View style={styles.modalOverlay}>
+                      <View style={[styles.modalContent, { height: '40%' }]}>
+                        <TouchableOpacity
+                          onPress={() => setShowSelectedModal(false)}
+                          style={styles.closeButton}
+                        >
+                          <Text style={styles.closeButtonText}>×</Text>
+                        </TouchableOpacity>
+
+                        <FlatList
+                          data={Array.isArray(allData.assignedTo) ? allData.assignedTo : [allData.assignedTo]}
+                          keyExtractor={(item, index) => index.toString()}
+                          renderItem={({ item }) => (
+                            <View style={styles.userInner2}>
+                              <Image source={{ uri: item.profilePicture }} style={styles.avatar2} />
+                              <Text style={styles.userName2}>{item.firstName}</Text>
+                            </View>
+                          )}
+                          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
 
 
                   <View style={{ flexDirection: 'column', gap: 6 }}>
@@ -829,7 +927,7 @@ const TaskDetailsScreen = () => {
                           {/* {selectedUser2 ? selectedUser2.name : 'Assign To'} */}
                         </TitleText>
                         <Image
-                          source={require('../../assets/images/downarrow.png')}
+                          source={require('@assets/images/downarrow.png')}
                           style={styles.image2}
                         />
                       </View>
@@ -844,6 +942,12 @@ const TaskDetailsScreen = () => {
                     >
                       <TouchableWithoutFeedback onPress={() => setShowDropdown2(false)}>
                         <View style={styles.modalOverlay}>
+                          <TouchableOpacity
+                            onPress={() => setShowDropdown2(false)}
+                            style={styles.closeButton}
+                          >
+                            <Text style={styles.closeButtonText}>×</Text>
+                          </TouchableOpacity>
                           <TouchableWithoutFeedback>
                             <View style={styles.modalContent}>
                               <FlatList
@@ -852,6 +956,16 @@ const TaskDetailsScreen = () => {
                                 ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
                                 renderItem={renderUser2}
                               />
+
+                              <TouchableOpacity
+                                onPress={() => {
+                                  setSelectedUser2(tempSelectedUsers2);
+                                  setShowDropdown2(false);
+                                  changeAssignToUserInDB(updatedUsers);
+                                }}
+                              >
+                                <Text>Done</Text>
+                              </TouchableOpacity>
                             </View>
                           </TouchableWithoutFeedback>
                         </View>
@@ -923,6 +1037,12 @@ const TaskDetailsScreen = () => {
                 <TouchableOpacity onPress={() => navigate('NewScreen')}>
                   <TitleText>
                     the other screen
+                  </TitleText>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => console.log(updatedUsers)}>
+                  <TitleText>
+                    the mother screen
                   </TitleText>
                 </TouchableOpacity>
 
