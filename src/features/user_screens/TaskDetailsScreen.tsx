@@ -53,13 +53,15 @@ type AttachedImage = {
   uploadUri: string;
   fileExt: string;
 };
+type UserInfo = {
+  firstName: string;
+  profilePicture: string;
+};
 type TaskData = {
   title: string;
   description: string;
   recordedSound: null;
-  assignedProfilePicture: string;
-  assignedTo: string;
-  assignedName: string;
+  assignedTo: UserInfo | UserInfo[];
   taskStatus: string;
   needPermission: boolean;
   permissionStatus: boolean | null;
@@ -158,9 +160,7 @@ const TaskDetailsScreen = () => {
     title: '',
     description: '',
     recordedSound: null,
-    assignedProfilePicture: '',
-    assignedTo: '',
-    assignedName: '',
+    assignedTo: [],
     taskStatus: '',
     needPermission: false,
     permissionStatus: null,
@@ -395,25 +395,46 @@ const TaskDetailsScreen = () => {
       const taskData = await firestore().collection('TaskList').doc(taskId).get();
       const data = taskData.data();
 
+
+
       if (!data) {
         console.warn('No task data found');
         return;
       }
 
-      let assignToData = null;
-      if (data.assignTo) {
-        const assignToDoc = await firestore().collection('UserAccounts').doc(data.assignTo).get();
-        assignToData = assignToDoc.data();
-      }
+      let assignToData: { firstName: string; profilePicture: string } | { firstName: string; profilePicture: string }[] = {
+        firstName: '',
+        profilePicture: '',
+      };
+      if (data.assignTo && data.assignTo.length > 0) {
+        const userInfoArray: { firstName: string; profilePicture: string }[] = [];
 
-     
+        for (const assigneeEmail of data.assignTo) {
+          const userDoc = await firestore()
+            .collection('UserAccounts')
+            .doc(assigneeEmail)
+            .get();
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            userInfoArray.push({
+              firstName: userData?.firstName || '',
+              profilePicture: userData?.profilePicture || '',
+            });
+          }
+        }
+
+        assignToData = userInfoArray;
+      }
+      console.log("assignToData", assignToData);
+
+
+
       setAllData({
         title: data.title || '',
         description: data.description || '',
         recordedSound: data.attachedAudio || null,
-        assignedProfilePicture: assignToData?.profilePicture || '',
-        assignedTo: data?.assignTo || '',
-        assignedName: assignToData?.firstName || '',
+        assignedTo: assignToData || [],
         taskStatus: data.taskStatus || '',
         needPermission: data.needPermission || false,
         permissionStatus: typeof data.permissionStatus === 'boolean' ? data.permissionStatus : null,
@@ -423,7 +444,7 @@ const TaskDetailsScreen = () => {
         createdBy: data.createdBy || '',
         taskEndTime: moment(data.taskEndTime).format('DD MMM YYYY - hh:mm A') || '',
       });
-      console.log(data);
+      console.log("data:", data);
 
 
       if (data.taskComments?.length > 0) {
@@ -640,23 +661,23 @@ const TaskDetailsScreen = () => {
                     textStyle={styles.text}
                     readMoreTextStyle={styles.readMoreLink}
                   />
-                 
-                    
+
+
                 </View>
                 <View style={styles.taskbox2}>
-                <TitleText>
+                  <TitleText>
                     Finish before: {allData.taskEndTime}
                   </TitleText>
                   <TouchableOpacity onPress={() => deleteTask(taskId, allData.attachedImage, allData.attachedAudio)}>
                     {
-                      isDeleting ? 
-                      <ActivityIndicator size={24} color="red" /> :
-                      <Feather name="trash" size={24} color="red" />
+                      isDeleting ?
+                        <ActivityIndicator size={24} color="red" /> :
+                        <Feather name="trash" size={24} color="red" />
                     }
                   </TouchableOpacity>
-                               
 
-                </View> 
+
+                </View>
 
                 <View style={styles.commentbox}>
                   <View style={{ flexDirection: 'column', justifyContent: 'space-between', gap: 16 }}>
@@ -698,8 +719,8 @@ const TaskDetailsScreen = () => {
                             )}
 
                             <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}>
-                              <AutoSizedImage uri={allData.attachedImage} 
-                                />
+                              <AutoSizedImage uri={allData.attachedImage}
+                              />
                             </ScrollView>
                             {/* <Image
                               source={{ uri: allData.attachedImage }}
@@ -721,14 +742,35 @@ const TaskDetailsScreen = () => {
                   </View>
                   <View style={styles.righttop}>
                     <View style={styles.circle}>
-                      <Image source={
-                        allData.assignedProfilePicture
-                          ? { uri: allData.assignedProfilePicture }
-                          : require('@assets/images/profileIcon.png')
-                      } style={styles.circleImage} />
+                      <Image
+                        source={
+                          Array.isArray(allData.assignedTo)
+                            ? allData.assignedTo.length > 1
+                              ? require('@assets/images/multiUserIcon.png')
+                              : allData.assignedTo.length === 1
+                                ? { uri: allData.assignedTo[0].profilePicture }
+                                : require('@assets/images/profileIcon.png')
+                            : allData.assignedTo.profilePicture
+                              ? { uri: allData.assignedTo.profilePicture }
+                              : require('@assets/images/profileIcon.png')
+                        }
+                        style={styles.circleImage}
+                      />
                     </View>
-                    <Text style={styles.personName}>{allData.assignedName}</Text>
+
+                    <Text style={styles.personName}>
+                      {
+                        Array.isArray(allData.assignedTo)
+                          ? allData.assignedTo.length > 1
+                            ? `${allData.assignedTo.length} members`
+                            : allData.assignedTo.length === 1
+                              ? allData.assignedTo[0].firstName
+                              : ''
+                          : allData.assignedTo.firstName
+                      }
+                    </Text>
                   </View>
+
 
                   <View style={{ flexDirection: 'column', gap: 6 }}>
 
@@ -825,7 +867,7 @@ const TaskDetailsScreen = () => {
       </TouchableOpacity> */}
 
 
-                {
+                {/* {
                   allData.needPermission && allData.permissionStatus === null && (
                     <>
                       {
@@ -863,7 +905,7 @@ const TaskDetailsScreen = () => {
                       }
 
                     </>
-                  )}
+                  )} */}
 
 
 

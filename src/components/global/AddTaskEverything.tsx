@@ -1,4 +1,4 @@
-import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView, PermissionsAndroid, TouchableWithoutFeedback, Modal, ActivityIndicator, Alert } from 'react-native'
+import { View, Text, Image, Animated, Platform, TouchableOpacity, StyleSheet, ScrollView, PermissionsAndroid, TouchableWithoutFeedback, Modal, ActivityIndicator, Alert, FlatList } from 'react-native'
 import React, { useEffect, useState, useRef } from 'react';
 import TitleText from './Titletext'
 import InputField from './InputField'
@@ -104,7 +104,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    assignTo: '',
+    assignTo: [],
     needPermission: false,
     taskEndTime: '',
     notificationTimer: '',
@@ -112,9 +112,11 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     taskStatus: ''
   });
 
-  const handleInputChange = (field: keyof typeof formData, value: string | boolean | null | undefined) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+
+  const handleInputChange = (field: keyof typeof formData, value: string | string[] | boolean | null | undefined) => {
+  setFormData(prev => ({ ...prev, [field]: value }));
+};
+
 
 
   const onChange = (event: any, selectedDate?: Date) => {
@@ -160,21 +162,50 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
   // toggleswitch end
 
   // dropdown start
-  const [selectedUser3, setSelectedUser3] = useState<User | null>(null);
+  const [selectedUser3, setSelectedUser3] = useState<User[]>([]);
+  const [tempSelectedUsers2, setTempSelectedUsers2] = useState<User[]>([]);
+  const [showSelectedModal, setShowSelectedModal] = useState(false);
   const [showDropdown3, setShowDropdown3] = useState<boolean>(false);
 
   const handleSelect3 = (user: User) => {
     if (user.id === '0') {
-      setSelectedUser3(null);
+      setTempSelectedUsers2([]);
     } else {
-      setSelectedUser3(user);
-      handleInputChange('assignTo', user.userEmail)
+      // console.log(user);
+      
+      // console.log(tempSelectedUsers2);
+      
+      const already = tempSelectedUsers2.find(u => u.id === user.id);
+      if (already) {
+        setTempSelectedUsers2(prev => {
+          const newList = prev.filter(u => u.id !== user.id);
+          const emails = newList.map(u => u.userEmail).filter(Boolean) as string[];
+          handleInputChange('assignTo', emails);
+          return newList;
+        });
+      } else {
+        setTempSelectedUsers2(prev => {
+          const newList = [...prev, user];
+          const emails = newList.map(u => u.userEmail).filter(Boolean) as string[];
+          handleInputChange('assignTo', emails);
+          return newList;
+        });
+      }
+
+        
       handleInputChange('createdBy', currentUser?.email)
     }
-    setShowDropdown3(false);
+
+    // else {
+    //   setSelectedUser3(user);
+    //   handleInputChange('assignTo', user.userEmail)
+    //   handleInputChange('createdBy', currentUser?.email)
+    // }
+
   };
   const renderUser3 = ({ item }: { item: User }) => {
-    const isSelected3 = selectedUser3?.id === item.id;
+    const isSelected3 = tempSelectedUsers2.some(u => u.id === item.id);
+
 
     if (item.id === '0') {
       return (
@@ -337,7 +368,7 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
     if (
       !title.trim() ||
       !description.trim() ||
-      !assignTo.trim() ||
+      !assignTo || !Array.isArray(assignTo) || assignTo.length === 0 ||
       !taskEndTime.trim() ||
       !notificationTimer.trim() ||
       !createdBy.trim()
@@ -345,6 +376,9 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
       Alert.alert('Error', 'Please fill in all fields before submitting.');
       return;
     }
+
+    console.log(formData);
+    
 
     setActivityIndicator(true);
     try {
@@ -489,15 +523,15 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
     <View style={{ flex: 1 }}>
 
-{activityIndicator ?
-            <ActivityIndicator size="large" color="#FECC01" /> :
-            <>
-      <ScrollView>
-        <View style={{ flexDirection: 'column', gap: 16 }}>
+      {activityIndicator ?
+        <ActivityIndicator size="large" color="#FECC01" /> :
+        <>
+          <ScrollView>
+            <View style={{ flexDirection: 'column', gap: 16 }}>
 
-          
 
-            
+
+
 
               <TitleText style={styles.poptext}>
                 Title
@@ -629,23 +663,39 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
               }
 
               <View style={styles.namecard}>
-                <View style={styles.row}>
-                  <View style={styles.circle}>
-                    <Image
-                      source={selectedUser3 ? { uri: selectedUser3.profilePicture } : require('@assets/images/profileIcon.png')}
+                  <TouchableOpacity
 
-                      style={styles.circleImage}
-                    />
-                  </View>
+                    onPress={() => {
+                      if (selectedUser3.length > 0) setShowSelectedModal(true);
+                    }}
+                  >
+                      <View style={styles.row}>
+                    <View style={styles.circle}>
+                      {selectedUser3.length === 1 ? (
+                        <Image source={{ uri: selectedUser3[0].profilePicture }} style={styles.circleImage} />
+                      ) : selectedUser3.length > 1 ? (
+                        <Image source={require('../../assets/images/multiUserIcon.png')} style={styles.circleImage} />
+                      ) : (
+                        <Image source={require('@assets/images/profileIcon.png')} style={styles.circleImage} />
+                      )}
+                    </View>
 
-                  <TitleText style={styles.personName}>{selectedUser3 ? selectedUser3.name : 'User Name'}</TitleText>
+                    <TitleText style={styles.personName}>
+
+                      {selectedUser3.length === 0
+                        ? 'Assign To'
+                        : selectedUser3.length === 1
+                          ? selectedUser3[0].name
+                          : `${selectedUser3.length} Members`}
+                    </TitleText>
                 </View>
+                  </TouchableOpacity>
 
 
                 <TouchableOpacity onPress={() => setShowDropdown3(true)}>
                   <View style={styles.addtask}>
                     <TitleText style={styles.dropdownText2}>
-                      {selectedUser3 ? selectedUser3.name : 'Assign To'}
+                      Assign To
                     </TitleText>
                     <Image
                       source={require('../../assets/images/downarrow.png')}
@@ -669,13 +719,51 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                               <React.Fragment key={item.userEmail}>{renderUser3({ item })}</React.Fragment>
                             ))}
                           </ScrollView>
+
+                          <TouchableOpacity
+                            onPress={() => {
+                              setSelectedUser3(tempSelectedUsers2);
+                              setShowDropdown3(false);
+                            }}
+                          >
+                            <Text>Done</Text>
+                          </TouchableOpacity>
                         </View>
                       </TouchableWithoutFeedback>
                     </View>
                   </TouchableWithoutFeedback>
+
                 </Modal>
 
+                <Modal
+                  visible={showSelectedModal}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setShowSelectedModal(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={[styles.modalContent, { height: '40%' }]}>
+                      <TouchableOpacity
+                        onPress={() => setShowSelectedModal(false)}
+                        style={styles.closeButton}
+                      >
+                        <Text style={styles.closeButtonText}>×</Text>
+                      </TouchableOpacity>
 
+                      <FlatList
+                        data={selectedUser3}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                          <View style={styles.userInner2}>
+                            <Image source={{ uri: item.profilePicture }} style={styles.avatar2} />
+                            <Text style={styles.userName2}>{item.name}</Text>
+                          </View>
+                        )}
+                        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                      />
+                    </View>
+                  </View>
+                </Modal>
 
               </View>
 
@@ -738,19 +826,19 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                 <TimePicker onSendData={(timer: string) => handleInputChange('notificationTimer', timer)} />
 
               </View>
-            
-          
-        </View>
-      </ScrollView>
 
-      <View style={styles.endcontainer}>
-        <TouchableOpacity style={styles.orangebutton} onPress={() => addTaskFunction(formData, attachedImage, attachedAudio)}>
-          <TitleText style={styles.orangebtntext}>
-            Add Task
-          </TitleText>
-        </TouchableOpacity>
-      </View>
-      </>
+
+            </View>
+          </ScrollView>
+
+          <View style={styles.endcontainer}>
+            <TouchableOpacity style={styles.orangebutton} onPress={() => addTaskFunction(formData, attachedImage, attachedAudio)}>
+              <TitleText style={styles.orangebtntext}>
+                Add Task
+              </TitleText>
+            </TouchableOpacity>
+          </View>
+        </>
       }
     </View>
 

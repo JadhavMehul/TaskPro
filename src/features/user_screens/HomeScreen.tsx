@@ -168,13 +168,17 @@ const HomeScreen = () => {
             snapshot.docs.map(async (doc) => {
               const task = { ...(doc.data() as TaskData), id: doc.id };
 
+              let userInfo: { firstName: string; profilePicture: string } | { firstName: string; profilePicture: string }[] = {
+                firstName: '',
+                profilePicture: '',
+              };
 
-              let userInfo = { firstName: '', profilePicture: '' };
+              if (Array.isArray(task.assignTo) && task.assignTo.length === 0) {
+                const firstAssignee = task.assignTo[0]; // or loop if needed
 
-              if (task.assignTo) {
                 const userDoc = await firestore()
                   .collection('UserAccounts')
-                  .doc(task.assignTo) // This assumes the document ID in UserAccounts is the user's email
+                  .doc(firstAssignee)
                   .get();
 
                 if (userDoc.exists()) {
@@ -185,17 +189,42 @@ const HomeScreen = () => {
                   };
                 }
               }
+              if (Array.isArray(task.assignTo) && task.assignTo.length > 0) {
+                const userInfoArray: { firstName: string; profilePicture: string }[] = [];
+
+                for (const assigneeEmail of task.assignTo) {
+                  const userDoc = await firestore()
+                    .collection('UserAccounts')
+                    .doc(assigneeEmail)
+                    .get();
+
+                  if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    userInfoArray.push({
+                      firstName: userData?.firstName || '',
+                      profilePicture: userData?.profilePicture || '',
+                    });
+                  }
+                }
+
+                userInfo = userInfoArray;
+                
+              }
+
+
 
               const formattedDate = task.createdAt?.toDate ? moment(task.createdAt.toDate()).format("DD MMM YYYY - hh:mm A") : '';
 
               return {
                 ...task,
                 createdAt: formattedDate,
-                firstName: userInfo.firstName,
-                profilePicture: userInfo.profilePicture,
+                userInfo: userInfo
               };
             })
           );
+
+          console.log(tasksWithUserInfo);
+          
 
           setOriginalTaskCards(tasksWithUserInfo);
           setAllTaskCards(tasksWithUserInfo);
@@ -337,8 +366,7 @@ const HomeScreen = () => {
                       <TaskBox
                         taskTitle={item.title}
                         taskDescription={item.description}
-                        imageSource={item.profilePicture} // Or dynamic if needed
-                        personName={item.firstName || 'Unknown'}
+                        assignToData={item.userInfo}
                         dateTime={item.createdAt}
                         taskStatus={item.taskStatus}
                         onPress={() => navigate('TaskDetailsScreen', { taskId: item.id })}

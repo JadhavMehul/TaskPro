@@ -3,11 +3,15 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ImageSourcePropType, A
 import Feather from '@react-native-vector-icons/feather';
 import TitleText from './Titletext';
 
+type UserInfo = {
+  firstName: string;
+  profilePicture: string;
+};
+
 type TaskBoxProps = {
   taskTitle: string;
   taskDescription: string;
-  imageSource: ImageSourcePropType;
-  personName: string;
+  assignToData: UserInfo | UserInfo[];
   dateTime: string;
   taskStatus: string;
   onPress: () => void;
@@ -16,21 +20,23 @@ type TaskBoxProps = {
 const TaskBox = ({
   taskTitle,
   taskDescription,
-  imageSource,
-  personName,
+  assignToData,
   dateTime,
   taskStatus,
   onPress,
 }: TaskBoxProps) => {
 
+  console.log(assignToData);
+  
+
 
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={[
-    styles.taskbox,
-    taskStatus === 'Done' && { backgroundColor: '#FFFFAF' },
-    taskStatus === 'Approved' && { backgroundColor: '#DAF8E6' },
-  ]}>
+        styles.taskbox,
+        taskStatus === 'Done' && { backgroundColor: '#FFFFAF' },
+        taskStatus === 'Approved' && { backgroundColor: '#DAF8E6' },
+      ]}>
         <View style={styles.topbox}>
           <View style={styles.lefttop}>
             <TitleText numberOfLines={1} ellipsizeMode="tail" style={styles.tasktitle}>{taskTitle}</TitleText>
@@ -39,13 +45,54 @@ const TaskBox = ({
           <View style={styles.righttop}>
             <View style={styles.circle}>
               <Image source={
+                Array.isArray(assignToData)
+                  ? assignToData.length > 1
+                    ? require('@assets/images/multiUserIcon.png')
+                    : assignToData.length === 1
+                      ? { uri: assignToData[0].profilePicture }
+                      : require('@assets/images/profileIcon.png')
+                  : assignToData.profilePicture
+                    ? { uri: assignToData.profilePicture }
+                    : require('@assets/images/profileIcon.png')
+              } style={styles.circleImage} />
+            </View>
+            <Text style={styles.personName}>
+  {
+    Array.isArray(assignToData)
+      ? assignToData.length > 1
+        ? `${assignToData.length} members`
+        : assignToData.length === 1
+          ? assignToData[0].firstName
+          : ''
+      : assignToData.firstName
+  }
+</Text>
+
+          </View>
+          {/* <View style={styles.righttop}>
+            <View style={styles.circle}>
+              <Image source={
+                Array.isArray(assignToData)
+                  ? require('@assets/images/multiUserIcon.png') // group icon
+                  : assignToData.profilePicture
+                    ? { uri: assignToData.profilePicture }
+                    : require('@assets/images/profileIcon.png') // fallback
+              } style={styles.circleImage} />
+            </View>
+            <Text style={styles.personName}>{Array.isArray(assignToData)
+              ? `${assignToData.length} members`
+              : assignToData.firstName}</Text>
+          </View> */}
+          {/* <View style={styles.righttop}>
+            <View style={styles.circle}>
+              <Image source={
                 imageSource
                   ? { uri: imageSource } // Remote URL string
                   : require('@assets/images/profileIcon.png') // Local fallback
               } style={styles.circleImage} />
             </View>
             <Text style={styles.personName}>{personName}</Text>
-          </View>
+          </View> */}
         </View>
 
         <View style={styles.aline} />
@@ -54,7 +101,7 @@ const TaskBox = ({
           <View style={styles.leftbottom}>
             <Text style={styles.datetime}>{dateTime}</Text>
           </View>
-          
+
         </View>
       </View>
     </TouchableOpacity>

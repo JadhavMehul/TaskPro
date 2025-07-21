@@ -388,12 +388,13 @@ const ProfileScreen = () => {
 
                       </BottomModal>
 
-                      <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText} onPress={handleLogout}>
-                          {
-                            logoutActivityIndicator ? <ActivityIndicator size="large" color="#FECC01" /> : 'Logout'
-                          }
-                        </Text>
+                      <TouchableOpacity style={styles.button} onPress={handleLogout}>
+                        {
+                          logoutActivityIndicator ? <ActivityIndicator size="large" color="#FECC01" /> :
+                            <Text style={styles.buttonText}>
+                              'Logout'
+                            </Text>
+                        }
 
                       </TouchableOpacity>
                     </View>
