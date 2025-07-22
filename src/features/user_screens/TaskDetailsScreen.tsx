@@ -43,7 +43,7 @@ type User = {
 };
 
 type RootStackParamList = {
-  TaskDetailsScreen: { taskId: string }; // Replace `any` with your actual task type
+  TaskDetailsScreen: { taskId: string }; 
 };
 
 type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScreen'>;
@@ -913,9 +913,9 @@ const TaskDetailsScreen = () => {
                       <View style={[styles.modalContent, { height: '40%' }]}>
                         <TouchableOpacity
                           onPress={() => setShowSelectedModal(false)}
-                          style={styles.closeButton}
+                          style={styles.closeButton2}
                         >
-                          <Text style={styles.closeButtonText}>×</Text>
+                          <Text style={styles.closeButtonText2}>×</Text>
                         </TouchableOpacity>
 
                         <FlatList
@@ -1004,16 +1004,14 @@ const TaskDetailsScreen = () => {
                       animationType="fade"
                       onRequestClose={() => setShowDropdown2(false)}
                     >
-                      <TouchableWithoutFeedback onPress={() => setShowDropdown2(false)}>
-                        <View style={styles.modalOverlay}>
+                      <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
                           <TouchableOpacity
                             onPress={() => setShowDropdown2(false)}
-                            style={styles.closeButton}
+                            style={styles.closeButton2}
                           >
-                            <Text style={styles.closeButtonText}>×</Text>
+                            <Text style={styles.closeButtonText2}>×</Text>
                           </TouchableOpacity>
-                          <TouchableWithoutFeedback>
-                            <View style={styles.modalContent}>
                               <FlatList
                                 data={users}
                                 keyExtractor={(item) => item.id}
@@ -1027,13 +1025,12 @@ const TaskDetailsScreen = () => {
                                   setShowDropdown2(false);
                                   changeAssignToUserInDB(updatedUsers);
                                 }}
+                                style={styles.doneButton}
                               >
-                                <Text>Done</Text>
+                                <Text style={styles.doneButtonText}>Done</Text>
                               </TouchableOpacity>
-                            </View>
-                          </TouchableWithoutFeedback>
                         </View>
-                      </TouchableWithoutFeedback>
+                        </View>
                     </Modal>
 
 
@@ -1174,11 +1171,7 @@ const TaskDetailsScreen = () => {
                   </TitleText>
                 </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => console.log(updatedUsers)}>
-                  <TitleText>
-                    the mother screen
-                  </TitleText>
-                </TouchableOpacity>
+               
 
                 <CommentModal
                   visible={commentmodalVisible}
@@ -1334,6 +1327,34 @@ const TaskDetailsScreen = () => {
 }
 
 const styles = StyleSheet.create({
+  doneButton: {
+    marginTop: 16,
+    backgroundColor: 'green',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  closeButton2: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#eee',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  closeButtonText2: {
+    fontSize: 20,
+    color: '#333',
+  },
 
   commentbox2: {
 
@@ -1478,9 +1499,10 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     width: '80%',
-    height: '50%',
+    height: '60%',
     borderRadius: 10,
     padding: 16,
+    paddingTop: 40,
 
   },
   modalBackground: {

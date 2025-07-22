@@ -725,8 +725,9 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
                               setSelectedUser3(tempSelectedUsers2);
                               setShowDropdown3(false);
                             }}
+                            style={styles.doneButton}
                           >
-                            <Text>Done</Text>
+                                <Text style={styles.doneButtonText}>Done</Text>
                           </TouchableOpacity>
                         </View>
                       </TouchableWithoutFeedback>
@@ -847,6 +848,18 @@ const AddTaskEverything: React.FC<Props> = ({ onCloseModal }) => {
 
 const styles = StyleSheet.create({
 
+  doneButton: {
+    marginTop: 16,
+    backgroundColor: 'green',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  doneButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
   recordingUI: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -24,6 +24,7 @@ import DateTimePicker, {
 import TimePicker from '@components/global/TimePicker';
 import AddTaskEverything from '@components/global/AddTaskEverything';
 import moment from 'moment';
+import BottomModal2 from '@components/global/BottomModal2';
 
 
 
@@ -316,9 +317,9 @@ const HomeScreen = () => {
                     </View>
 
                   </TouchableOpacity>
-                  <BottomModal isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
+                  <BottomModal2 isVisible={isModalVisible} onClose={() => setModalVisible(false)}>
                     <AddTaskEverything onCloseModal={() => setModalVisible(false)} />
-                  </BottomModal>
+                  </BottomModal2>
 
                   
 
