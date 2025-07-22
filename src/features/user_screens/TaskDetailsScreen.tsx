@@ -1040,11 +1040,67 @@ const TaskDetailsScreen = () => {
                   </View>
                 </View>
 
-                
+
+
+                {allData.needPermission && (
+                  allData.permissionStatus === null ? (
+                    userIsAdmin ? (
+                      // Admin sees approval UI
+                      <View style={styles.commentbox}>
+                        <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
+                        <View style={styles.addtask}>
+                          <TouchableOpacity onPress={() => updatePermission(true)}>
+                            <Image
+                              source={
+                                allData.permissionStatus === true
+                                  ? require('../../assets/images/like_fill.png')
+                                  : require('../../assets/images/like_unfill.png')
+                              }
+                              style={styles.icon}
+                            />
+                          </TouchableOpacity>
+
+                          <TouchableOpacity onPress={() => updatePermission(false)}>
+                            <Image
+                              source={
+                                allData.permissionStatus === false
+                                  ? require('../../assets/images/dislike_fill.png')
+                                  : require('../../assets/images/dislike_unfill.png')
+                              }
+                              style={styles.icon}
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ) : (
+                      // Non-admin sees "pending"
+                      <View style={styles.commentbox}>
+                        <TitleText style={styles.textualtext}>Permission is pending</TitleText>
+                      </View>
+                    )
+                  ) : (
+                    // Permission already given
+                    <View style={styles.commentbox}>
+                      <TitleText style={styles.textualtext}>
+                        Permission given by: {allData.permissionUsername}
+                      </TitleText>
+                      <Image
+                        source={
+                          allData.permissionStatus === true
+                            ? require('../../assets/images/like_fill.png')
+                            : require('../../assets/images/dislike_fill.png')
+                        }
+                        style={styles.icon}
+                      />
+                    </View>
+                  )
+                )}
 
 
 
-                {
+
+
+                {/* {
                   userIsAdmin && (
 
                     <View style={styles.commentbox}>
@@ -1094,9 +1150,9 @@ const TaskDetailsScreen = () => {
                         )}
                     </View>
                   )
-                }
+                } */}
 
-                
+
 
 
 
