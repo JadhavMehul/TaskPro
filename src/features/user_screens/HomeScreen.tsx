@@ -66,7 +66,9 @@ const HomeScreen = () => {
   const sortTaskByUsers = (userEmail: string | null) => {
     if (!userEmail) return;
 
-    const filteredTasks = originalTaskCards.filter(task => task.assignTo === userEmail);
+    const filteredTasks = originalTaskCards.filter(task => Array.isArray(task.assignTo) && task.assignTo.includes(userEmail));
+    
+    
     setAllTaskCards(filteredTasks);
   };
 

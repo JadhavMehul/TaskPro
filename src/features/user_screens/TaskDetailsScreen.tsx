@@ -71,6 +71,7 @@ type TaskData = {
   attachedAudio: string | null;
   createdBy: string;
   taskEndTime: string;
+  permissionUsername: string | null;
 };
 
 const TaskDetailsScreen = () => {
@@ -172,6 +173,7 @@ const TaskDetailsScreen = () => {
     attachedAudio: null,
     createdBy: '',
     taskEndTime: '',
+    permissionUsername: '',
   })
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
@@ -433,6 +435,7 @@ const TaskDetailsScreen = () => {
       setActivityIndicator(false)
       setShowDropdown(false);
     }
+
   }
   const fetchCommentUsers = async (emails: string[]) => {
     const usersMap: { [email: string]: { name: string; profilePicture: string } } = {};
@@ -503,6 +506,7 @@ const TaskDetailsScreen = () => {
         attachedAudio: data.attachedAudio || null,
         createdBy: data.createdBy || '',
         taskEndTime: moment(data.taskEndTime).format('DD MMM YYYY - hh:mm A') || '',
+        permissionUsername: data.permissionUsername || null
       });
       console.log("data:", data);
 
@@ -568,12 +572,37 @@ const TaskDetailsScreen = () => {
       setSelected2(!permission);
     }
     try {
+
+      let permissionName = "";
+
+      if (currentUser?.email) {
+        const doc = await firestore()
+          .collection('UserAccounts')
+          .doc(currentUser.email)
+          .get();
+
+        if (doc.exists()) {
+          const userData = doc.data();
+          if (userData && userData.firstName && userData.lastName) {
+            permissionName = userData.firstName + " " + userData.lastName;
+          }
+        } else {
+          console.log('User document does not exist');
+        }
+      }
+
       await firestore().collection('TaskList').doc(taskId).update({
         permissionStatus: permission,
+        permissionUpdatedBy: currentUser?.email,
+        permissionUsername: permissionName
       });
+
+
       setAllData(prev => ({
         ...prev,
         permissionStatus: permission,
+        permissionUpdatedBy: currentUser?.email,
+        permissionUsername: permissionName
       }));
 
 
@@ -678,10 +707,38 @@ const TaskDetailsScreen = () => {
   };
 
 
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+
+  const fetchUserData = async () => {
+    if (currentUser?.email) {
+      try {
+        const doc = await firestore()
+          .collection('UserAccounts')
+          .doc(currentUser.email)
+          .get();
+
+        if (doc.exists()) {
+          const userData = doc.data();
+          if (userData && typeof userData.isAdmin !== 'undefined') {
+            setUserIsAdmin(userData.isAdmin);
+          }
+        } else {
+          console.log('User document does not exist');
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    } else {
+      console.log('No user is logged in');
+    }
+  };
+
+
 
   useEffect(() => {
     fetchTask();
     getEmployees();
+    fetchUserData();
   }, [])
 
 
@@ -728,13 +785,20 @@ const TaskDetailsScreen = () => {
                   <TitleText>
                     Finish before: {allData.taskEndTime}
                   </TitleText>
-                  <TouchableOpacity onPress={() => deleteTask(taskId, allData.attachedImage, allData.attachedAudio)}>
-                    {
-                      isDeleting ?
-                        <ActivityIndicator size={24} color="red" /> :
-                        <Feather name="trash" size={24} color="red" />
-                    }
-                  </TouchableOpacity>
+                  {
+                    userIsAdmin && (
+
+                      <TouchableOpacity onPress={() => deleteTask(taskId, allData.attachedImage, allData.attachedAudio)}>
+                        {
+                          isDeleting ?
+                            <ActivityIndicator size={24} color="red" /> :
+                            <Feather name="trash" size={24} color="red" />
+                        }
+                      </TouchableOpacity>
+
+                    )
+                  }
+
 
 
                 </View>
@@ -976,18 +1040,17 @@ const TaskDetailsScreen = () => {
                   </View>
                 </View>
 
-                {/* <TouchableOpacity onPress={onPlaySound} style={styles.playBtn}>
-        <Text style={styles.btnText}>Play Recording</Text>
-      </TouchableOpacity> */}
+                
 
 
-                {/* {
-                  allData.needPermission && allData.permissionStatus === null && (
-                    <>
+
+                {
+                  userIsAdmin && (
+
+                    <View style={styles.commentbox}>
                       {
-                        allData.assignedTo == currentUser?.email && (
-
-                          <View style={styles.commentbox}>
+                        allData.needPermission && allData.permissionStatus === null ? (
+                          <>
 
                             <TitleText style={styles.textualtext}>Will you approve this?</TitleText>
                             <View style={styles.addtask}>
@@ -1014,12 +1077,27 @@ const TaskDetailsScreen = () => {
                               </TouchableOpacity>
 
                             </View>
-                          </View>
-                        )
-                      }
 
-                    </>
-                  )} */}
+                          </>
+                        ) : (
+                          <>
+                            <TitleText style={styles.textualtext}>Permission given by: {allData.permissionUsername}</TitleText>
+                            <Image
+                              source={
+                                allData?.permissionStatus === true
+                                  ? require('../../assets/images/like_fill.png')
+                                  : require('../../assets/images/dislike_fill.png')
+                              }
+                              style={styles.icon}
+                            />
+                          </>
+                        )}
+                    </View>
+                  )
+                }
+
+                
+
 
 
 

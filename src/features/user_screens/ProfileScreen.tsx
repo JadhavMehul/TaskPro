@@ -392,7 +392,7 @@ const ProfileScreen = () => {
                         {
                           logoutActivityIndicator ? <ActivityIndicator size="large" color="#FECC01" /> :
                             <Text style={styles.buttonText}>
-                              'Logout'
+                              Logout
                             </Text>
                         }
 
