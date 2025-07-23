@@ -1,11 +1,16 @@
 import {
   View, Text, StyleSheet, Alert, Button, Image, TouchableOpacity, Modal,
   Pressable,
-  ActivityIndicator,
   FlatList,
   TouchableWithoutFeedback,
   TextInput, Dimensions,
-  ScrollView
+  ScrollView,
+  ImageSourcePropType,
+  ImageStyle,
+  ActivityIndicator,
+  StyleProp,
+  ImageResolvedAssetSource,
+  Image as RNImage,
 } from 'react-native'
 import React, { useState, useRef, useEffect } from 'react';
 import BottomNav from '@components/global/BottomBar'
@@ -43,7 +48,7 @@ type User = {
 };
 
 type RootStackParamList = {
-  TaskDetailsScreen: { taskId: string }; 
+  TaskDetailsScreen: { taskId: string };
 };
 
 type TaskDetailsScreenRouteProp = RouteProp<RootStackParamList, 'TaskDetailsScreen'>;
@@ -74,42 +79,65 @@ type TaskData = {
   permissionUsername: string | null;
 };
 
+const screenWidth = Dimensions.get('window').width;
+
+interface AutoSizedImageProps {
+  source: ImageSourcePropType;
+  style?: StyleProp<ImageStyle>;
+  borderRadius?: number;
+}
+
 const TaskDetailsScreen = () => {
-  const AutoSizedImage = ({ uri }: { uri: string }) => {
+  const AutoSizedImage: React.FC<AutoSizedImageProps> = ({ source, style, borderRadius = 10 }) => {
     const [imageSize, setImageSize] = useState<{ width: number; height: number } | null>(null);
 
     useEffect(() => {
-      if (uri) {
-        Image.getSize(uri, (width, height) => {
-          const maxWidth = screenWidth * 0.9;
-          const ratio = maxWidth / width;
-          setImageSize({
-            width: maxWidth,
-            height: height * ratio,
-          });
-        }, error => {
-          console.error("Image size fetch error", error);
+      // Case: Remote image with `uri`
+      if (typeof source === 'object' && 'uri' in source && source.uri) {
+        RNImage.getSize(
+          source.uri,
+          (width, height) => {
+            const maxWidth = screenWidth * 0.9;
+            const ratio = maxWidth / width;
+            setImageSize({
+              width: maxWidth,
+              height: height * ratio,
+            });
+          },
+          error => {
+            console.error('Image size fetch error:', error);
+          }
+        );
+      } else {
+        // Case: Local static image (require)
+        const resolved: ImageResolvedAssetSource = RNImage.resolveAssetSource(source);
+        const maxWidth = screenWidth * 0.9;
+        const ratio = maxWidth / resolved.width;
+        setImageSize({
+          width: maxWidth,
+          height: resolved.height * ratio,
         });
       }
-    }, [uri]);
+    }, [source]);
 
     if (!imageSize) return <ActivityIndicator size="small" color="#FECC01" />;
 
     return (
       <Image
-        source={{ uri }}
-        style={{
-          width: imageSize.width,
-          height: imageSize.height,
-          borderRadius: 10,
-        }}
-        onLoadStart={() => setImageLoading(true)}
-        onLoadEnd={() => setImageLoading(false)}
+        source={source}
+        style={[
+          {
+            width: imageSize.width,
+            height: imageSize.height,
+            borderRadius,
+          },
+          style,
+        ]}
         resizeMode="contain"
-
       />
     );
   };
+
 
   const currentUser = auth().currentUser;
   const screenWidth = Dimensions.get('window').width;
@@ -544,7 +572,7 @@ const TaskDetailsScreen = () => {
       });
 
       const updatedUsers = [
-        { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
+        { id: '0', name: 'Deselect', profilePicture: '', userEmail: null },
         ...employees,
       ];
       setUsers(updatedUsers);
@@ -843,8 +871,7 @@ const TaskDetailsScreen = () => {
                             )}
 
                             <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}>
-                              <AutoSizedImage uri={allData.attachedImage}
-                              />
+                              <AutoSizedImage source={{ uri: allData.attachedImage }} />
                             </ScrollView>
                             {/* <Image
                               source={{ uri: allData.attachedImage }}
@@ -1012,25 +1039,25 @@ const TaskDetailsScreen = () => {
                           >
                             <Text style={styles.closeButtonText2}>×</Text>
                           </TouchableOpacity>
-                              <FlatList
-                                data={users}
-                                keyExtractor={(item) => item.id}
-                                ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-                                renderItem={renderUser2}
-                              />
+                          <FlatList
+                            data={users}
+                            keyExtractor={(item) => item.id}
+                            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+                            renderItem={renderUser2}
+                          />
 
-                              <TouchableOpacity
-                                onPress={() => {
-                                  setSelectedUser2(tempSelectedUsers2);
-                                  setShowDropdown2(false);
-                                  changeAssignToUserInDB(updatedUsers);
-                                }}
-                                style={styles.doneButton}
-                              >
-                                <Text style={styles.doneButtonText}>Done</Text>
-                              </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => {
+                              setSelectedUser2(tempSelectedUsers2);
+                              setShowDropdown2(false);
+                              changeAssignToUserInDB(updatedUsers);
+                            }}
+                            style={styles.doneButton}
+                          >
+                            <Text style={styles.doneButtonText}>Done</Text>
+                          </TouchableOpacity>
                         </View>
-                        </View>
+                      </View>
                     </Modal>
 
 
@@ -1171,7 +1198,7 @@ const TaskDetailsScreen = () => {
                   </TitleText>
                 </TouchableOpacity>
 
-               
+
 
                 <CommentModal
                   visible={commentmodalVisible}
@@ -1279,7 +1306,16 @@ const TaskDetailsScreen = () => {
                                       style={{ position: 'absolute', top: screenWidth * 0.4 + 16, alignSelf: 'center', zIndex: 1 }}
                                     />
                                   )}
-                                  <Image
+                                  <ScrollView contentContainerStyle={{ alignItems: 'center', paddingTop: 16 }}>
+                                    <AutoSizedImage
+                                      source={
+                                        selectedCommentImage
+                                          ? { uri: selectedCommentImage }
+                                          : require('../../assets/images/profileIcon.png')
+                                      }
+                                    />
+                                  </ScrollView>
+                                  {/* <Image
                                     source={
                                       selectedCommentImage ? { uri: selectedCommentImage } : require('../../assets/images/profileIcon.png')
                                     }
@@ -1292,7 +1328,7 @@ const TaskDetailsScreen = () => {
                                     }}
                                     onLoadStart={() => setImageLoading(true)}
                                     onLoadEnd={() => setImageLoading(false)}
-                                  />
+                                  /> */}
                                 </View>
                               </BottomModal>
                             </View>
