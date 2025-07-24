@@ -43,6 +43,8 @@ const TaskBox = ({
             <TitleText numberOfLines={2} ellipsizeMode="tail" style={styles.taskdescription}>{taskDescription}</TitleText>
           </View>
           <View style={styles.righttop}>
+            <View style={{flexDirection: 'column', alignItems: 'center'}}>
+
             <View style={styles.circle}>
               <Image source={
                 Array.isArray(assignToData)
@@ -68,6 +70,9 @@ const TaskBox = ({
   }
 </Text>
 
+
+            </View>
+            
           </View>
           {/* <View style={styles.righttop}>
             <View style={styles.circle}>
@@ -172,9 +177,9 @@ const styles = StyleSheet.create({
   },
 
   righttop: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     // backgroundColor: 'green',
-    width: '25%',
+    width: '30%',
     flexDirection: 'column',
     justifyContent: 'space-between',
   },
@@ -192,7 +197,7 @@ const styles = StyleSheet.create({
   },
 
   lefttop: {
-    width: '74%',
+    width: '69%',
     // backgroundColor: 'red',
     flexDirection: 'column',
     gap: 12,

@@ -1191,15 +1191,6 @@ const TaskDetailsScreen = () => {
                     />
                   </View>
                 </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => navigate('NewScreen')}>
-                  <TitleText>
-                    the other screen
-                  </TitleText>
-                </TouchableOpacity>
-
-
-
                 <CommentModal
                   visible={commentmodalVisible}
                   onClose={() => commentModalClose()}
