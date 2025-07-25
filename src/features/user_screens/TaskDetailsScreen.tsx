@@ -77,6 +77,7 @@ type TaskData = {
   createdBy: string;
   taskEndTime: string;
   permissionUsername: string | null;
+  createdByName: string | null;
 };
 
 const screenWidth = Dimensions.get('window').width;
@@ -202,6 +203,7 @@ const TaskDetailsScreen = () => {
     createdBy: '',
     taskEndTime: '',
     permissionUsername: '',
+    createdByName: '',
   })
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
@@ -485,13 +487,16 @@ const TaskDetailsScreen = () => {
     try {
       const taskData = await firestore().collection('TaskList').doc(taskId).get();
       const data = taskData.data();
-
+      
 
 
       if (!data) {
         console.warn('No task data found');
         return;
       }
+      const createdBy = await firestore().collection('UserAccounts').doc(data.createdBy).get();
+      const createdData = createdBy.data();
+      const createdByFullname = createdData?.firstName + ' ' + createdData?.lastName ;
 
       let assignToData: { firstName: string; profilePicture: string } | { firstName: string; profilePicture: string }[] = {
         firstName: '',
@@ -534,7 +539,8 @@ const TaskDetailsScreen = () => {
         attachedAudio: data.attachedAudio || null,
         createdBy: data.createdBy || '',
         taskEndTime: moment(data.taskEndTime).format('DD MMM YYYY - hh:mm A') || '',
-        permissionUsername: data.permissionUsername || null
+        permissionUsername: data.permissionUsername || null,
+        createdByName: createdByFullname || null
       });
       console.log("data:", data);
 
@@ -809,10 +815,16 @@ const TaskDetailsScreen = () => {
 
 
                 </View>
+               
                 <View style={styles.taskbox2}>
+                  <View>
+                  <TitleText>Created by : {allData.createdByName}</TitleText>
                   <TitleText>
                     Finish before: {allData.taskEndTime}
                   </TitleText>
+
+                  </View>
+                
                   {
                     userIsAdmin && (
                       <TouchableOpacity
@@ -1244,12 +1256,13 @@ const TaskDetailsScreen = () => {
                                 style={styles.circleImage}
                               />
                             </View>
-                            <Text style={styles.personName}>{commentUsers[commentData.commentedBy]?.name ?? 'Unknown'}</Text>
+                            
                           </View>
 
                           <View style={{ flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
 
                             <View>
+                              <Text style={styles.personName}>{commentUsers[commentData.commentedBy]?.name ?? 'Unknown'}</Text>
 
                               <TitleText>
                                 {moment(new Date(commentData.commentedAt._seconds * 1000)).format('DD MMM YYYY hh:mm A')}
@@ -1653,7 +1666,6 @@ const styles = StyleSheet.create({
     width: '45%',
     flexDirection: 'column',
     justifyContent: 'center',
-    backgroundColor: 'green',
     gap: 6,
   },
 

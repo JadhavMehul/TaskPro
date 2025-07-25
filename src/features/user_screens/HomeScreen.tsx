@@ -90,6 +90,7 @@ const HomeScreen = () => {
   const [selectedUser2, setSelectedUser2] = useState<User | null>(null);
   const [showDropdown2, setShowDropdown2] = useState<boolean>(false);
   const [activityIndicator, setActivityIndicator] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([
     { id: '0', name: 'Assigned to', profilePicture: '', userEmail: null },
   ]);
@@ -98,8 +99,8 @@ const HomeScreen = () => {
     if (!userEmail) return;
 
     const filteredTasks = originalTaskCards.filter(task => Array.isArray(task.assignTo) && task.assignTo.includes(userEmail));
-    
-    
+
+
     setAllTaskCards(filteredTasks);
   };
 
@@ -119,20 +120,20 @@ const HomeScreen = () => {
     if (item.id === '0') {
       return (
         <TouchableOpacity onPress={() => handleSelect2(item)}>
-        <View
-          style={[
-            styles.userContainer2,
-            {
-              backgroundColor: '#fff',
-               justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center'
-            },
-          ]}
-        >
-          <Text style={styles.crossIcon2}>🔄</Text>
-        <Text style={[styles.userName2, { color: '#F00', fontWeight: '600' }]}>Reset</Text>
-        <Text style={styles.crossIcon2}>🔄</Text>
-        </View>
-      </TouchableOpacity>
+          <View
+            style={[
+              styles.userContainer2,
+              {
+                backgroundColor: '#fff',
+                justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center'
+              },
+            ]}
+          >
+            <Text style={styles.crossIcon2}>🔄</Text>
+            <Text style={[styles.userName2, { color: '#F00', fontWeight: '600' }]}>Reset</Text>
+            <Text style={styles.crossIcon2}>🔄</Text>
+          </View>
+        </TouchableOpacity>
       );
     }
 
@@ -192,6 +193,7 @@ const HomeScreen = () => {
   };
 
   const fetchTaskCard = () => {
+    setLoading(true);
     const unsubscribe = firestore()
       .collection('TaskList')
       .orderBy('createdAt', 'desc')
@@ -241,7 +243,7 @@ const HomeScreen = () => {
                 }
 
                 userInfo = userInfoArray;
-                
+
               }
 
 
@@ -257,7 +259,7 @@ const HomeScreen = () => {
           );
 
           console.log(tasksWithUserInfo);
-          
+
 
           setOriginalTaskCards(tasksWithUserInfo);
           setAllTaskCards(tasksWithUserInfo);
@@ -265,6 +267,8 @@ const HomeScreen = () => {
 
         } catch (error) {
           console.error('Error fetching user info for tasks:', error);
+        } finally {
+          setLoading(false)
         }
       }, (error) => {
         console.error('Error fetching tasks:', error);
@@ -273,7 +277,7 @@ const HomeScreen = () => {
     return unsubscribe;
   };
 
-  
+
 
   useEffect(() => {
     const getEmployees = async () => {
@@ -351,7 +355,7 @@ const HomeScreen = () => {
                     <AddTaskEverything onCloseModal={() => setModalVisible(false)} />
                   </BottomModal2>
 
-                  
+
 
                   <TouchableOpacity onPress={() => setShowDropdown2(true)}>
                     <View style={styles.addtask}>
@@ -405,6 +409,13 @@ const HomeScreen = () => {
                         onPress={() => navigate('TaskDetailsScreen', { taskId: item.id })}
                       />
                     )}
+                    ListEmptyComponent={
+                      loading ? (
+                        <ActivityIndicator size="large" color="white" style={{ marginTop: 50 }} />
+                      ) : (
+                        <Text style={{ textAlign: 'center', marginTop: 50, color: 'white' }}>No tasks found</Text>
+                      )
+                    }
                   />
 
 
