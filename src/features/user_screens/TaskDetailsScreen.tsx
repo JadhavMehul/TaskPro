@@ -815,17 +815,34 @@ const TaskDetailsScreen = () => {
                   </TitleText>
                   {
                     userIsAdmin && (
-
-                      <TouchableOpacity onPress={() => deleteTask(taskId, allData.attachedImage, allData.attachedAudio)}>
-                        {
-                          isDeleting ?
-                            <ActivityIndicator size={24} color="red" /> :
-                            <Feather name="trash" size={24} color="red" />
-                        }
+                      <TouchableOpacity
+                        onPress={() => {
+                          Alert.alert(
+                            'Confirm Deletion',
+                            'Are you sure you want to delete this task?',
+                            [
+                              {
+                                text: 'No',
+                                style: 'cancel',
+                              },
+                              {
+                                text: 'Yes, I\'m sure',
+                                onPress: () => deleteTask(taskId, allData.attachedImage, allData.attachedAudio),
+                                style: 'destructive', // optional, for red text on iOS
+                              },
+                            ]
+                          );
+                        }}
+                      >
+                        {isDeleting ? (
+                          <ActivityIndicator size={24} color="red" />
+                        ) : (
+                          <Feather name="trash" size={24} color="red" />
+                        )}
                       </TouchableOpacity>
-
                     )
                   }
+
 
 
 
@@ -1633,9 +1650,10 @@ const styles = StyleSheet.create({
 
   righttop: {
     alignItems: 'center',
-    width: '25%',
+    width: '45%',
     flexDirection: 'column',
     justifyContent: 'center',
+    backgroundColor: 'green',
     gap: 6,
   },
 

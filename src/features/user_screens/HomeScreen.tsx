@@ -25,8 +25,8 @@ import TimePicker from '@components/global/TimePicker';
 import AddTaskEverything from '@components/global/AddTaskEverything';
 import moment from 'moment';
 import BottomModal2 from '@components/global/BottomModal2';
-
-
+import { BackHandler } from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 type TaskData = {
   id: string;
@@ -49,7 +49,37 @@ type User = {
 };
 
 const HomeScreen = () => {
+  const navigation = useNavigation(); // 👈 Add this if not already present
 
+  // 🔐 Disable iOS swipe-back
+  useEffect(() => {
+    navigation.setOptions({
+      gestureEnabled: false,
+    });
+  }, [navigation]);
+
+  // 📲 Android hardware back handling
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        if (Platform.OS === 'android') {
+          Alert.alert('Exit App', 'Are you sure you want to exit?', [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Exit', onPress: () => BackHandler.exitApp() },
+          ]);
+          return true;
+        }
+        return false;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => backHandler.remove();
+    }, [])
+  );
   const user = auth().currentUser;
   const [userIsAdmin, setUserIsAdmin] = useState(false);
   const [originalTaskCards, setOriginalTaskCards] = useState<any[]>([]);
