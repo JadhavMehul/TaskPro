@@ -222,6 +222,27 @@ const TaskDetailsScreen = () => {
 
   const handleSubmit = async () => {
     setActivityIndicator(true);
+    const api = 'http://89.117.145.28:3000/comment-notification'
+    // const api = 'http://10.0.2.2:3000/comment-notification'
+
+    const taskData = await firestore().collection('TaskList').doc(taskId).get();
+    const data = taskData.data();
+
+
+    if (!data) {
+      console.log("cant get assign to data");
+    }
+
+    const allEmails = [...data?.assignTo, allData.createdBy]
+
+
+    const payload = {
+      recipients: allEmails,
+      title: allData.title,
+      comment: inputValue
+    };
+
+
     if (!inputValue.trim()) {
       Alert.alert('Error', 'Please add comment before submitting.');
       setActivityIndicator(false);
@@ -282,6 +303,22 @@ const TaskDetailsScreen = () => {
           })
         }
 
+
+
+        const response = await fetch(api, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ API Response:', data);
 
       } catch (error) {
         console.log(error);
@@ -448,7 +485,15 @@ const TaskDetailsScreen = () => {
 
 
   const updateTaskStatus = async (status: string) => {
-    setActivityIndicator(true)
+    setActivityIndicator(true);
+    const api = 'http://89.117.145.28:3000/task-status-notification'
+    // const api = 'http://10.0.2.2:3000/task-status-notification'
+
+    const payload = {
+      createdByEmail: allData.createdBy,
+      title: allData.title,
+    };
+
     try {
       await firestore().collection('TaskList').doc(taskId).update({
         taskStatus: status,
@@ -458,6 +503,25 @@ const TaskDetailsScreen = () => {
         ...prev,
         taskStatus: status
       }));
+
+      if (status === "Done") {
+        const response = await fetch(api, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ API Response:', data);
+      }
+
+
     } catch (error) {
       console.log(error);
     } finally {
@@ -487,7 +551,7 @@ const TaskDetailsScreen = () => {
     try {
       const taskData = await firestore().collection('TaskList').doc(taskId).get();
       const data = taskData.data();
-      
+
 
 
       if (!data) {
@@ -496,7 +560,7 @@ const TaskDetailsScreen = () => {
       }
       const createdBy = await firestore().collection('UserAccounts').doc(data.createdBy).get();
       const createdData = createdBy.data();
-      const createdByFullname = createdData?.firstName + ' ' + createdData?.lastName ;
+      const createdByFullname = createdData?.firstName + ' ' + createdData?.lastName;
 
       let assignToData: { firstName: string; profilePicture: string } | { firstName: string; profilePicture: string }[] = {
         firstName: '',
@@ -815,16 +879,16 @@ const TaskDetailsScreen = () => {
 
 
                 </View>
-               
+
                 <View style={styles.taskbox2}>
                   <View>
-                  <TitleText>Created by : {allData.createdByName}</TitleText>
-                  <TitleText>
-                    Finish before: {allData.taskEndTime}
-                  </TitleText>
+                    <TitleText>Created by : {allData.createdByName}</TitleText>
+                    <TitleText>
+                      Finish before: {allData.taskEndTime}
+                    </TitleText>
 
                   </View>
-                
+
                   {
                     userIsAdmin && (
                       <TouchableOpacity
@@ -1256,7 +1320,7 @@ const TaskDetailsScreen = () => {
                                 style={styles.circleImage}
                               />
                             </View>
-                            
+
                           </View>
 
                           <View style={{ flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
